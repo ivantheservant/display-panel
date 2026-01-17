@@ -738,14 +738,14 @@
             const now = new Date();
             const day = now.getDay();
             const today = now.toISOString().slice(0, 10);
-            const tomorrow = new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
+            const tomorrowDate = new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
             
             let events = [];
             
             // Check NZ holidays
             if (config.calendar.nz) {
                 const nzToday = holidays2026.nz.find(h => h.date === today);
-                const nzTomorrow = holidays2026.nz.find(h => h.date === tomorrow);
+                const nzTomorrow = holidays2026.nz.find(h => h.date === tomorrowDate);
                 if (nzToday) events.push({ day: 'Today', time: 'All day', title: `🇳🇿 ${nzToday.name}`, type: 'holiday' });
                 if (nzTomorrow) events.push({ day: 'Tomorrow', time: 'All day', title: `🇳🇿 ${nzTomorrow.name}`, type: 'holiday' });
             }
@@ -753,7 +753,7 @@
             // Check HK holidays
             if (config.calendar.hk) {
                 const hkToday = holidays2026.hk.find(h => h.date === today);
-                const hkTomorrow = holidays2026.hk.find(h => h.date === tomorrow);
+                const hkTomorrow = holidays2026.hk.find(h => h.date === tomorrowDate);
                 if (hkToday) events.push({ day: 'Today', time: 'All day', title: `🇭🇰 ${hkToday.name}`, type: 'holiday' });
                 if (hkTomorrow) events.push({ day: 'Tomorrow', time: 'All day', title: `🇭🇰 ${hkTomorrow.name}`, type: 'holiday' });
             }
@@ -768,9 +768,9 @@
                 schedule[day].forEach(e => events.push({ day: 'Today', ...e }));
             }
             
-            const tomorrow = (day + 1) % 7;
-            if (schedule[tomorrow] && config.calendar.personal) {
-                schedule[tomorrow].forEach(e => events.push({ day: 'Tomorrow', ...e }));
+            const tomorrowDay = (day + 1) % 7;
+            if (schedule[tomorrowDay] && config.calendar.personal) {
+                schedule[tomorrowDay].forEach(e => events.push({ day: 'Tomorrow', ...e }));
             }
             
             // Display
