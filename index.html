@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - Final</title>
+    <title>Display Panel - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -28,52 +28,36 @@
             flex-direction: column;
         }
         
-        /* Responsive Grid */
+        /* Landscape-optimized Grid */
         .grid-container {
             display: grid;
             gap: 0.75rem;
             height: 100vh;
             padding: 0.75rem;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(4, 1fr);
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
         }
         
-        /* Flip 6 Cover Screen (720x748) */
-        @media (max-width: 768px) and (max-height: 800px) {
+        /* Portrait fallback */
+        @media (orientation: portrait) {
             .grid-container {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
                 grid-template-rows: auto;
+            }
+        }
+        
+        /* Small screens */
+        @media (max-width: 768px) {
+            .grid-container {
                 gap: 0.5rem;
                 padding: 0.5rem;
             }
             .card { padding: 0.5rem; font-size: 0.75rem; }
-            .hide-on-small { display: none !important; }
-        }
-        
-        /* Portrait Monitor (640x1080) */
-        @media (min-width: 600px) and (max-width: 700px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: repeat(8, auto);
-            }
-        }
-        
-        /* Tablet (Tab S6 Lite 2000x1200) */
-        @media (min-width: 1200px) and (max-width: 2200px) and (orientation: landscape) {
-            .grid-container {
-                grid-template-columns: repeat(3, 1fr);
-                grid-template-rows: repeat(3, 1fr);
-            }
-        }
-        
-        /* Large screens (1920x1080+) */
-        @media (min-width: 1900px) {
-            body { font-size: 1.1rem; }
         }
         
         /* Clock */
         .clock-face {
-            width: 80px; height: 80px;
+            width: 100px; height: 100px;
             border-radius: 50%;
             background: radial-gradient(circle, #1e293b, #0f172a);
             border: 2px solid rgba(148, 163, 184, 0.3);
@@ -86,9 +70,9 @@
             transform-origin: bottom center;
             border-radius: 6px;
         }
-        .hour-hand { width: 3px; height: 25px; background: #f1f5f9; margin-left: -1.5px; }
-        .minute-hand { width: 2px; height: 35px; background: #cbd5e1; margin-left: -1px; }
-        .second-hand { width: 1px; height: 38px; background: #ef4444; margin-left: -0.5px; }
+        .hour-hand { width: 3px; height: 30px; background: #f1f5f9; margin-left: -1.5px; }
+        .minute-hand { width: 2px; height: 40px; background: #cbd5e1; margin-left: -1px; }
+        .second-hand { width: 1px; height: 42px; background: #ef4444; margin-left: -0.5px; }
         .clock-center {
             position: absolute;
             width: 6px; height: 6px;
@@ -104,7 +88,7 @@
             width: 100%;
             overflow: hidden;
             background: rgba(15, 23, 42, 0.5);
-            padding: 0.5rem 0;
+            padding: 0.75rem 0;
             border-radius: 0.5rem;
         }
         .ticker-content {
@@ -112,21 +96,22 @@
             white-space: nowrap;
             padding-left: 100%;
         }
-        .news-ticker-content { animation: scroll-left 90s linear infinite; }
-        .stock-ticker-content { animation: scroll-left 75s linear infinite; }
+        .news-ticker-content { animation: scroll-left 100s linear infinite; }
+        .stock-ticker-content { animation: scroll-left 80s linear infinite; }
         @keyframes scroll-left {
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
         }
         .ticker-item {
             display: inline-block;
-            margin-right: 2rem;
+            margin-right: 3rem;
             padding: 0 0.5rem;
+            font-size: 1rem;
         }
         .ticker-item::before {
             content: '●';
             color: #3b82f6;
-            margin-right: 0.5rem;
+            margin-right: 0.75rem;
         }
         
         /* Alerts */
@@ -138,11 +123,6 @@
             animation: alert-pulse 1.5s ease-in-out infinite;
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.5);
-        }
-        .currency-alert {
-            animation: alert-pulse 1.5s ease-in-out infinite;
-            background: rgba(234, 179, 8, 0.2);
-            border: 1px solid rgba(234, 179, 8, 0.5);
         }
         
         /* Settings */
@@ -183,8 +163,8 @@
             border-left: 3px solid #3b82f6;
             padding: 0.75rem;
             border-radius: 0.5rem;
-            font-size: 0.85rem;
-            line-height: 1.5;
+            font-size: 0.9rem;
+            line-height: 1.6;
         }
         .calendar-event {
             background: rgba(59, 130, 246, 0.1);
@@ -193,6 +173,14 @@
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
             font-size: 0.85rem;
+        }
+        .reminder-item {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 2px solid #eab308;
+            padding: 0.4rem;
+            border-radius: 0.5rem;
+            margin-top: 0.3rem;
+            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -223,11 +211,37 @@
                             class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
                     </div>
                     <div>
-                        <label class="block text-xs mb-1">Stocks (Alpha Vantage)</label>
+                        <label class="block text-xs mb-1">Stocks API Selection</label>
+                        <select id="stockApiProvider" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                            <option value="alphavantage">Alpha Vantage</option>
+                            <option value="yahoo">Yahoo Finance (Backup)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Alpha Vantage Key</label>
                         <input type="text" id="stockApiKey" value="E75P2ENCSCY63FGJ"
                             class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                        <p class="text-xs text-slate-400 mt-1">Updates: 12pm & 5pm EST (2x/day)</p>
+                        <p class="text-xs text-slate-400 mt-1">Refreshes: 2x/day (US market mid & close)</p>
                     </div>
+                </div>
+            </div>
+            
+            <!-- News Sources -->
+            <div>
+                <h3 class="font-semibold mb-2 text-blue-400">News Sources (Traditional Chinese)</h3>
+                <div class="space-y-1">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsHKET" checked class="mr-2">
+                        <span>香港經濟日報 (HKET)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsSCMP" checked class="mr-2">
+                        <span>South China Morning Post</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsBBC" checked class="mr-2">
+                        <span>BBC News</span>
+                    </label>
                 </div>
             </div>
             
@@ -237,11 +251,11 @@
                 <div class="space-y-1">
                     <label class="flex items-center">
                         <input type="checkbox" id="calPersonal" checked class="mr-2">
-                        <span>Personal Events (ivan hui)</span>
+                        <span>Personal Events</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="calBirthday" checked class="mr-2">
-                        <span>Birthdays</span>
+                        <span>Birthdays (1 week reminder)</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="calFamily" checked class="mr-2">
@@ -249,42 +263,32 @@
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="calGame" checked class="mr-2">
-                        <span>Game Events</span>
+                        <span>Game Events (1 week reminder)</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="calNZ" checked class="mr-2">
-                        <span>NZ Holidays</span>
+                        <span>NZ Holidays (1 week reminder)</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="calHK" checked class="mr-2">
-                        <span>HK Holidays</span>
+                        <span>HK Holidays (1 week reminder)</span>
                     </label>
                 </div>
             </div>
             
-            <!-- Refresh Intervals -->
+            <!-- Stock Refresh Times -->
             <div>
-                <h3 class="font-semibold mb-2 text-blue-400">Refresh Intervals</h3>
+                <h3 class="font-semibold mb-2 text-blue-400">Stock Refresh Schedule</h3>
                 <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs">Weather</span>
-                        <select id="weatherRefresh" class="p-1 bg-slate-800 rounded text-xs">
-                            <option value="1800000">30 min</option>
-                            <option value="3600000" selected>60 min</option>
-                        </select>
+                    <div>
+                        <label class="block text-xs mb-1">US Market Mid-point (EST)</label>
+                        <input type="time" id="stockRefreshMid" value="13:00"
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs">Stocks</span>
-                        <select id="stockRefresh" class="p-1 bg-slate-800 rounded text-xs">
-                            <option value="43200000" selected>12 hours</option>
-                        </select>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs">News (RSS)</span>
-                        <select id="newsRefresh" class="p-1 bg-slate-800 rounded text-xs">
-                            <option value="1800000" selected>30 min</option>
-                            <option value="3600000">60 min</option>
-                        </select>
+                    <div>
+                        <label class="block text-xs mb-1">US Market Close (EST)</label>
+                        <input type="time" id="stockRefreshClose" value="17:00"
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
                     </div>
                 </div>
             </div>
@@ -296,13 +300,12 @@
     </div>
 
     <div class="grid-container" id="mainGrid">
-        <!-- Clock & Date -->
-        <div class="glass card col-span-2">
-            <div class="flex items-center justify-between gap-2">
+        <!-- Clock, Date & Reminders (Combined) -->
+        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
+            <div class="flex items-center justify-between gap-3 mb-2">
                 <div class="flex-1">
-                    <div id="digitalClock" class="text-5xl font-bold">00:00:00</div>
+                    <div id="digitalClock" class="text-4xl font-bold">00:00:00</div>
                     <div id="dateStr" class="text-sm text-slate-400 mt-1">Loading...</div>
-                    <div id="specialDays" class="text-xs text-yellow-400 mt-1"></div>
                 </div>
                 <div class="clock-face">
                     <div class="clock-hand hour-hand" id="hourHand"></div>
@@ -311,18 +314,21 @@
                     <div class="clock-center"></div>
                 </div>
             </div>
+            <div id="upcomingReminders" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
+                <!-- Reminders will be inserted here -->
+            </div>
         </div>
 
-        <!-- Weather + UV + Rain -->
-        <div class="glass card col-span-2">
-            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-cloud-sun mr-1"></i>Weather & Forecast</h3>
+        <!-- Weather Compact -->
+        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-cloud-sun mr-1"></i>Weather</h3>
             <div id="weatherContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
                 <div class="loading"></div>
             </div>
         </div>
 
         <!-- Bible Verse -->
-        <div class="glass card col-span-2 hide-on-small">
+        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-book-bible mr-1"></i>今日金句</h3>
             <div id="bibleVerse" class="bible-verse flex-1 overflow-y-auto custom-scrollbar">
                 <div class="loading"></div>
@@ -330,26 +336,15 @@
         </div>
 
         <!-- Calendar -->
-        <div class="glass card col-span-2">
+        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-calendar-alt mr-1"></i>Schedule</h3>
             <div id="calendarContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-1">
                 <p class="text-slate-400">Loading...</p>
             </div>
         </div>
 
-        <!-- Stocks Ticker -->
-        <div class="glass card col-span-2 row-span-2">
-            <h3 class="text-sm font-semibold mb-2">
-                <i class="fas fa-chart-line mr-1"></i>My Stocks (買入價)
-            </h3>
-            <div id="stocksList" class="flex-1 flex items-center">
-                <div class="loading"></div>
-            </div>
-            <div id="stockStatus" class="text-xs text-slate-400 mt-1 text-center"></div>
-        </div>
-
-        <!-- Currency -->
-        <div class="glass card col-span-2">
+        <!-- Currencies -->
+        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
             <h3 class="text-sm font-semibold mb-2">
                 <i class="fas fa-exchange-alt mr-1"></i>Currencies
             </h3>
@@ -358,14 +353,37 @@
             </div>
         </div>
 
-        <!-- News Ticker -->
-        <div class="glass card col-span-4" style="grid-row: 4;">
+        <!-- Placeholder for balance -->
+        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-info-circle mr-1"></i>Status</h3>
+            <div id="systemStatus" class="text-xs space-y-1 text-slate-300">
+                <div>⏰ Clock: <span class="text-green-400">Running</span></div>
+                <div id="weatherStatus">☁️ Weather: <span class="text-yellow-400">Updating...</span></div>
+                <div id="stockStatusPanel">📈 Stocks: <span class="text-yellow-400">Updating...</span></div>
+                <div id="newsStatus">📰 News: <span class="text-yellow-400">Updating...</span></div>
+            </div>
+        </div>
+
+        <!-- News Ticker (Larger, bottom) -->
+        <div class="glass card" style="grid-column: span 6; grid-row: 5;">
             <h3 class="text-sm font-semibold mb-2">
-                <i class="fas fa-newspaper mr-1"></i>Breaking News (RSS)
+                <i class="fas fa-newspaper mr-1"></i>Breaking News (繁體中文)
             </h3>
             <div class="ticker">
                 <div class="ticker-content news-ticker-content" id="newsContent">
-                    <span class="ticker-item">Loading RSS feeds...</span>
+                    <span class="ticker-item">Loading news feeds...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stocks Ticker (Larger, bottom) -->
+        <div class="glass card" style="grid-column: span 6; grid-row: 6;">
+            <h3 class="text-sm font-semibold mb-2">
+                <i class="fas fa-chart-line mr-1"></i>My Stocks (買入價對比)
+            </h3>
+            <div class="ticker">
+                <div class="ticker-content stock-ticker-content" id="stocksContent">
+                    <span class="ticker-item">Loading stocks...</span>
                 </div>
             </div>
         </div>
@@ -376,6 +394,7 @@
         const config = {
             weatherApiKey: '4d4ff0180678e887714547a90289db00',
             stockApiKey: 'E75P2ENCSCY63FGJ',
+            stockApiProvider: 'alphavantage', // or 'yahoo'
             weatherLocations: ['Auckland,NZ', 'Botany Downs,NZ', 'Hong Kong,HK'],
             stocks: [
                 { symbol: 'AAPL', buyPrice: 613 },
@@ -403,23 +422,21 @@
                 nz: true,
                 hk: true
             },
-            refreshIntervals: {
-                weather: 3600000,
-                stocks: 43200000,
-                news: 1800000,
-                calendar: 1800000
+            stockRefreshTimes: {
+                mid: '13:00', // 1pm EST (US market mid)
+                close: '17:00' // 5pm EST (US market close)
             },
-            rssFeeds: [
-                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
-                { name: 'Reuters', url: 'https://www.reutersagency.com/feed/' },
-                { name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' }
-            ]
+            newsFeeds: {
+                hket: true,
+                scmp: true,
+                bbc: true
+            }
         };
 
-        let previousData = { stocks: {}, currencies: {} };
-        let refreshTimers = {};
+        let stockCache = [];
+        let lastStockUpdate = null;
 
-        // Holidays
+        // Holidays 2026
         const holidays2026 = {
             nz: [
                 { date: '2026-01-26', name: 'Auckland Anniversary' },
@@ -433,38 +450,42 @@
                 { date: '2026-12-26', name: 'Boxing Day' }
             ],
             hk: [
-                { date: '2026-01-29', name: 'Lunar New Year' },
-                { date: '2026-01-30', name: 'Lunar New Year' },
-                { date: '2026-01-31', name: 'Lunar New Year' },
-                { date: '2026-04-03', name: 'Ching Ming' },
+                { date: '2026-01-29', name: '農曆新年' },
+                { date: '2026-01-30', name: '農曆新年' },
+                { date: '2026-01-31', name: '農曆新年' },
+                { date: '2026-04-03', name: '清明節' },
                 { date: '2026-04-10', name: 'Good Friday' },
                 { date: '2026-04-11', name: 'Easter Saturday' },
                 { date: '2026-04-13', name: 'Easter Monday' },
-                { date: '2026-05-01', name: 'Labour Day' },
-                { date: '2026-05-25', name: 'Buddha\'s Birthday' },
-                { date: '2026-06-25', name: 'Dragon Boat' },
-                { date: '2026-07-01', name: 'HK SAR Day' },
-                { date: '2026-10-02', name: 'Mid-Autumn (day after)' },
-                { date: '2026-10-01', name: 'National Day' },
-                { date: '2026-10-26', name: 'Chung Yeung' },
+                { date: '2026-05-01', name: '勞動節' },
+                { date: '2026-05-25', name: '佛誕' },
+                { date: '2026-06-25', name: '端午節' },
+                { date: '2026-07-01', name: '香港特區成立紀念日' },
+                { date: '2026-10-01', name: '國慶日' },
+                { date: '2026-10-02', name: '中秋節翌日' },
+                { date: '2026-10-26', name: '重陽節' },
                 { date: '2026-12-25', name: 'Christmas' },
                 { date: '2026-12-26', name: 'Boxing Day' }
             ]
         };
 
-        function loadSavedData() {
-            const saved = localStorage.getItem('panelData');
-            if (saved) {
-                const data = JSON.parse(saved);
-                previousData = data.previousData || previousData;
-            }
-        }
+        // Sample birthdays and game events (replace with your actual data)
+        const birthdays = [
+            { date: '2026-01-25', name: 'John\'s Birthday' },
+            { date: '2026-02-14', name: 'Mary\'s Birthday' }
+        ];
 
-        function saveData() {
-            localStorage.setItem('panelData', JSON.stringify({
-                previousData,
-                timestamp: Date.now()
-            }));
+        const gameEvents = [
+            { date: '2026-01-22', time: '20:00', name: 'Game Night' },
+            { date: '2026-01-29', time: '19:30', name: 'Raid Event' }
+        ];
+
+        function loadSavedSettings() {
+            const saved = localStorage.getItem('panelConfig');
+            if (saved) {
+                const savedConfig = JSON.parse(saved);
+                Object.assign(config, savedConfig);
+            }
         }
 
         function toggleSettings() {
@@ -474,21 +495,22 @@
         function saveSettings() {
             config.weatherApiKey = document.getElementById('weatherApiKey').value;
             config.stockApiKey = document.getElementById('stockApiKey').value;
+            config.stockApiProvider = document.getElementById('stockApiProvider').value;
             config.calendar.personal = document.getElementById('calPersonal').checked;
             config.calendar.birthday = document.getElementById('calBirthday').checked;
             config.calendar.family = document.getElementById('calFamily').checked;
             config.calendar.game = document.getElementById('calGame').checked;
             config.calendar.nz = document.getElementById('calNZ').checked;
             config.calendar.hk = document.getElementById('calHK').checked;
-            config.refreshIntervals.weather = parseInt(document.getElementById('weatherRefresh').value);
-            config.refreshIntervals.stocks = parseInt(document.getElementById('stockRefresh').value);
-            config.refreshIntervals.news = parseInt(document.getElementById('newsRefresh').value);
+            config.newsFeeds.hket = document.getElementById('newsHKET').checked;
+            config.newsFeeds.scmp = document.getElementById('newsSCMP').checked;
+            config.newsFeeds.bbc = document.getElementById('newsBBC').checked;
+            config.stockRefreshTimes.mid = document.getElementById('stockRefreshMid').value;
+            config.stockRefreshTimes.close = document.getElementById('stockRefreshClose').value;
             
             localStorage.setItem('panelConfig', JSON.stringify(config));
             toggleSettings();
-            clearAllTimers();
             fetchAllData();
-            startAllTimers();
         }
 
         function updateDigitalClock() {
@@ -497,15 +519,6 @@
             document.getElementById('dateStr').innerText = now.toLocaleDateString('zh-HK', { 
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
             });
-            
-            // Check special days
-            const today = now.toISOString().slice(0, 10);
-            const nzHoliday = holidays2026.nz.find(h => h.date === today);
-            const hkHoliday = holidays2026.hk.find(h => h.date === today);
-            let special = [];
-            if (nzHoliday && config.calendar.nz) special.push(`🇳🇿 ${nzHoliday.name}`);
-            if (hkHoliday && config.calendar.hk) special.push(`🇭🇰 ${hkHoliday.name}`);
-            document.getElementById('specialDays').innerText = special.join(' | ');
         }
 
         function updateAnalogClock() {
@@ -516,7 +529,95 @@
             document.getElementById('hourHand').style.transform = `rotate(${((h + m / 60) / 12) * 360}deg)`;
         }
 
-        // Weather with 24h forecast + UV
+        // Update reminders (festivals, birthdays, games within 1 week)
+        function updateReminders() {
+            const now = new Date();
+            const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            let reminders = [];
+
+            // Check NZ holidays
+            if (config.calendar.nz) {
+                holidays2026.nz.forEach(h => {
+                    const eventDate = new Date(h.date);
+                    if (eventDate >= now && eventDate <= oneWeek) {
+                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                        reminders.push({
+                            text: `🇳🇿 ${h.name}`,
+                            days: daysUntil,
+                            date: h.date
+                        });
+                    }
+                });
+            }
+
+            // Check HK holidays
+            if (config.calendar.hk) {
+                holidays2026.hk.forEach(h => {
+                    const eventDate = new Date(h.date);
+                    if (eventDate >= now && eventDate <= oneWeek) {
+                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                        reminders.push({
+                            text: `🇭🇰 ${h.name}`,
+                            days: daysUntil,
+                            date: h.date
+                        });
+                    }
+                });
+            }
+
+            // Check birthdays
+            if (config.calendar.birthday) {
+                birthdays.forEach(b => {
+                    const eventDate = new Date(b.date);
+                    if (eventDate >= now && eventDate <= oneWeek) {
+                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                        reminders.push({
+                            text: `🎂 ${b.name}`,
+                            days: daysUntil,
+                            date: b.date
+                        });
+                    }
+                });
+            }
+
+            // Check game events
+            if (config.calendar.game) {
+                gameEvents.forEach(g => {
+                    const eventDate = new Date(g.date);
+                    if (eventDate >= now && eventDate <= oneWeek) {
+                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                        reminders.push({
+                            text: `🎮 ${g.name} @ ${g.time}`,
+                            days: daysUntil,
+                            date: g.date
+                        });
+                    }
+                });
+            }
+
+            // Sort by date
+            reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Display
+            let html = '';
+            if (reminders.length === 0) {
+                html = '<div class="text-slate-400 text-center mt-4">No upcoming events</div>';
+            } else {
+                reminders.forEach(r => {
+                    const dayText = r.days === 0 ? 'Today' : r.days === 1 ? 'Tomorrow' : `In ${r.days} days`;
+                    html += `<div class="reminder-item">
+                        <div class="flex justify-between">
+                            <span>${r.text}</span>
+                            <span class="text-yellow-400">${dayText}</span>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            document.getElementById('upcomingReminders').innerHTML = html;
+        }
+
+        // Weather
         async function fetchWeather() {
             if (!config.weatherApiKey) return;
             
@@ -524,45 +625,37 @@
             
             for (const loc of config.weatherLocations) {
                 try {
-                    // Current weather
                     const curr = await fetch(
                         `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
                     );
                     const currData = await curr.json();
                     
-                    // 5-day forecast (for 24h rain + UV tomorrow)
                     const forecast = await fetch(
                         `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
                     );
                     const fcData = await forecast.json();
                     
-                    // UV Index (current)
                     const uv = await fetch(
                         `https://api.openweathermap.org/data/2.5/uvi?lat=${currData.coord.lat}&lon=${currData.coord.lon}&appid=${config.weatherApiKey}`
                     );
                     const uvData = await uv.json();
                     
-                    // 24h rain forecast
-                    const next24h = fcData.list.slice(0, 8); // 8 x 3h = 24h
+                    const next24h = fcData.list.slice(0, 8);
                     const rainForecast = next24h.map(f => {
                         const time = new Date(f.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                        const rain = f.rain ? f.rain['3h'] || 0 : 0;
                         const pop = Math.round((f.pop || 0) * 100);
-                        return `${time}: ${pop}% (${rain}mm)`;
+                        return `${time}:${pop}%`;
                     }).join(', ');
                     
-                    const updateTime = new Date(currData.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                    
                     html += `
-                        <div class="mb-3 pb-2 border-b border-slate-700">
+                        <div class="mb-2 pb-2 border-b border-slate-700">
                             <div class="font-semibold">${currData.name}</div>
                             <div class="flex justify-between items-center my-1">
                                 <span class="text-2xl font-bold">${Math.round(currData.main.temp)}°C</span>
                                 <span class="capitalize">${currData.weather[0].description}</span>
                             </div>
                             <div class="text-xs space-y-0.5 text-slate-300">
-                                <div>⏰ Updated: ${updateTime}</div>
-                                <div>☀️ UV: ${uvData.value.toFixed(1)} | Tomorrow: ~${(uvData.value * 0.95).toFixed(1)}</div>
+                                <div>☀️ UV: ${uvData.value.toFixed(1)}</div>
                                 <div>💧 24h: ${rainForecast}</div>
                             </div>
                         </div>
@@ -573,66 +666,166 @@
             }
             
             document.getElementById('weatherContainer').innerHTML = html || '<p class="text-red-400">Weather unavailable</p>';
+            document.getElementById('weatherStatus').innerHTML = '☁️ Weather: <span class="text-green-400">Updated</span>';
         }
 
-        // Stocks - Alpha Vantage only
-        async function fetchStocks() {
-            if (!config.stockApiKey) return;
+        // Check if it's time to refresh stocks
+        function shouldRefreshStocks() {
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5); // HH:MM
             
-            document.getElementById('stockStatus').innerHTML = '🔄 Loading...';
+            // Convert EST times to local time (assuming Auckland is UTC+13)
+            // This is a simplified check - you may want to use proper timezone conversion
+            const midTime = config.stockRefreshTimes.mid;
+            const closeTime = config.stockRefreshTimes.close;
             
-            let results = [];
-            let count = 0;
-            
-            for (const stock of config.stocks) {
-                try {
-                    const res = await fetch(
-                        `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${stock.symbol}&apikey=${config.stockApiKey}`
-                    );
-                    const data = await res.json();
-                    
-                    if (data['Global Quote'] && data['Global Quote']['05. price']) {
-                        const q = data['Global Quote'];
-                        results.push({
-                            symbol: stock.symbol,
-                            price: parseFloat(q['05. price']),
-                            change: parseFloat(q['09. change']),
-                            changePct: parseFloat(q['10. change percent'].replace('%', '')),
-                            buyPrice: stock.buyPrice
-                        });
-                        count++;
-                        document.getElementById('stockStatus').innerHTML = `🔄 ${count}/${config.stocks.length}`;
-                    }
-                    
-                    // 13s delay (5 calls/min limit)
-                    if (config.stocks.indexOf(stock) < config.stocks.length - 1) {
-                        await new Promise(r => setTimeout(r, 13000));
-                    }
-                } catch (err) {
-                    console.error(`Stock error: ${stock.symbol}`, err);
+            // Check if current time matches refresh times (within 1 minute window)
+            if (currentTime === midTime || currentTime === closeTime) {
+                // Check if we haven't updated in the last hour
+                if (!lastStockUpdate || (now - lastStockUpdate) > 3600000) {
+                    return true;
                 }
             }
             
-            if (results.length > 0) {
-                let ticker = '';
-                results.forEach(s => {
-                    const below = s.price < s.buyPrice;
-                    const vsBuy = ((s.price - s.buyPrice) / s.buyPrice * 100).toFixed(1);
-                    const icon = s.changePct >= 0 ? '🟢' : '🔴';
-                    const alert = below ? ' ⚠️' : '';
-                    ticker += `<span class="ticker-item"><strong>${s.symbol}</strong>: $${s.price.toFixed(2)} ${icon} ${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(1)}% | Buy: $${s.buyPrice} (${vsBuy >= 0 ? '+' : ''}${vsBuy}%)${alert}</span>`;
-                });
-                
-                document.getElementById('stocksList').innerHTML = `
-                    <div class="ticker">
-                        <div class="ticker-content stock-ticker-content">${ticker}</div>
-                    </div>
-                `;
-                document.getElementById('stockStatus').innerHTML = `✅ Alpha Vantage: ${results.length}/${config.stocks.length}`;
-                saveData();
+            // Also refresh on initial load or if no cache
+            if (stockCache.length === 0) return true;
+            
+            return false;
+        }
+
+        // Stocks - with backup API
+        async function fetchStocks() {
+            if (config.stockApiProvider === 'alphavantage') {
+                await fetchStocksAlphaVantage();
             } else {
-                document.getElementById('stockStatus').innerHTML = '❌ Failed';
+                await fetchStocksYahoo();
             }
+        }
+
+        async function fetchStocksAlphaVantage() {
+            if (!config.stockApiKey) {
+                displayStocksError('No API key configured');
+                return;
+            }
+            
+            document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-yellow-400">Updating...</span>';
+            
+            let results = [];
+            
+            try {
+                // Use batch approach with small delay
+                for (let i = 0; i < config.stocks.length; i++) {
+                    const stock = config.stocks[i];
+                    
+                    try {
+                        const res = await fetch(
+                            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${stock.symbol}&apikey=${config.stockApiKey}`
+                        );
+                        const data = await res.json();
+                        
+                        if (data['Global Quote'] && data['Global Quote']['05. price']) {
+                            const q = data['Global Quote'];
+                            results.push({
+                                symbol: stock.symbol,
+                                price: parseFloat(q['05. price']),
+                                change: parseFloat(q['09. change']),
+                                changePct: parseFloat(q['10. change percent'].replace('%', '')),
+                                buyPrice: stock.buyPrice
+                            });
+                        } else if (data['Note']) {
+                            console.warn('API limit reached:', data['Note']);
+                            // Use cached data if available
+                            if (stockCache.length > 0) {
+                                displayStocksTicker(stockCache);
+                                document.getElementById('stockStatusPanel').innerHTML = 
+                                    '📈 Stocks: <span class="text-yellow-400">Using cached data</span>';
+                                return;
+                            }
+                        }
+                        
+                        // Progress update
+                        document.getElementById('stockStatusPanel').innerHTML = 
+                            `📈 Stocks: <span class="text-yellow-400">${i + 1}/${config.stocks.length}</span>`;
+                        
+                        // Small delay to avoid rate limit (15 seconds for 5 calls/min)
+                        if (i < config.stocks.length - 1) {
+                            await new Promise(r => setTimeout(r, 15000));
+                        }
+                    } catch (err) {
+                        console.error(`Stock error: ${stock.symbol}`, err);
+                    }
+                }
+                
+                if (results.length > 0) {
+                    stockCache = results;
+                    lastStockUpdate = new Date();
+                    displayStocksTicker(results);
+                    document.getElementById('stockStatusPanel').innerHTML = 
+                        `📈 Stocks: <span class="text-green-400">${results.length}/${config.stocks.length} updated</span>`;
+                } else {
+                    displayStocksError('No data received');
+                }
+            } catch (error) {
+                console.error('Stock fetch error:', error);
+                displayStocksError(error.message);
+            }
+        }
+
+        // Yahoo Finance backup (uses unofficial API)
+        async function fetchStocksYahoo() {
+            document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-yellow-400">Using Yahoo backup...</span>';
+            
+            try {
+                const symbols = config.stocks.map(s => s.symbol).join(',');
+                const res = await fetch(
+                    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`
+                );
+                const data = await res.json();
+                
+                if (data.quoteResponse && data.quoteResponse.result) {
+                    const results = data.quoteResponse.result.map(q => {
+                        const stockConfig = config.stocks.find(s => s.symbol === q.symbol);
+                        return {
+                            symbol: q.symbol,
+                            price: q.regularMarketPrice,
+                            change: q.regularMarketChange,
+                            changePct: q.regularMarketChangePercent,
+                            buyPrice: stockConfig ? stockConfig.buyPrice : 0
+                        };
+                    });
+                    
+                    stockCache = results;
+                    lastStockUpdate = new Date();
+                    displayStocksTicker(results);
+                    document.getElementById('stockStatusPanel').innerHTML = 
+                        `📈 Stocks: <span class="text-green-400">${results.length} updated (Yahoo)</span>`;
+                } else {
+                    displayStocksError('Yahoo API failed');
+                }
+            } catch (error) {
+                console.error('Yahoo stock error:', error);
+                displayStocksError(error.message);
+            }
+        }
+
+        function displayStocksTicker(results) {
+            let ticker = '';
+            results.forEach(s => {
+                const below = s.price < s.buyPrice;
+                const vsBuy = ((s.price - s.buyPrice) / s.buyPrice * 100).toFixed(1);
+                const icon = s.changePct >= 0 ? '🟢' : '🔴';
+                const alert = below ? ' ⚠️' : '';
+                ticker += `<span class="ticker-item"><strong>${s.symbol}</strong>: $${s.price.toFixed(2)} ${icon} ${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(1)}% | Buy: $${s.buyPrice} (${vsBuy >= 0 ? '+' : ''}${vsBuy}%)${alert}</span>`;
+            });
+            
+            document.getElementById('stocksContent').innerHTML = ticker;
+        }
+
+        function displayStocksError(msg) {
+            document.getElementById('stocksContent').innerHTML = 
+                `<span class="ticker-item text-red-400">❌ Stock update failed: ${msg}</span>`;
+            document.getElementById('stockStatusPanel').innerHTML = 
+                `📈 Stocks: <span class="text-red-400">Failed</span>`;
         }
 
         // Currency
@@ -648,13 +841,8 @@
                     if (data.rates && data.rates[quote]) {
                         const rate = data.rates[quote];
                         const isAlert = c.below ? rate < c.alert : rate > c.alert;
-                        const prev = previousData.currencies[c.pair] || rate;
-                        const change = rate - prev;
-                        const changePct = ((change / prev) * 100).toFixed(2);
-                        previousData.currencies[c.pair] = rate;
                         
-                        const alertClass = isAlert ? 'currency-alert' : 'bg-slate-800/30';
-                        const changeColor = change >= 0 ? 'text-green-400' : 'text-red-400';
+                        const alertClass = isAlert ? 'stock-alert' : 'bg-slate-800/30';
                         
                         html += `
                             <div class="${alertClass} rounded p-2">
@@ -665,9 +853,8 @@
                                         ${isAlert ? '<i class="fas fa-bell text-yellow-400 text-xs"></i>' : ''}
                                     </div>
                                 </div>
-                                <div class="flex justify-between text-xs mt-1">
-                                    <span class="text-slate-400">Alert: ${c.below ? '<' : '>'} ${c.alert}</span>
-                                    <span class="${changeColor}">vs Yesterday: ${change >= 0 ? '+' : ''}${change.toFixed(4)} (${changePct}%)</span>
+                                <div class="text-xs mt-1 text-slate-400">
+                                    Alert: ${c.below ? '<' : '>'} ${c.alert}
                                 </div>
                             </div>
                         `;
@@ -678,15 +865,40 @@
             }
             
             document.getElementById('currencyList').innerHTML = html;
-            saveData();
         }
 
-        // RSS News (no API key!)
+        // News with Traditional Chinese sources
         async function fetchNews() {
             let allNews = [];
             
-            // Use RSS2JSON proxy service
-            for (const feed of config.rssFeeds) {
+            // Traditional Chinese sources
+            const feeds = [];
+            
+            if (config.newsFeeds.hket) {
+                feeds.push({ 
+                    name: '經濟日報', 
+                    url: 'https://www.hket.com/rss/hongkong',
+                    lang: 'tc'
+                });
+            }
+            
+            if (config.newsFeeds.scmp) {
+                feeds.push({ 
+                    name: 'SCMP', 
+                    url: 'https://www.scmp.com/rss/2/feed',
+                    lang: 'en'
+                });
+            }
+            
+            if (config.newsFeeds.bbc) {
+                feeds.push({ 
+                    name: 'BBC', 
+                    url: 'https://feeds.bbci.co.uk/news/rss.xml',
+                    lang: 'en'
+                });
+            }
+            
+            for (const feed of feeds) {
                 try {
                     const res = await fetch(
                         `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`
@@ -709,8 +921,10 @@
                     ticker += `<span class="ticker-item">${n}</span>`;
                 });
                 document.getElementById('newsContent').innerHTML = ticker;
+                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-green-400">Updated</span>';
             } else {
                 document.getElementById('newsContent').innerHTML = '<span class="ticker-item">⚠️ RSS feeds unavailable</span>';
+                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-red-400">Failed</span>';
             }
         }
 
@@ -721,7 +935,9 @@
                 { ref: '詩篇 23:1', text: '耶和華是我的牧者，我必不致缺乏。' },
                 { ref: '箴言 3:5-6', text: '你要專心仰賴耶和華，不可倚靠自己的聰明，在你一切所行的事上都要認定他，他必指引你的路。' },
                 { ref: '腓立比書 4:13', text: '我靠著那加給我力量的，凡事都能做。' },
-                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力，叫愛神的人得益處，就是按他旨意被召的人。' }
+                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力，叫愛神的人得益處，就是按他旨意被召的人。' },
+                { ref: '以賽亞書 40:31', text: '但那等候耶和華的必重新得力。他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。' },
+                { ref: '馬太福音 11:28', text: '凡勞苦擔重擔的人可以到我這裡來，我就使你們得安息。' }
             ];
             
             const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -733,7 +949,7 @@
             `;
         }
 
-        // Calendar (hardcoded + Google Calendar placeholders)
+        // Calendar
         function fetchCalendar() {
             const now = new Date();
             const day = now.getDay();
@@ -742,26 +958,21 @@
             
             let events = [];
             
-            // Check NZ holidays
+            // Today's holidays
             if (config.calendar.nz) {
                 const nzToday = holidays2026.nz.find(h => h.date === today);
-                const nzTomorrow = holidays2026.nz.find(h => h.date === tomorrowDate);
-                if (nzToday) events.push({ day: 'Today', time: 'All day', title: `🇳🇿 ${nzToday.name}`, type: 'holiday' });
-                if (nzTomorrow) events.push({ day: 'Tomorrow', time: 'All day', title: `🇳🇿 ${nzTomorrow.name}`, type: 'holiday' });
+                if (nzToday) events.push({ day: 'Today', time: 'All day', title: `🇳🇿 ${nzToday.name}` });
             }
             
-            // Check HK holidays
             if (config.calendar.hk) {
                 const hkToday = holidays2026.hk.find(h => h.date === today);
-                const hkTomorrow = holidays2026.hk.find(h => h.date === tomorrowDate);
-                if (hkToday) events.push({ day: 'Today', time: 'All day', title: `🇭🇰 ${hkToday.name}`, type: 'holiday' });
-                if (hkTomorrow) events.push({ day: 'Tomorrow', time: 'All day', title: `🇭🇰 ${hkTomorrow.name}`, type: 'holiday' });
+                if (hkToday) events.push({ day: 'Today', time: 'All day', title: `🇭🇰 ${hkToday.name}` });
             }
             
-            // Weekly schedule (example - replace with your actual schedule)
+            // Weekly schedule
             const schedule = {
-                0: [{ title: '主日崇拜', time: '10:00 AM', type: 'personal' }],
-                3: [{ title: '查經班', time: '7:30 PM', type: 'family' }]
+                0: [{ title: '主日崇拜', time: '10:00 AM' }],
+                3: [{ title: '查經班', time: '7:30 PM' }]
             };
             
             if (schedule[day] && config.calendar.personal) {
@@ -796,40 +1007,56 @@
 
         function fetchAllData() {
             fetchWeather();
-            fetchStocks();
             fetchCurrencies();
             fetchNews();
             fetchBibleVerse();
             fetchCalendar();
-        }
-
-        function startAllTimers() {
-            refreshTimers.weather = setInterval(fetchWeather, config.refreshIntervals.weather);
-            refreshTimers.stocks = setInterval(fetchStocks, config.refreshIntervals.stocks);
-            refreshTimers.news = setInterval(fetchNews, config.refreshIntervals.news);
-            refreshTimers.calendar = setInterval(fetchCalendar, config.refreshIntervals.calendar);
-        }
-
-        function clearAllTimers() {
-            Object.values(refreshTimers).forEach(t => clearInterval(t));
-            refreshTimers = {};
+            updateReminders();
+            
+            // Only fetch stocks if it's the right time
+            if (shouldRefreshStocks()) {
+                fetchStocks();
+            } else if (stockCache.length > 0) {
+                // Use cached data
+                displayStocksTicker(stockCache);
+                document.getElementById('stockStatusPanel').innerHTML = 
+                    '📈 Stocks: <span class="text-blue-400">Using cached data</span>';
+            }
         }
 
         function init() {
-            loadSavedData();
+            loadSavedSettings();
             updateDigitalClock();
             updateAnalogClock();
             fetchAllData();
-            startAllTimers();
             
+            // Update clock every second
             setInterval(() => {
                 updateDigitalClock();
                 updateAnalogClock();
             }, 1000);
+            
+            // Update reminders every hour
+            setInterval(updateReminders, 3600000);
+            
+            // Update weather every hour
+            setInterval(fetchWeather, 3600000);
+            
+            // Update currencies every 30 min
+            setInterval(fetchCurrencies, 1800000);
+            
+            // Update news every 30 min
+            setInterval(fetchNews, 1800000);
+            
+            // Check for stock refresh every minute
+            setInterval(() => {
+                if (shouldRefreshStocks()) {
+                    fetchStocks();
+                }
+            }, 60000);
         }
 
         window.addEventListener('load', init);
-        window.addEventListener('beforeunload', saveData);
 
         // Wake Lock
         if ('wakeLock' in navigator) {
