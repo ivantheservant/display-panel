@@ -37,19 +37,18 @@
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(6, 1fr);
         }
-
-to { opacity: 1; }
-        }
-        
         /* Clock */
         .clock-face {
-            width: 100px; height: 100px;
+            width: 72px; height: 72px;
             border-radius: 50%;
             background: radial-gradient(circle, #1e293b, #0f172a);
             border: 2px solid rgba(148, 163, 184, 0.3);
             position: relative;
+            z-index: 0;
         }
-        .clock-hand {
+        
+        #upcomingReminders { position: relative; z-index: 1; }
+.clock-hand {
             position: absolute;
             bottom: 50%;
             left: 50%;
@@ -82,9 +81,9 @@ to { opacity: 1; }
             white-space: nowrap;
             padding-left: 100%;
         }
-        .news-ticker-content { animation: scroll-left 100s linear infinite; }
-        .alerts-ticker-content { animation: scroll-left 40s linear infinite; }
-        .stock-ticker-content { animation: scroll-left 80s linear infinite; }
+        .news-ticker-content { animation: scroll-left 104s linear infinite; }
+        .alerts-ticker-content { animation: scroll-left 50s linear infinite; }
+        .stock-ticker-content { animation: scroll-left 35s linear infinite; }
         @keyframes scroll-left {
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
@@ -210,13 +209,7 @@ to { opacity: 1; }
         </div>
         
         <div class="space-y-4 text-sm">
-            <!-- Important Notice -->
-            <div class="bg-blue-900/30 border border-blue-700 rounded p-3">
-                <h3 class="font-semibold mb-1 text-blue-400">💡 Setup Instructions</h3>
-                <p class="text-xs text-blue-200 mb-2">For CORS errors: Open this HTML file directly in your browser (double-click) or install a CORS browser extension.</p>
-                <p class="text-xs text-blue-200">Preview errors are normal - they'll disappear in actual use!</p>
-            </div>
-            <!-- Calendar (方案A: Apps Script Web App) -->
+<!-- Calendar (方案A: Apps Script Web App) -->
             <div>
                 <h3 class="font-semibold mb-2 text-green-400">📅 日曆（方案A）</h3>
                 <p class="text-xs text-slate-400 mb-2">用 Google Apps Script Web App 讀取你已勾選的行事曆（私密亦可）。</p>
@@ -301,11 +294,11 @@ to { opacity: 1; }
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="newsSCMP" class="mr-2">
-                        <span>SCMP (requires CORS proxy)</span>
+                        <span>SCMP</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" id="newsBBC" class="mr-2">
-                        <span>BBC (requires CORS proxy)</span>
+                        <span>BBC</span>
                     </label>
                 </div>
             </div>
@@ -349,18 +342,18 @@ to { opacity: 1; }
 
     <div class="grid-container" id="mainGrid">
         <!-- Clock, Date & Reminders -->
-        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
-            <div class="flex items-center justify-between gap-3 mb-2">
-                <div class="flex-1">
+        <div class="glass card" style="grid-column: 1 / span 2; grid-row: 1 / span 2;">
+            <div class="mb-2">
+                <div class="flex items-center gap-3">
                     <div id="digitalClock" class="text-4xl font-bold">00:00:00</div>
-                    <div id="dateStr" class="text-sm text-slate-400 mt-1">Loading...</div>
+                    <div class="clock-face clock-face-inline">
+                        <div class="clock-hand hour-hand" id="hourHand"></div>
+                        <div class="clock-hand minute-hand" id="minuteHand"></div>
+                        <div class="clock-hand second-hand" id="secondHand"></div>
+                        <div class="clock-center"></div>
+                    </div>
                 </div>
-                <div class="clock-face">
-                    <div class="clock-hand hour-hand" id="hourHand"></div>
-                    <div class="clock-hand minute-hand" id="minuteHand"></div>
-                    <div class="clock-hand second-hand" id="secondHand"></div>
-                    <div class="clock-center"></div>
-                </div>
+                <div id="dateStr" class="text-sm text-slate-400 mt-1">Loading...</div>
             </div>
             <div id="upcomingReminders" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
                 <div class="text-slate-400 text-center mt-4">Loading reminders...</div>
@@ -368,7 +361,7 @@ to { opacity: 1; }
         </div>
 
         <!-- Weather -->
-        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
+        <div class="glass card" style="grid-column: 3 / span 2; grid-row: 1 / span 4;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-cloud-sun mr-1"></i>Weather</h3>
             <div id="weatherContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
                 <div class="loading"></div>
@@ -376,7 +369,7 @@ to { opacity: 1; }
         </div>
 
         <!-- Bible Verse -->
-        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
+        <div class="glass card" style="grid-column: 5 / span 2; grid-row: 1 / span 2;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-book-bible mr-1"></i>今日金句</h3>
             <div id="bibleVerse" class="bible-verse flex-1 overflow-y-auto custom-scrollbar">
                 <div class="loading"></div>
@@ -384,49 +377,46 @@ to { opacity: 1; }
         </div>
 
         <!-- Calendar -->
-        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
+        <div class="glass card" style="grid-column: 1 / span 2; grid-row: 3 / span 2;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-calendar-alt mr-1"></i>Schedule</h3>
             <div id="calendarContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-1">
                 <p class="text-slate-400">Loading...</p>
             </div>
         </div>
 
-        <!-- Currencies -->
-        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
-            <h3 class="text-sm font-semibold mb-2">
-                <i class="fas fa-exchange-alt mr-1"></i>Currencies
-            </h3>
-            <div id="currencyList" class="space-y-2 flex-1 text-xs">
-                <div class="loading"></div>
+        <!-- Currencies + Music (Combined) -->
+        <div class="glass card" style="grid-column: 5 / span 2; grid-row: 3 / span 2;">
+            <div class="flex items-center justify-between mb-2">
+                
+            </div>
+
+            <!-- Currencies -->
+            <div class="mb-3">
+                <div id="currencyList" class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="loading"></div>
+                </div>
+            </div>
+
+            <!-- YouTube Music (audio controls, minimal UI) -->
+            <div class="mt-auto">
+                
+                <div class="yt-frame yt-frame-music" style="height:1px; opacity:0; pointer-events:none;">
+                    <div id="ytMusicPlayer" class="yt-player"></div>
+                </div>
+                <div id="musicNowPlaying" class="text-xs text-slate-200 truncate">未播放</div>
+                <div class="mt-2 flex flex-wrap gap-1">
+                    <button class="media-btn" id="musicPrev" title="上一首">⏮</button>
+                    <button class="media-btn" id="musicPlay" title="播放/暫停">⏯</button>
+                    <button class="media-btn" id="musicStop" title="停止">⏹</button>
+                    <button class="media-btn" id="musicNext" title="下一首">⏭</button>
+                    <button class="media-btn" id="musicReshuffle" title="重排+重播/更新">🔀</button>
+                </div>
             </div>
         </div>
 
-        <!-- Media (replaces Status Panel in production UI) -->
-        <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold"><i class="fas fa-play-circle mr-1"></i>媒體</h3></div>
-
-            <div class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-3">
-                <!-- YouTube Music -->
-                <div>
-                    <div class="text-[11px] text-slate-400 mb-1">🎵 YouTube 音樂播放清單</div>
-                    <div class="yt-frame yt-frame-music">
-                        <div id="ytMusicPlayer" class="yt-player"></div>
-                    </div>
-                    <div id="musicNowPlaying" class="mt-1 text-xs text-slate-200 truncate">未播放</div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        <button class="media-btn" id="musicPrev">Prev</button>
-                        <button class="media-btn" id="musicPlay">Play / Pause</button>
-                        <button class="media-btn" id="musicStop">Stop</button>
-                        <button class="media-btn" id="musicNext">Next</button>
-                        <button class="media-btn" id="musicReshuffle">Reshuffle / 更新</button>
-                    </div>
-                </div>
-</div>
-        </div>
 
         <!-- Video Player (大屏；可於設定開關) -->
-        <div id="videoCard" class="glass card hidden" style="grid-column: span 4; grid-row: span 2;">
+        <div id="videoCard" class="glass card hidden" style="grid-column: 3 / span 4; grid-row: 1 / span 4;">
             <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm font-semibold"><i class="fas fa-film mr-1"></i>影片播放（大屏）</h3>
                 <button id="videoHideBtn" class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] hover:bg-slate-700">隱藏</button>
@@ -446,18 +436,13 @@ to { opacity: 1; }
             </div>
         </div>
 <!-- News Ticker (two lines) -->
-        <div class="glass card" style="grid-column: span 6; grid-row: 5;">
-            <h3 class="text-sm font-semibold mb-2">
-                <i class="fas fa-newspaper mr-1"></i>新聞
-            </h3>
-            <div class="text-[11px] text-slate-400 mb-1">一般</div>
-            <div class="ticker mb-2">
+        <div class="glass card" style="grid-column: 1 / span 6; grid-row: 5;">
+<div class="ticker mb-2">
                 <div class="ticker-content news-ticker-content" id="newsContent">
                     <span class="ticker-item">Loading...</span>
                 </div>
             </div>
-            <div class="text-[11px] text-slate-400 mb-1">重要快訊（天氣／交通／警報）</div>
-            <div class="ticker">
+<div class="ticker">
                 <div class="ticker-content alerts-ticker-content" id="alertsContent">
                     <span class="ticker-item">Loading...</span>
                 </div>
@@ -465,11 +450,8 @@ to { opacity: 1; }
         </div>
 
         <!-- Stocks Ticker -->
-        <div class="glass card" style="grid-column: span 6; grid-row: 6;">
-            <h3 class="text-sm font-semibold mb-2">
-                <i class="fas fa-chart-line mr-1"></i>My Stocks (買入價對比)
-            </h3>
-            <div class="ticker">
+        <div class="glass card" style="grid-column: 1 / span 6; grid-row: 6;">
+<div class="ticker">
                 <div class="ticker-content stock-ticker-content" id="stocksContent">
                     <span class="ticker-item">Loading stocks...</span>
                 </div>
@@ -478,7 +460,17 @@ to { opacity: 1; }
     </div>
 
     <script>
-        // Configuration
+
+        // Safe storage: file:// 或某些瀏覽器設定下，localStorage 可能拋 SecurityError
+        const SafeStore = {
+            get(key){ try { return localStorage.getItem(key); } catch(e){ return null; } },
+            set(key, val){ try { localStorage.setItem(key, val); } catch(e){} }
+        };
+
+        
+        function getEl(id){ return document.getElementById(id) || null; }
+        function setStatus(id, value){ const el=getEl(id); if(el) el.innerHTML=value; }
+// Configuration
         const config = {
             // APIs
             weatherApiKey: '',
@@ -486,7 +478,7 @@ to { opacity: 1; }
             // Put keys in Settings in production, or keep this file private.
             twelveDataKey: '',
             finnhubKey: '',
-            stockApiProvider: 'demo',
+            stockApiProvider: 'auto',
 
             // YouTube
             ytMusicPlaylistId: 'PLK1NiZBn99vRvPpps7r9wMB0KLUacyRKT',
@@ -494,9 +486,7 @@ to { opacity: 1; }
             ytVolume: 80,
             ytShowVideo: false,
             ytEnableVideo: false,
-            useCorsProxy: false,
-
-            // Stocks refresh (local time, 2x/day)
+// Stocks refresh (local time, 2x/day)
             stockRefreshTimes: ['07:00', '11:00'],
             
             // Google Calendar (NEW)
@@ -553,54 +543,11 @@ to { opacity: 1; }
             }
         };
 
-        // Cache structure: { updatedAt: ISOString, provider: string, items: Array }
-        let stockCache = null;
-        let lastStockFetchMarker = null; // used to enforce max 2x/day schedule
-        let photoTimer = null;
+	        // Timers / state
+	        let photoTimer = null;
         let currentPhotoIndex = 0;
         let todayPhotos = [];
 
-        const STOCK_CACHE_KEY = 'panelStockCache';
-        const STOCK_REFRESH_LOG_KEY = 'panelStockRefreshLog';
-
-        function loadStockCache() {
-            try {
-                const raw = localStorage.getItem(STOCK_CACHE_KEY);
-                if (!raw) return null;
-                const parsed = JSON.parse(raw);
-                if (parsed && Array.isArray(parsed.items) && parsed.items.length) {
-                    return parsed;
-                }
-            } catch (e) {
-                console.warn('Stock cache parse failed', e);
-            }
-            return null;
-        }
-
-        function saveStockCache(cacheObj) {
-            try {
-                localStorage.setItem(STOCK_CACHE_KEY, JSON.stringify(cacheObj));
-            } catch (e) {
-                console.warn('Stock cache write failed', e);
-            }
-        }
-
-        function loadStockRefreshLog() {
-            try {
-                const raw = localStorage.getItem(STOCK_REFRESH_LOG_KEY);
-                return raw ? JSON.parse(raw) : {};
-            } catch (e) {
-                return {};
-            }
-        }
-
-        function saveStockRefreshLog(log) {
-            try {
-                localStorage.setItem(STOCK_REFRESH_LOG_KEY, JSON.stringify(log));
-            } catch (e) {
-                // ignore
-            }
-        }
 
         // Hardcoded holidays (fallback when Google Calendar not used)
         const holidays2026 = {
@@ -659,7 +606,7 @@ to { opacity: 1; }
         }
 
         function loadSavedSettings() {
-            const saved = localStorage.getItem('panelConfig');
+            const saved = SafeStore.get('panelConfig');
             if (saved) {
                 const savedConfig = JSON.parse(saved);
                 Object.assign(config, savedConfig);
@@ -760,7 +707,7 @@ to { opacity: 1; }
             const ns = document.getElementById('newsSCMP'); if (ns) config.newsFeeds.scmp = ns.checked;
             const nb = document.getElementById('newsBBC'); if (nb) config.newsFeeds.bbc = nb.checked;
 
-            localStorage.setItem('panelConfig', JSON.stringify(config));
+            SafeStore.set('panelConfig', JSON.stringify(config));
             toggleSettings();
             fetchAllData();
             maybeRefreshStocks(true);
@@ -915,7 +862,7 @@ to { opacity: 1; }
 
             let html = '';
             if (reminders.length === 0) {
-                html = '<div class="text-slate-400 text-center mt-4">No upcoming events</div>';
+                html = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
             } else {
                 reminders.forEach(r => {
                     const dayText = r.days === 0 ? 'Today' : r.days === 1 ? 'Tomorrow' : `In ${r.days} days`;
@@ -931,391 +878,20 @@ to { opacity: 1; }
             document.getElementById('upcomingReminders').innerHTML = html;
         }
 
-        // Photo Memories Feature
-        async function loadTodayPhotos() {
-            const now = new Date();
-            const month = now.getMonth() + 1;
-            const day = now.getDate();
-
-            if (config.photoSource === 'demo') {
-                todayPhotos = demoPhotos;
-            } else if (config.photoSource === 'gdrive' && config.gdriveFolderId) {
-                // Google Drive implementation would go here
-                // For now, use demo
-                todayPhotos = demoPhotos;
-            } else if (config.photoSource === 'onedrive' && config.onedrivePath) {
-                // OneDrive implementation would go here
-                // For now, use demo
-                todayPhotos = demoPhotos;
-            } else {
-                todayPhotos = [];
-            }
-
-            if (todayPhotos.length > 0) {
-                document.getElementById('photoStatus').innerHTML = 
-                    `📸 Photos: <span class="text-green-400">${todayPhotos.length} found</span>`;
-            } else {
-                document.getElementById('photoStatus').innerHTML = 
-                    `📸 Photos: <span class="text-slate-400">None for today</span>`;
-            }
-        }
-
-        function showNextPhoto() {
-            if (todayPhotos.length === 0) return;
-
-            const photo = todayPhotos[currentPhotoIndex];
-            const img = document.getElementById('memoryPhoto');
-            
-            img.classList.remove('photo-fade-in');
-            void img.offsetWidth; // Trigger reflow
-            img.classList.add('photo-fade-in');
-            
-            img.src = photo.url;
-            document.getElementById('photoFilename').textContent = photo.filename;
-            document.getElementById('photoYear').textContent = `Year: ${photo.year}`;
-
-            currentPhotoIndex = (currentPhotoIndex + 1) % todayPhotos.length;
-        }
-
-        function initPhotoMemories() {
-            if (photoTimer) {
-                clearInterval(photoTimer);
-                photoTimer = null;
-            }
-
-            if (!config.enablePhotos) {
-                document.getElementById('photoStatus').innerHTML = 
-                    '📸 Photos: <span class="text-slate-400">Disabled</span>';
-                return;
-            }
-
-            loadTodayPhotos().then(() => {
-                if (todayPhotos.length > 0) {
-                    showNextPhoto();
-                    photoTimer = setInterval(showNextPhoto, config.photoInterval);
-                }
-            });
-        }
-
-        async function fetchWeather() {
-            if (!config.weatherApiKey) {
-                document.getElementById('weatherContainer').innerHTML = '<p class="text-yellow-400">⚠️ No API key</p>';
-                return;
-            }
-            
-            let html = '';
-            let success = 0;
-            
-            for (const loc of config.weatherLocations) {
-                try {
-                    const url = getCorsProxy(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`);
-                    const curr = await fetch(url);
-                    
-                    if (!curr.ok) throw new Error(`HTTP ${curr.status}`);
-                    
-                    const currData = await curr.json();
-                    
-                    html += `
-                        <div class="mb-2 pb-2 border-b border-slate-700">
-                            <div class="font-semibold">${currData.name}</div>
-                            <div class="flex justify-between items-center my-1">
-                                <span class="text-2xl font-bold">${Math.round(currData.main.temp)}°C</span>
-                                <span class="capitalize">${currData.weather[0].description}</span>
-                            </div>
-                            <div class="text-xs text-slate-300">
-                                Feels: ${Math.round(currData.main.feels_like)}°C | Humidity: ${currData.main.humidity}%
-                            </div>
-                        </div>
-                    `;
-                    success++;
-                } catch (error) {
-                    console.error(`Weather error: ${loc}`, error);
-                }
-            }
-            
-            if (success === 0) {
-                html = '<p class="text-yellow-400">⚠️ Weather unavailable</p>';
-                document.getElementById('weatherStatus').innerHTML = '☁️ Weather: <span class="text-red-400">Failed</span>';
-            } else {
-                document.getElementById('weatherStatus').innerHTML = `☁️ Weather: <span class="text-green-400">${success}/${config.weatherLocations.length}</span>`;
-            }
-            
-            document.getElementById('weatherContainer').innerHTML = html;
-        }
-
-        async function fetchStocks() {
-            // Load cache once per page load
-            if (!stockCache) {
-                stockCache = loadStockCache();
-            }
-
-            if (config.stockApiProvider === 'demo') {
-                displayDemoStocks();
-                return;
-            }
-
-            // Render cached quotes immediately (fast UI)
-            if (stockCache && stockCache.items && stockCache.items.length) {
-                renderStocksTicker(stockCache.items, {
-                    label: `Cached ${formatTimeAgo(stockCache.updatedAt)}`,
-                    provider: stockCache.provider
-                });
-            }
-
-            // If no cache exists, fetch once on load so the widget is never empty
-            if (!stockCache || !stockCache.items || stockCache.items.length === 0) {
-                await maybeRefreshStocks(true);
-            }
-        }
-
-        function formatTimeAgo(isoString) {
-            try {
-                const then = new Date(isoString);
-                const diffMs = Date.now() - then.getTime();
-                const mins = Math.round(diffMs / 60000);
-                if (mins < 1) return 'just now';
-                if (mins < 60) return `${mins}m ago`;
-                const hrs = Math.round(mins / 60);
-                if (hrs < 24) return `${hrs}h ago`;
-                const days = Math.round(hrs / 24);
-                return `${days}d ago`;
-            } catch {
-                return '';
-            }
-        }
-
-        function renderStocksTicker(items, meta = {}) {
-            let ticker = '';
-            items.forEach(s => {
-                const below = (typeof s.buyPrice === 'number') ? (s.price < s.buyPrice) : false;
-                const vsBuy = (typeof s.buyPrice === 'number') ? ((s.price - s.buyPrice) / s.buyPrice * 100) : null;
-                const icon = (s.changePct ?? 0) >= 0 ? '🟢' : '🔴';
-                const alert = below ? ' ⚠️' : '';
-                const curr = s.currency ? ` ${s.currency}` : '';
-                ticker += `<span class="ticker-item ${below ? 'stock-alert' : ''}"><strong>${s.symbol}</strong>: ${s.price.toFixed(2)}${curr} ${icon} ${(s.changePct ?? 0) >= 0 ? '+' : ''}${(s.changePct ?? 0).toFixed(2)}%`;
-                if (typeof s.buyPrice === 'number' && vsBuy !== null) {
-                    ticker += ` | Buy: ${s.buyPrice} (${vsBuy >= 0 ? '+' : ''}${vsBuy.toFixed(1)}%)${alert}`;
-                }
-                ticker += `</span>`;
-            });
-
-            document.getElementById('stocksContent').innerHTML = ticker || '<span class="ticker-item">No stock data</span>';
-            const label = meta.label ? meta.label : 'Updated';
-            const prov = meta.provider ? ` <span class="text-slate-400">(${meta.provider})</span>` : '';
-            document.getElementById('stockStatusPanel').innerHTML = `📈 Stocks: <span class="text-green-400">${label}</span>${prov}`;
-        }
-
-        function isWithinMinutes(now, targetMinutes, windowMinutes = 5) {
-            const nowMinutes = now.getHours() * 60 + now.getMinutes();
-            return Math.abs(nowMinutes - targetMinutes) <= windowMinutes;
-        }
-
-        function timeStringToMinutes(t) {
-            const [hh, mm] = (t || '00:00').split(':').map(x => parseInt(x, 10));
-            return (hh * 60) + (mm || 0);
-        }
-
-        async function maybeRefreshStocks(force = false) {
-            if (config.stockApiProvider === 'demo') return;
-
-            const now = new Date();
-            const todayKey = now.toISOString().slice(0, 10);
-            const times = Array.isArray(config.stockRefreshTimes) ? config.stockRefreshTimes.slice(0, 2) : ['07:00', '11:00'];
-            const minutesTargets = times.map(timeStringToMinutes);
-
-            const log = loadStockRefreshLog();
-
-            const eligibleIndex = minutesTargets.findIndex((m, idx) => {
-                const marker = `${todayKey}_${times[idx]}`;
-                if (log[marker]) return false;
-                return isWithinMinutes(now, m, 5);
-            });
-
-            if (!force && eligibleIndex === -1) {
-                return;
-            }
-
-            // Mark UI as updating
-            document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-yellow-400">Updating...</span>';
-
-            try {
-                let items;
-                let providerLabel = config.stockApiProvider;
-
-                if (config.stockApiProvider === 'twelvedata') {
-                    try {
-                        items = await fetchStocksTwelveData();
-                        providerLabel = 'Twelve Data';
-                    } catch (e) {
-                        console.warn('Twelve Data failed, fallback to Finnhub', e);
-                        items = await fetchStocksFinnhub();
-                        providerLabel = 'Finnhub (fallback)';
-                    }
-                } else if (config.stockApiProvider === 'finnhub') {
-                    try {
-                        items = await fetchStocksFinnhub();
-                        providerLabel = 'Finnhub';
-                    } catch (e) {
-                        console.warn('Finnhub failed, fallback to Twelve Data', e);
-                        items = await fetchStocksTwelveData();
-                        providerLabel = 'Twelve Data (fallback)';
-                    }
-                } else if (config.stockApiProvider === 'demo') {
-                    displayDemoStocks();
-                    return;
-                } else {
-                    throw new Error(`Unknown provider: ${config.stockApiProvider}`);
-                }
-
-                if (!items || !items.length) {
-                    throw new Error('No quote data returned');
-                }
-
-                const cacheObj = { updatedAt: new Date().toISOString(), provider: providerLabel, items };
-                stockCache = cacheObj;
-                saveStockCache(cacheObj);
-                renderStocksTicker(items, { label: 'Updated', provider: providerLabel });
-
-                // Record the schedule marker if we refreshed due to a schedule window
-                if (!force && eligibleIndex !== -1) {
-                    const marker = `${todayKey}_${times[eligibleIndex]}`;
-                    log[marker] = cacheObj.updatedAt;
-                    saveStockRefreshLog(log);
-                }
-            } catch (error) {
-                console.error('Stock refresh failed', error);
-                if (stockCache && stockCache.items && stockCache.items.length) {
-                    renderStocksTicker(stockCache.items, {
-                        label: `Cached ${formatTimeAgo(stockCache.updatedAt)} (refresh failed)` ,
-                        provider: stockCache.provider
-                    });
-                } else {
-                    document.getElementById('stocksContent').innerHTML = '<span class="ticker-item">Stocks unavailable</span>';
-                    document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-red-400">Failed</span>';
-                }
-            }
-        }
-
-        async function fetchStocksTwelveData() {
-            if (!config.twelveDataKey) throw new Error('Missing Twelve Data API key');
-
-            // Twelve Data Basic (Free) has a low per-minute credit limit (commonly shown as 8/min).
-            // /quote consumes ~1 credit per symbol, so with 12 symbols we split into chunks <= 8.
-            const maxPerMinute = 8;
-            const symbols = config.stocks.map(s => s.symbol);
-
-            async function waitUntilNextMinute() {
-                const now = new Date();
-                const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 250;
-                await new Promise(r => setTimeout(r, Math.max(250, msToNextMinute)));
-            }
-
-            const results = {};
-            for (let i = 0; i < symbols.length; i += maxPerMinute) {
-                const chunk = symbols.slice(i, i + maxPerMinute);
-                const url = getCorsProxy(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(chunk.join(','))}&apikey=${encodeURIComponent(config.twelveDataKey)}`);
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
-
-                // Batch response is typically an object keyed by symbol; single-symbol response is a flat object.
-                const bySymbol = (data && data.symbol) ? { [data.symbol]: data } : data;
-                for (const sym of chunk) {
-                    const r = bySymbol?.[sym];
-                    if (r) results[sym] = r;
-                }
-
-                // If there are more chunks, wait for credit reset (next minute boundary)
-                if (i + maxPerMinute < symbols.length) {
-                    await waitUntilNextMinute();
-                }
-            }
-
-            return config.stocks
-                .map(s => {
-                    const r = results?.[s.symbol];
-                    if (!r || r.status === 'error') return null;
-                    const price = Number(r.close ?? r.price ?? r.last ?? r.open);
-                    const changePct = Number(r.percent_change ?? r.change_percent ?? r.changePercent ?? 0);
-                    if (!Number.isFinite(price)) return null;
-                    return {
-                        symbol: s.symbol,
-                        price,
-                        changePct: Number.isFinite(changePct) ? changePct : 0,
-                        currency: r.currency || 'USD',
-                        buyPrice: typeof s.buyPrice === 'number' ? s.buyPrice : Number(s.buyPrice)
-                    };
-                })
-                .filter(Boolean);
-        }
-
-        async function fetchStocksFinnhub() {
-            if (!config.finnhubKey) throw new Error('Missing Finnhub API key');
-
-            // Finnhub quote is per symbol. With 12 symbols × 2/day, still well within free tier.
-            const out = [];
-            for (let i = 0; i < config.stocks.length; i++) {
-                const s = config.stocks[i];
-                const url = getCorsProxy(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(s.symbol)}&token=${encodeURIComponent(config.finnhubKey)}`);
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const q = await res.json();
-                const price = Number(q?.c);
-                const prev = Number(q?.pc);
-                if (!Number.isFinite(price)) continue;
-                const changePct = (Number.isFinite(prev) && prev !== 0) ? ((price - prev) / prev * 100) : 0;
-                out.push({
-                    symbol: s.symbol,
-                    price,
-                    changePct,
-                    currency: 'USD',
-                    buyPrice: typeof s.buyPrice === 'number' ? s.buyPrice : Number(s.buyPrice)
-                });
-            }
-            return out;
-        }
-
-        function displayDemoStocks() {
-            const demoData = config.stocks.map(s => ({
-                symbol: s.symbol,
-                price: s.buyPrice * (1 + (Math.random() * 0.2 - 0.1)),
-                change: (Math.random() * 20 - 10),
-                changePct: (Math.random() * 5 - 2.5),
-                buyPrice: s.buyPrice
-            }));
-            
-            let ticker = '';
-            demoData.forEach(s => {
-                const below = s.price < s.buyPrice;
-                const vsBuy = ((s.price - s.buyPrice) / s.buyPrice * 100).toFixed(1);
-                const icon = s.changePct >= 0 ? '🟢' : '🔴';
-                const alert = below ? ' ⚠️' : '';
-                ticker += `<span class="ticker-item"><strong>${s.symbol}</strong>: $${s.price.toFixed(2)} ${icon} ${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(1)}% | Buy: $${s.buyPrice} (${vsBuy >= 0 ? '+' : ''}${vsBuy}%)${alert}</span>`;
-            });
-            
-            document.getElementById('stocksContent').innerHTML = ticker;
-            document.getElementById('stockStatusPanel').innerHTML = 
-                '📈 Stocks: <span class="text-blue-400">Demo Mode</span>';
-        }
-
         async function fetchCurrencies() {
-            let html = '';
-            let success = 0;
-            
-            for (const c of config.currencies) {
-                try {
+            const box = document.getElementById('currencyList');
+            try {
+                let html = '';
+                let success = 0;
+                for (const c of (config.currencies || [])) {
                     const [base, quote] = c.pair.split('-');
-                    const url = getCorsProxy(`https://api.exchangerate-api.com/v4/latest/${base}`);
+                    const url = `https://open.er-api.com/v6/latest/${base}`;
                     const res = await fetch(url);
-                    
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    
                     const data = await res.json();
-                    
-                    if (data.rates && data.rates[quote]) {
-                        const rate = data.rates[quote];
+                    const rate = data?.rates?.[quote];
+                    if (Number.isFinite(rate)) {
                         const isAlert = c.below ? rate < c.alert : rate > c.alert;
-                        
                         html += `
                             <div class="${isAlert ? 'stock-alert' : 'bg-slate-800/30'} rounded p-2">
                                 <div class="flex justify-between items-center">
@@ -1325,26 +901,16 @@ to { opacity: 1; }
                                         ${isAlert ? '<i class="fas fa-bell text-yellow-400 text-xs"></i>' : ''}
                                     </div>
                                 </div>
-                                <div class="text-xs mt-1 text-slate-400">
-                                    Alert: ${c.below ? '<' : '>'} ${c.alert}
-                                </div>
                             </div>
                         `;
                         success++;
                     }
-                } catch (err) {
-                    console.error(`Currency error: ${c.pair}`, err);
                 }
+                box.innerHTML = success ? html : '<p class="text-yellow-400">⚠️ 匯率暫時不可用</p>';
+            } catch (e) {
+                console.warn('Currencies failed', e);
+                box.innerHTML = '<p class="text-yellow-400">⚠️ 匯率暫時不可用</p>';
             }
-            
-            if (success > 0) {
-                document.getElementById('currencyStatus').innerHTML = `💱 Currency: <span class="text-green-400">${success}/${config.currencies.length}</span>`;
-            } else {
-                html = '<p class="text-yellow-400">⚠️ Currency unavailable</p>';
-                document.getElementById('currencyStatus').innerHTML = '💱 Currency: <span class="text-red-400">Failed</span>';
-            }
-            
-            document.getElementById('currencyList').innerHTML = html;
         }
 
         async function fetchRss(url, limit = 12) {
@@ -1376,7 +942,6 @@ to { opacity: 1; }
                     '[示範] 天氣預報：本週末將有大雨，市民請注意防範'
                 ];
                 document.getElementById('newsContent').innerHTML = demo.map(n => `<span class="ticker-item">${n}</span>`).join('');
-                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-blue-400">Demo Mode</span>';
                 return;
             }
 
@@ -1387,11 +952,9 @@ to { opacity: 1; }
 
             if (feeds.length === 0) {
                 document.getElementById('newsContent').innerHTML = '<span class="ticker-item">No news sources enabled</span>';
-                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-yellow-400">No sources</span>';
                 return;
             }
 
-            document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-yellow-400">Updating...</span>';
 
             try {
                 const all = [];
@@ -1417,11 +980,9 @@ to { opacity: 1; }
                 }).join('');
 
                 document.getElementById('newsContent').innerHTML = ticker;
-                document.getElementById('newsStatus').innerHTML = `📰 News: <span class="text-green-400">${top.length} items</span> <span class="text-slate-400">(${feeds.map(f => f.name).join(', ')})</span>`;
             } catch (error) {
                 console.error('News fetch failed', error);
                 document.getElementById('newsContent').innerHTML = '<span class="ticker-item">⚠️ News unavailable</span>';
-                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-red-400">Failed</span>';
             }
         }
 
@@ -1485,7 +1046,7 @@ to { opacity: 1; }
             fetchBibleVerse();
             fetchCalendar();
             updateReminders();
-            fetchStocks();
+            maybeRefreshStocks(true);
         }
 
         // -----------------------------
@@ -1719,19 +1280,28 @@ to { opacity: 1; }
                     const line1 = 'UV: ' + (uvNow === null ? '?' : uvNow) + (uvTomorrowMax === null ? '' : '（明日最高:' + uvTomorrowMax + '）');
                     const line2 = '雨: +1h ' + pick(1) + ', +4h ' + pick(4) + ', +12h ' + pick(12) + ', 明日' + (rainTomorrow === null ? '?' : rainTomorrow) + 'mm';
 
+                    const isHK = ((loc.label || '').toLowerCase().indexOf('hong kong') !== -1);
+                    const displayLabel = isHK ? '香港' : (loc.label || '');
+
+                    const headerHtml =
+                        '<div class="flex items-center justify-between">' +
+                            '<div class="text-sm font-semibold">' + escapeHtml(displayLabel) +
+                                ' <span class="text-xs text-slate-400 ml-2">' + escapeHtml(desc) + '</span>' +
+                            '</div>' +
+                            '<div class="text-2xl font-bold">' + currentTemp + '°C</div>' +
+                        '</div>';
+
+                    let detailHtml = '';
+                    if (!isHK) {
+                        detailHtml =
+                            '<div class="text-xs text-slate-300 mt-1">☀️ ' + escapeHtml(line1) + '</div>' +
+                            '<div class="text-xs text-slate-300">💧 ' + escapeHtml(line2) + '</div>';
+                    }
+
                     parts.push(
                         '<div class="weather-location">' +
-                            '<div class="flex justify-between items-start">' +
-                                '<div>' +
-                                    '<div class="text-sm font-semibold">' + escapeHtml(loc.label) + '</div>' +
-                                    '<div class="text-2xl font-bold">' + currentTemp + '°C</div>' +
-                                '</div>' +
-                                '<div class="text-right">' +
-                                    '<div class="text-xs text-slate-400">' + escapeHtml(desc) + '</div>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div class="text-xs text-slate-300 mt-1">☀️ ' + escapeHtml(line1) + '</div>' +
-                            '<div class="text-xs text-slate-300">💧 ' + escapeHtml(line2) + '</div>' +
+                            headerHtml +
+                            detailHtml +
                         '</div>'
                     );
                 } catch (e) {
@@ -1825,29 +1395,6 @@ to { opacity: 1; }
             const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             const reminders = [];
 
-            // Demo birthday/game (replace later with Calendar WebApp)
-            const demoBirthdays = [
-                { date: '2026-01-25', name: '🎂 John\'s Birthday' },
-                { date: '2026-02-14', name: '🎂 Valentine\'s Birthday' }
-            ];
-            const demoGames = [
-                { date: '2026-01-22', name: '🎮 Game Night @ 20:00' },
-                { date: '2026-01-29', name: '🎮 Game Night @ 20:00' }
-            ];
-
-            if (config.calendar && config.calendar.birthday) {
-                demoBirthdays.forEach(e => {
-                    const d = new Date(e.date);
-                    if (d >= now && d <= oneWeek) reminders.push({ text: e.name, date: e.date });
-                });
-            }
-            if (config.calendar && config.calendar.game) {
-                demoGames.forEach(e => {
-                    const d = new Date(e.date);
-                    if (d >= now && d <= oneWeek) reminders.push({ text: e.name, date: e.date });
-                });
-            }
-
             // Holidays (hardcoded fallback already present)
             if (config.calendar && config.calendar.nz && typeof holidays2026 !== 'undefined' && holidays2026.nz) {
                 holidays2026.nz.forEach(h => {
@@ -1868,16 +1415,185 @@ to { opacity: 1; }
             if (!box) return;
 
             if (!reminders.length) {
-                box.innerHTML = '<div class="text-slate-400 text-center mt-4">No upcoming events</div>';
+                box.innerHTML = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
                 return;
             }
 
             box.innerHTML = reminders.map(r => {
                 const d = new Date(r.date);
                 const daysUntil = Math.ceil((d - now) / (24 * 60 * 60 * 1000));
-                const dayText = daysUntil === 0 ? 'Today' : (daysUntil === 1 ? 'Tomorrow' : ('In ' + daysUntil + ' days'));
+                const dayText = daysUntil === 0 ? '今日' : (daysUntil === 1 ? '明日' : ('還有 ' + daysUntil + ' 日'));
                 return '<div class="reminder-item"><div class="flex justify-between"><span>' + escapeHtml(r.text) + '</span><span class="text-yellow-400">' + dayText + '</span></div></div>';
             }).join('');
+        }
+
+
+
+        // ------------------------------
+        // Stocks (Finnhub / TwelveData) with auto failover + cache
+        // ------------------------------
+        const STOCK_CACHE_KEY = 'dp_stocks_cache_v5';
+        let stockCache = null;
+
+        function loadStockCache(){
+            try{ const raw=SafeStore.get(STOCK_CACHE_KEY); if(!raw) return null; return JSON.parse(raw);}catch(e){return null;}
+        }
+        function saveStockCache(obj){
+            try{ SafeStore.set(STOCK_CACHE_KEY, JSON.stringify(obj)); }catch(e){}
+        }
+        function todayKey(d){
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        function isNearTime(hhmm, now, windowMin){
+            try{
+                const [hh,mm]=hhmm.split(':').map(x=>parseInt(x,10));
+                const t=new Date(now); t.setHours(hh,mm,0,0);
+                const diff=Math.abs(now.getTime()-t.getTime())/60000;
+                return diff <= (windowMin||7);
+            }catch(e){ return false; }
+        }
+        function fmtPct(x){
+            if(x===null||x===undefined||isNaN(x)) return '';
+            const v=Number(x);
+            const s=(v>0?'+':'') + v.toFixed(1) + '%';
+            return s;
+        }
+        function renderStocks(quotes, meta){
+            const el=document.getElementById('stocksContent');
+            if(!el) return;
+            const arr=(config.stocks||[]).map(s=>{
+                const q=quotes && quotes[s.symbol];
+                if(!q) return {symbol:s.symbol, missing:true};
+                return {symbol:s.symbol, price:q.price, pct:q.pct, buy:s.buyPrice};
+            });
+            const html=arr.map(it=>{
+                if(it.missing) return '<span class="ticker-item">'+escapeHtml(it.symbol)+': ?</span>';
+                const below = (it.buy!=null && it.price!=null && it.price < it.buy);
+                const dot = '<span class="ticker-dot"></span>';
+                const priceStr = (it.price==null? '?' : ('$'+Number(it.price).toFixed(2)));
+                const pctStr = (it.pct==null? '' : fmtPct(it.pct));
+                const arrow = (it.pct==null? '' : (it.pct>=0 ? ' <span class="text-green-400">▲</span>' : ' <span class="text-red-400">▼</span>'));
+                const warn = below ? ' <span class="text-yellow-300">⚠</span>' : '';
+                const buy = (it.buy==null? '' : (' | Buy: $'+Number(it.buy).toFixed(2)));
+                return '<span class="ticker-item">'+dot+' '+escapeHtml(it.symbol)+': '+priceStr+(pctStr?(' '+arrow+' '+escapeHtml(pctStr)):'')+buy+warn+'</span>';
+            }).join('');
+            el.innerHTML = html || '<span class="ticker-item">（暫無股票）</span>';
+        }
+
+        async function fetchStocks(provider){
+            const symbols=(config.stocks||[]).map(s=>s.symbol).filter(Boolean);
+            const quotes={};
+            const used = provider;
+
+            if(provider==='twelvedata'){
+                const key=(config.twelveDataKey||'').trim();
+                if(!key) throw new Error('NO_TWELVEDATA_KEY');
+                const url='https://api.twelvedata.com/quote?symbol='+encodeURIComponent(symbols.join(','))+'&apikey='+encodeURIComponent(key);
+                const resp=await fetch(url,{cache:'no-store'});
+                const data=await resp.json();
+                if(!resp.ok) throw new Error('HTTP_'+resp.status);
+                // multi-symbol returns object keyed by symbol
+                for(const sym of symbols){
+                    const d=data[sym] || (data.symbol===sym?data:null);
+                    if(!d || d.status==='error') continue;
+                    const price=Number(d.price);
+                    const pct = d.percent_change!=null ? Number(d.percent_change) : (d.change_percent!=null ? Number(d.change_percent) : null);
+                    quotes[sym]={price: isNaN(price)?null:price, pct: (pct==null || (pct!=pct))?null:pct};
+                }
+                return {quotes, provider:used};
+            }
+
+            if(provider==='finnhub'){
+                const key=(config.finnhubKey||'').trim();
+                if(!key) throw new Error('NO_FINNHUB_KEY');
+                for(const sym of symbols){
+                    const url='https://finnhub.io/api/v1/quote?symbol='+encodeURIComponent(sym)+'&token='+encodeURIComponent(key);
+                    const resp=await fetch(url,{cache:'no-store'});
+                    if(!resp.ok) throw new Error('HTTP_'+resp.status);
+                    const d=await resp.json();
+                    const price = (d && d.c!=null) ? Number(d.c) : null;
+                    const prev = (d && d.pc!=null) ? Number(d.pc) : null;
+                    let pct=null;
+                    if(price!=null && prev!=null && prev!==0) pct=((price-prev)/prev)*100;
+                    quotes[sym]={price: isNaN(price)?null:price, pct: (pct==null||isNaN(pct))?null:pct};
+                    await new Promise(r=>setTimeout(r, 250));
+                }
+                return {quotes, provider:used};
+            }
+
+            throw new Error('UNKNOWN_PROVIDER');
+        }
+
+        async function refreshStocks(force){
+            const el=document.getElementById('stocksContent');
+            if(el) el.innerHTML='<span class="ticker-item">Loading stocks...</span>';
+
+            const provider=(config.stockApiProvider||'auto');
+            const tries = (provider==='auto')
+                ? ['twelvedata','finnhub']
+                : [provider, (provider==='twelvedata'?'finnhub':'twelvedata')];
+
+            let lastErr=null;
+            for(const p of tries){
+                try{
+                    const res=await fetchStocks(p);
+                    // keep only those with price
+                    const have = Object.keys(res.quotes||{}).length;
+                    if(!have) throw new Error('NO_DATA');
+                    const now=new Date();
+                    stockCache = {
+                        date: todayKey(now),
+                        updatedAt: now.toISOString(),
+                        provider: res.provider,
+                        quotes: res.quotes,
+                        slots: stockCache && stockCache.date===todayKey(now) ? (stockCache.slots||{}) : {}
+                    };
+                    saveStockCache(stockCache);
+                    renderStocks(stockCache.quotes, stockCache);
+                    return;
+                }catch(e){
+                    lastErr=e;
+                }
+            }
+
+            // fallback to cache
+            if(stockCache && stockCache.quotes){
+                renderStocks(stockCache.quotes, stockCache);
+            } else {
+                const el2=document.getElementById('stocksContent');
+                if(el2) el2.innerHTML='<span class="ticker-item">（股票讀取失敗）</span>';
+            }
+            console.warn('Stocks refresh failed', lastErr);
+        }
+
+        function maybeRefreshStocks(force){
+            const now=new Date();
+            if(!stockCache) stockCache = loadStockCache();
+            if(stockCache && stockCache.quotes) renderStocks(stockCache.quotes, stockCache);
+
+            const tKey=todayKey(now);
+            if(!stockCache || stockCache.date!==tKey){
+                stockCache = stockCache || {};
+                stockCache.date=tKey;
+                stockCache.slots={};
+            }
+            if(force){
+                refreshStocks(true);
+                return;
+            }
+            const times = (config.stockRefreshTimes||[]).slice(0,2);
+            const windowMin=7;
+            for(const t of times){
+                if(!t) continue;
+                if(isNearTime(t, now, windowMin)){
+                    if(stockCache.slots && stockCache.slots[t]===tKey) continue; // already fetched this slot today
+                    stockCache.slots = stockCache.slots || {};
+                    stockCache.slots[t]=tKey;
+                    saveStockCache(stockCache);
+                    refreshStocks(false);
+                    break;
+                }
+            }
         }
 
 
@@ -1906,7 +1622,11 @@ function init() {
             maybeRefreshStocks(false);
         }
 
-        window.addEventListener('load', init);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>
