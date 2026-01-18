@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - Enhanced</title>
+    <title>Display Panel - Final Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -37,22 +37,8 @@
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(6, 1fr);
         }
-        
-        /* Portrait fallback */
-        @media (orientation: portrait) {
-            .grid-container {
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: auto;
-            }
-        }
-        
-        /* Small screens */
-        @media (max-width: 768px) {
-            .grid-container {
-                gap: 0.5rem;
-                padding: 0.5rem;
-            }
-            .card { padding: 0.5rem; font-size: 0.75rem; }
+
+to { opacity: 1; }
         }
         
         /* Clock */
@@ -124,12 +110,32 @@
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.5);
         }
+
+        /* Media (YouTube) */
+        .yt-frame {
+            width: 100%;
+            height: 120px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .yt-frame-video { height: 160px; }
+        .yt-player { width: 100%; height: 100%; }
+        .media-btn {
+            padding: 0.35rem 0.55rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            font-size: 0.75rem;
+        }
+        .media-btn:hover { background: rgba(51, 65, 85, 0.9); }
         
         /* Settings */
         .settings-panel {
             position: fixed;
-            top: 0; right: -450px;
-            width: 450px;
+            top: 0; right: -550px;
+            width: 550px;
             height: 100vh;
             background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(20px);
@@ -201,46 +207,97 @@
         </div>
         
         <div class="space-y-4 text-sm">
+            <!-- Important Notice -->
+            <div class="bg-blue-900/30 border border-blue-700 rounded p-3">
+                <h3 class="font-semibold mb-1 text-blue-400">💡 Setup Instructions</h3>
+                <p class="text-xs text-blue-200 mb-2">For CORS errors: Open this HTML file directly in your browser (double-click) or install a CORS browser extension.</p>
+                <p class="text-xs text-blue-200">Preview errors are normal - they'll disappear in actual use!</p>
+            </div>
+            <!-- Calendar (方案A: Apps Script Web App) -->
+            <div>
+                <h3 class="font-semibold mb-2 text-green-400">📅 日曆（方案A）</h3>
+                <p class="text-xs text-slate-400 mb-2">用 Google Apps Script Web App 讀取你已勾選的行事曆（私密亦可）。</p>
+                <div class="space-y-2 ml-4">
+                    <div>
+                        <label class="block text-xs mb-1">Calendar Web App URL</label>
+                        <input type="text" id="calendarWebAppUrl" placeholder="https://script.google.com/macros/s/.../exec"
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Token（可選）</label>
+                        <input type="text" id="calendarToken" placeholder="留空亦可"
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                    </div>
+                    <p class="text-[11px] text-slate-400">未填 URL 會用示範資料。</p>
+                </div>
+            </div>
+
+            <!-- CORS Proxy -->
+            <div class="bg-yellow-900/30 border border-yellow-700 rounded p-3">
+                <label class="flex items-center">
+                    <input type="checkbox" id="useCorsProxy" class="mr-2">
+                    <span class="text-xs">Use CORS Proxy (slower, for testing)</span>
+                </label>
+            </div>
+            
             <!-- API Keys -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">API Keys</h3>
                 <div class="space-y-2">
                     <div>
-                        <label class="block text-xs mb-1">Weather (OpenWeatherMap)</label>
-                        <input type="text" id="weatherApiKey" value="4d4ff0180678e887714547a90289db00"
-                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                        <label class="block text-xs mb-1">Weather（Open-Meteo，免 API Key）</label>
+                        <div class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs text-slate-300">已改用 Open‑Meteo：雨量/降雨機率/UV（+1/+4/+12/明日），每 30 分鐘更新</div>
                     </div>
                     <div>
-                        <label class="block text-xs mb-1">Stocks API Selection</label>
+                        <label class="block text-xs mb-1">Stocks API Provider</label>
                         <select id="stockApiProvider" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                            <option value="alphavantage">Alpha Vantage</option>
-                            <option value="yahoo">Yahoo Finance (Backup)</option>
+                            <option value="demo">Demo Mode (No API)</option>
+                            <option value="twelvedata">Twelve Data (推薦：可一次取多隻股票)</option>
+                            <option value="finnhub">Finnhub (備用：逐隻股票查詢)</option>
                         </select>
+                        <p class="text-[11px] text-slate-400 mt-1">建議：Finnhub 做主（60/min，適合 12 隻股票），Twelve Data 做備用（Free plan 8/min，需要分段）。預設每日只更新 2 次以控制免費額度。</p>
                     </div>
                     <div>
-                        <label class="block text-xs mb-1">Alpha Vantage Key</label>
-                        <input type="text" id="stockApiKey" value="E75P2ENCSCY63FGJ"
+                        <label class="block text-xs mb-1">Twelve Data API Key</label>
+                        <input type="text" id="twelveDataKey" value=""
                             class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                        <p class="text-xs text-slate-400 mt-1">Refreshes: 2x/day (US market mid & close)</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Finnhub API Key</label>
+                        <input type="text" id="finnhubKey" value=""
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="block text-xs mb-1">Stocks Refresh Times (Local Time, 2x/day)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="time" id="stockRefresh1" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs" value="07:00">
+                            <input type="time" id="stockRefresh2" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs" value="11:00">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">Panel checks every 5 minutes but only fetches near these times (±5 min), maximum 2 updates per day.</p>
                     </div>
                 </div>
             </div>
             
             <!-- News Sources -->
             <div>
-                <h3 class="font-semibold mb-2 text-blue-400">News Sources (Traditional Chinese)</h3>
+                <h3 class="font-semibold mb-2 text-blue-400">News Sources</h3>
                 <div class="space-y-1">
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsHKET" checked class="mr-2">
-                        <span>香港經濟日報 (HKET)</span>
+                        <input type="checkbox" id="newsDemo" checked class="mr-2">
+                        <span>Demo News (Traditional Chinese)</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsSCMP" checked class="mr-2">
-                        <span>South China Morning Post</span>
+                        <input type="checkbox" id="newsLTN" class="mr-2">
+                        <span>自由時報 LTN (Traditional Chinese RSS)</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsBBC" checked class="mr-2">
-                        <span>BBC News</span>
+                        <input type="checkbox" id="newsSCMP" class="mr-2">
+                        <span>SCMP (requires CORS proxy)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsBBC" class="mr-2">
+                        <span>BBC (requires CORS proxy)</span>
                     </label>
                 </div>
             </div>
@@ -276,23 +333,6 @@
                 </div>
             </div>
             
-            <!-- Stock Refresh Times -->
-            <div>
-                <h3 class="font-semibold mb-2 text-blue-400">Stock Refresh Schedule</h3>
-                <div class="space-y-2">
-                    <div>
-                        <label class="block text-xs mb-1">US Market Mid-point (EST)</label>
-                        <input type="time" id="stockRefreshMid" value="13:00"
-                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-xs mb-1">US Market Close (EST)</label>
-                        <input type="time" id="stockRefreshClose" value="17:00"
-                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                    </div>
-                </div>
-            </div>
-            
             <button onclick="saveSettings()" class="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold">
                 Save & Apply
             </button>
@@ -300,7 +340,7 @@
     </div>
 
     <div class="grid-container" id="mainGrid">
-        <!-- Clock, Date & Reminders (Combined) -->
+        <!-- Clock, Date & Reminders -->
         <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
             <div class="flex items-center justify-between gap-3 mb-2">
                 <div class="flex-1">
@@ -315,11 +355,11 @@
                 </div>
             </div>
             <div id="upcomingReminders" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
-                <!-- Reminders will be inserted here -->
+                <div class="text-slate-400 text-center mt-4">Loading reminders...</div>
             </div>
         </div>
 
-        <!-- Weather Compact -->
+        <!-- Weather -->
         <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-cloud-sun mr-1"></i>Weather</h3>
             <div id="weatherContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
@@ -353,30 +393,78 @@
             </div>
         </div>
 
-        <!-- Placeholder for balance -->
+        <!-- Media (replaces Status Panel in production UI) -->
         <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
-            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-info-circle mr-1"></i>Status</h3>
-            <div id="systemStatus" class="text-xs space-y-1 text-slate-300">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold"><i class="fas fa-play-circle mr-1"></i>媒體</h3>
+                <button id="toggleVideoSectionBtn" class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] hover:bg-slate-700">
+                    顯示影片
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-3">
+                <!-- YouTube Music -->
+                <div>
+                    <div class="text-[11px] text-slate-400 mb-1">🎵 YouTube 音樂播放清單</div>
+                    <div class="yt-frame">
+                        <div id="ytMusicPlayer" class="yt-player"></div>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        <button class="media-btn" id="musicPrev">Prev</button>
+                        <button class="media-btn" id="musicPlay">Play / Pause</button>
+                        <button class="media-btn" id="musicStop">Stop</button>
+                        <button class="media-btn" id="musicNext">Next</button>
+                        <button class="media-btn" id="musicReshuffle">Reshuffle / 更新</button>
+                    </div>
+                </div>
+
+                <!-- YouTube Video (large screen recommended) -->
+                <div id="videoPlayerSection" class="hidden">
+                    <div class="text-[11px] text-slate-400 mb-1">🎬 大屏影片播放清單</div>
+                    <div class="yt-frame yt-frame-video">
+                        <div id="ytVideoPlayer" class="yt-player"></div>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        <button class="media-btn" id="videoPrev">Prev</button>
+                        <button class="media-btn" id="videoPlay">Play / Pause</button>
+                        <button class="media-btn" id="videoStop">Stop</button>
+                        <button class="media-btn" id="videoNext">Next</button>
+                        <button class="media-btn" id="videoReshuffle">Reshuffle / 更新</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden status hooks (keep IDs to avoid JS errors) -->
+            <div id="systemStatus" class="hidden">
                 <div>⏰ Clock: <span class="text-green-400">Running</span></div>
                 <div id="weatherStatus">☁️ Weather: <span class="text-yellow-400">Updating...</span></div>
                 <div id="stockStatusPanel">📈 Stocks: <span class="text-yellow-400">Updating...</span></div>
                 <div id="newsStatus">📰 News: <span class="text-yellow-400">Updating...</span></div>
+                <div id="currencyStatus">💱 Currency: <span class="text-yellow-400">Updating...</span></div>
+                <div id="photoStatus">📸 Photos: <span class="text-slate-400">Disabled</span></div>
             </div>
         </div>
 
-        <!-- News Ticker (Larger, bottom) -->
+        <!-- News Ticker (two lines) -->
         <div class="glass card" style="grid-column: span 6; grid-row: 5;">
             <h3 class="text-sm font-semibold mb-2">
-                <i class="fas fa-newspaper mr-1"></i>Breaking News (繁體中文)
+                <i class="fas fa-newspaper mr-1"></i>新聞
             </h3>
-            <div class="ticker">
+            <div class="text-[11px] text-slate-400 mb-1">一般</div>
+            <div class="ticker mb-2">
                 <div class="ticker-content news-ticker-content" id="newsContent">
-                    <span class="ticker-item">Loading news feeds...</span>
+                    <span class="ticker-item">Loading...</span>
+                </div>
+            </div>
+            <div class="text-[11px] text-slate-400 mb-1">重要快訊（天氣／交通／警報）</div>
+            <div class="ticker">
+                <div class="ticker-content news-ticker-content" id="alertsContent">
+                    <span class="ticker-item">Loading...</span>
                 </div>
             </div>
         </div>
 
-        <!-- Stocks Ticker (Larger, bottom) -->
+        <!-- Stocks Ticker -->
         <div class="glass card" style="grid-column: span 6; grid-row: 6;">
             <h3 class="text-sm font-semibold mb-2">
                 <i class="fas fa-chart-line mr-1"></i>My Stocks (買入價對比)
@@ -392,10 +480,44 @@
     <script>
         // Configuration
         const config = {
-            weatherApiKey: '4d4ff0180678e887714547a90289db00',
-            stockApiKey: 'E75P2ENCSCY63FGJ',
-            stockApiProvider: 'alphavantage', // or 'yahoo'
-            weatherLocations: ['Auckland,NZ', 'Botany Downs,NZ', 'Hong Kong,HK'],
+            // APIs
+            weatherApiKey: '',
+            // WARNING: Do NOT commit real API keys to public GitHub.
+            // Put keys in Settings in production, or keep this file private.
+            twelveDataKey: '',
+            finnhubKey: '',
+            stockApiProvider: 'demo',
+
+            // YouTube
+            ytMusicPlaylistId: 'PLK1NiZBn99vRvPpps7r9wMB0KLUacyRKT',
+            ytVideoPlaylistId: 'PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC',
+            ytVolume: 80,
+            ytShowVideo: false,
+            useCorsProxy: false,
+
+            // Stocks refresh (local time, 2x/day)
+            stockRefreshTimes: ['07:00', '11:00'],
+            
+            // Google Calendar (NEW)
+            useGoogleCalendar: false,
+            gcalApiKey: '',
+            nzCalendarId: 'en.new_zealand#holiday@group.v.calendar.google.com',
+            hkCalendarId: 'en.hong_kong#holiday@group.v.calendar.google.com',
+            personalCalendarId: '',
+            
+            // Photo Memories (NEW)
+            enablePhotos: false,
+            photoSource: 'demo', // 'demo', 'gdrive', 'onedrive'
+            gdriveFolderId: '',
+            onedrivePath: '',
+            photoInterval: 300000, // 5 minutes
+            
+            // Existing config
+            weatherLocations: [
+                { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
+                { label: 'Botany Downs', lat: -36.9167, lon: 174.9110 },
+                { label: 'Hong Kong', lat: 22.3193, lon: 114.1694 }
+            ],
             stocks: [
                 { symbol: 'AAPL', buyPrice: 613 },
                 { symbol: 'AVAV', buyPrice: 240 },
@@ -422,21 +544,64 @@
                 nz: true,
                 hk: true
             },
-            stockRefreshTimes: {
-                mid: '13:00', // 1pm EST (US market mid)
-                close: '17:00' // 5pm EST (US market close)
-            },
             newsFeeds: {
-                hket: true,
-                scmp: true,
-                bbc: true
+                demo: true,
+                ltn: false,
+                scmp: false,
+                bbc: false
             }
         };
 
-        let stockCache = [];
-        let lastStockUpdate = null;
+        // Cache structure: { updatedAt: ISOString, provider: string, items: Array }
+        let stockCache = null;
+        let lastStockFetchMarker = null; // used to enforce max 2x/day schedule
+        let photoTimer = null;
+        let currentPhotoIndex = 0;
+        let todayPhotos = [];
 
-        // Holidays 2026
+        const STOCK_CACHE_KEY = 'panelStockCache';
+        const STOCK_REFRESH_LOG_KEY = 'panelStockRefreshLog';
+
+        function loadStockCache() {
+            try {
+                const raw = localStorage.getItem(STOCK_CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (parsed && Array.isArray(parsed.items) && parsed.items.length) {
+                    return parsed;
+                }
+            } catch (e) {
+                console.warn('Stock cache parse failed', e);
+            }
+            return null;
+        }
+
+        function saveStockCache(cacheObj) {
+            try {
+                localStorage.setItem(STOCK_CACHE_KEY, JSON.stringify(cacheObj));
+            } catch (e) {
+                console.warn('Stock cache write failed', e);
+            }
+        }
+
+        function loadStockRefreshLog() {
+            try {
+                const raw = localStorage.getItem(STOCK_REFRESH_LOG_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveStockRefreshLog(log) {
+            try {
+                localStorage.setItem(STOCK_REFRESH_LOG_KEY, JSON.stringify(log));
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // Hardcoded holidays (fallback when Google Calendar not used)
         const holidays2026 = {
             nz: [
                 { date: '2026-01-26', name: 'Auckland Anniversary' },
@@ -455,7 +620,6 @@
                 { date: '2026-01-31', name: '農曆新年' },
                 { date: '2026-04-03', name: '清明節' },
                 { date: '2026-04-10', name: 'Good Friday' },
-                { date: '2026-04-11', name: 'Easter Saturday' },
                 { date: '2026-04-13', name: 'Easter Monday' },
                 { date: '2026-05-01', name: '勞動節' },
                 { date: '2026-05-25', name: '佛誕' },
@@ -469,16 +633,31 @@
             ]
         };
 
-        // Sample birthdays and game events (replace with your actual data)
-        const birthdays = [
-            { date: '2026-01-25', name: 'John\'s Birthday' },
-            { date: '2026-02-14', name: 'Mary\'s Birthday' }
+        // Demo photos (base64 encoded 1x1 colored squares for demo)
+        const demoPhotos = [
+            { 
+                url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%233b82f6" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="24">2023 Photo</text></svg>',
+                filename: 'family_gathering_2023.jpg',
+                year: 2023
+            },
+            {
+                url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%2310b981" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="24">2022 Photo</text></svg>',
+                filename: 'birthday_celebration_2022.jpg',
+                year: 2022
+            },
+            {
+                url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%23f59e0b" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="24">2021 Photo</text></svg>',
+                filename: 'vacation_trip_2021.jpg',
+                year: 2021
+            }
         ];
 
-        const gameEvents = [
-            { date: '2026-01-22', time: '20:00', name: 'Game Night' },
-            { date: '2026-01-29', time: '19:30', name: 'Raid Event' }
-        ];
+        function getCorsProxy(url) {
+            if (config.useCorsProxy) {
+                return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            }
+            return url;
+        }
 
         function loadSavedSettings() {
             const saved = localStorage.getItem('panelConfig');
@@ -486,31 +665,114 @@
                 const savedConfig = JSON.parse(saved);
                 Object.assign(config, savedConfig);
             }
+            // Migration: older versions stored weatherLocations as strings
+            if (Array.isArray(config.weatherLocations) && config.weatherLocations.length && typeof config.weatherLocations[0] === 'string') {
+                config.weatherLocations = [
+                    { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
+                    { label: 'Botany Downs', lat: -36.9167, lon: 174.9110 },
+                    { label: 'Hong Kong', lat: 22.3193, lon: 114.1694 }
+                ];
+            }
+
+            // Ensure at least one news feed is enabled
+            if (config.newsFeeds && !config.newsFeeds.demo && !config.newsFeeds.ltn && !config.newsFeeds.scmp && !config.newsFeeds.bbc) {
+                config.newsFeeds.demo = true;
+            }
+
+            updatePhotoLayout();
         }
 
         function toggleSettings() {
-            document.getElementById('settingsPanel').classList.toggle('open');
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) {
+                populateSettingsUI();
+            }
+        }
+
+        function populateSettingsUI() {
+            // APIs (公開 Launch 版：Weather 用 Open‑Meteo，唔需要 key)
+            const td = document.getElementById('twelveDataKey'); if (td) td.value = config.twelveDataKey || '';
+            const fh = document.getElementById('finnhubKey'); if (fh) fh.value = config.finnhubKey || '';
+            const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'demo';
+            const cors = document.getElementById('useCorsProxy'); if (cors) cors.checked = !!config.useCorsProxy;
+
+            // Stock schedule
+            const r1 = document.getElementById('stockRefresh1'); if (r1) r1.value = (config.stockRefreshTimes && config.stockRefreshTimes[0]) ? config.stockRefreshTimes[0] : '07:00';
+            const r2 = document.getElementById('stockRefresh2'); if (r2) r2.value = (config.stockRefreshTimes && config.stockRefreshTimes[1]) ? config.stockRefreshTimes[1] : '11:00';
+
+            // Calendar (方案A)
+            const url = document.getElementById('calendarWebAppUrl'); if (url) url.value = config.calendarWebAppUrl || '';
+            const tok = document.getElementById('calendarToken'); if (tok) tok.value = config.calendarToken || '';
+
+            // Calendar toggles
+            const cp = document.getElementById('calPersonal'); if (cp) cp.checked = !!config.calendar.personal;
+            const cb = document.getElementById('calBirthday'); if (cb) cb.checked = !!config.calendar.birthday;
+            const cf = document.getElementById('calFamily'); if (cf) cf.checked = !!config.calendar.family;
+            const cg = document.getElementById('calGame'); if (cg) cg.checked = !!config.calendar.game;
+            const cn = document.getElementById('calNZ'); if (cn) cn.checked = !!config.calendar.nz;
+            const ch = document.getElementById('calHK'); if (ch) ch.checked = !!config.calendar.hk;
+
+            // News
+            const nd = document.getElementById('newsDemo'); if (nd) nd.checked = !!config.newsFeeds.demo;
+            const nl = document.getElementById('newsLTN'); if (nl) nl.checked = !!config.newsFeeds.ltn;
+            const ns = document.getElementById('newsSCMP'); if (ns) ns.checked = !!config.newsFeeds.scmp;
+            const nb = document.getElementById('newsBBC'); if (nb) nb.checked = !!config.newsFeeds.bbc;
         }
 
         function saveSettings() {
-            config.weatherApiKey = document.getElementById('weatherApiKey').value;
-            config.stockApiKey = document.getElementById('stockApiKey').value;
-            config.stockApiProvider = document.getElementById('stockApiProvider').value;
-            config.calendar.personal = document.getElementById('calPersonal').checked;
-            config.calendar.birthday = document.getElementById('calBirthday').checked;
-            config.calendar.family = document.getElementById('calFamily').checked;
-            config.calendar.game = document.getElementById('calGame').checked;
-            config.calendar.nz = document.getElementById('calNZ').checked;
-            config.calendar.hk = document.getElementById('calHK').checked;
-            config.newsFeeds.hket = document.getElementById('newsHKET').checked;
-            config.newsFeeds.scmp = document.getElementById('newsSCMP').checked;
-            config.newsFeeds.bbc = document.getElementById('newsBBC').checked;
-            config.stockRefreshTimes.mid = document.getElementById('stockRefreshMid').value;
-            config.stockRefreshTimes.close = document.getElementById('stockRefreshClose').value;
-            
+            // APIs
+            const td = document.getElementById('twelveDataKey'); if (td) config.twelveDataKey = td.value;
+            const fh = document.getElementById('finnhubKey'); if (fh) config.finnhubKey = fh.value;
+            const prov = document.getElementById('stockApiProvider'); if (prov) config.stockApiProvider = prov.value;
+            const cors = document.getElementById('useCorsProxy'); if (cors) config.useCorsProxy = cors.checked;
+
+            // Stock schedule
+            const r1 = document.getElementById('stockRefresh1');
+            const r2 = document.getElementById('stockRefresh2');
+            config.stockRefreshTimes = [
+                (r1 && r1.value) ? r1.value : '07:00',
+                (r2 && r2.value) ? r2.value : '11:00'
+            ];
+
+            // Calendar (方案A)
+            const url = document.getElementById('calendarWebAppUrl');
+            const tok = document.getElementById('calendarToken');
+            config.calendarWebAppUrl = (url && url.value) ? url.value.trim() : '';
+            config.calendarToken = (tok && tok.value) ? tok.value.trim() : '';
+
+            // Calendar toggles
+            const cp = document.getElementById('calPersonal'); if (cp) config.calendar.personal = cp.checked;
+            const cb = document.getElementById('calBirthday'); if (cb) config.calendar.birthday = cb.checked;
+            const cf = document.getElementById('calFamily'); if (cf) config.calendar.family = cf.checked;
+            const cg = document.getElementById('calGame'); if (cg) config.calendar.game = cg.checked;
+            const cn = document.getElementById('calNZ'); if (cn) config.calendar.nz = cn.checked;
+            const ch = document.getElementById('calHK'); if (ch) config.calendar.hk = ch.checked;
+
+            // News
+            const nd = document.getElementById('newsDemo'); if (nd) config.newsFeeds.demo = nd.checked;
+            const nl = document.getElementById('newsLTN'); if (nl) config.newsFeeds.ltn = nl.checked;
+            const ns = document.getElementById('newsSCMP'); if (ns) config.newsFeeds.scmp = ns.checked;
+            const nb = document.getElementById('newsBBC'); if (nb) config.newsFeeds.bbc = nb.checked;
+
             localStorage.setItem('panelConfig', JSON.stringify(config));
             toggleSettings();
             fetchAllData();
+            maybeRefreshStocks(true);
+        }
+
+        function updatePhotoLayout() {
+            // Launch 版：已移除相片區（之後再加）
+            return;
+        }
+
+        function updatePhotoLayout() {
+            const grid = document.getElementById('mainGrid');
+            if (config.enablePhotos && window.innerWidth >= 1600) {
+                grid.classList.add('with-photos');
+            } else {
+                grid.classList.remove('with-photos');
+            }
         }
 
         function updateDigitalClock() {
@@ -529,76 +791,123 @@
             document.getElementById('hourHand').style.transform = `rotate(${((h + m / 60) / 12) * 360}deg)`;
         }
 
-        // Update reminders (festivals, birthdays, games within 1 week)
-        function updateReminders() {
+        // Fetch holidays from Google Calendar
+        async function fetchGoogleCalendarHolidays() {
+            if (!config.useGoogleCalendar || !config.gcalApiKey) {
+                return null;
+            }
+
+            try {
+                const now = new Date();
+                const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                const timeMin = now.toISOString();
+                const timeMax = oneWeekLater.toISOString();
+
+                let allEvents = [];
+
+                // Fetch NZ holidays
+                if (config.calendar.nz && config.nzCalendarId) {
+                    const nzUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.nzCalendarId)}/events?key=${config.gcalApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+                    const nzRes = await fetch(getCorsProxy(nzUrl));
+                    const nzData = await nzRes.json();
+                    if (nzData.items) {
+                        nzData.items.forEach(item => {
+                            allEvents.push({
+                                date: item.start.date || item.start.dateTime.split('T')[0],
+                                name: `🇳🇿 ${item.summary}`,
+                                type: 'holiday'
+                            });
+                        });
+                    }
+                }
+
+                // Fetch HK holidays
+                if (config.calendar.hk && config.hkCalendarId) {
+                    const hkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.hkCalendarId)}/events?key=${config.gcalApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+                    const hkRes = await fetch(getCorsProxy(hkUrl));
+                    const hkData = await hkRes.json();
+                    if (hkData.items) {
+                        hkData.items.forEach(item => {
+                            allEvents.push({
+                                date: item.start.date || item.start.dateTime.split('T')[0],
+                                name: `🇭🇰 ${item.summary}`,
+                                type: 'holiday'
+                            });
+                        });
+                    }
+                }
+
+                // Fetch personal calendar (birthdays, events)
+                if (config.personalCalendarId) {
+                    const perUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.personalCalendarId)}/events?key=${config.gcalApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+                    const perRes = await fetch(getCorsProxy(perUrl));
+                    const perData = await perRes.json();
+                    if (perData.items) {
+                        perData.items.forEach(item => {
+                            let icon = '📅';
+                            if (item.summary.toLowerCase().includes('birthday')) icon = '🎂';
+                            if (item.summary.toLowerCase().includes('game')) icon = '🎮';
+                            
+                            allEvents.push({
+                                date: item.start.date || item.start.dateTime.split('T')[0],
+                                name: `${icon} ${item.summary}`,
+                                type: 'personal'
+                            });
+                        });
+                    }
+                }
+
+                return allEvents;
+            } catch (error) {
+                console.error('Google Calendar error:', error);
+                return null;
+            }
+        }
+
+        async function updateReminders() {
             const now = new Date();
             const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             let reminders = [];
 
-            // Check NZ holidays
-            if (config.calendar.nz) {
-                holidays2026.nz.forEach(h => {
-                    const eventDate = new Date(h.date);
-                    if (eventDate >= now && eventDate <= oneWeek) {
-                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                        reminders.push({
-                            text: `🇳🇿 ${h.name}`,
-                            days: daysUntil,
-                            date: h.date
-                        });
-                    }
-                });
+            // Try Google Calendar first
+            if (config.useGoogleCalendar) {
+                const gcalEvents = await fetchGoogleCalendarHolidays();
+                if (gcalEvents) {
+                    gcalEvents.forEach(event => {
+                        const eventDate = new Date(event.date);
+                        if (eventDate >= now && eventDate <= oneWeek) {
+                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                            reminders.push({ text: event.name, days: daysUntil, date: event.date });
+                        }
+                    });
+                }
             }
 
-            // Check HK holidays
-            if (config.calendar.hk) {
-                holidays2026.hk.forEach(h => {
-                    const eventDate = new Date(h.date);
-                    if (eventDate >= now && eventDate <= oneWeek) {
-                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                        reminders.push({
-                            text: `🇭🇰 ${h.name}`,
-                            days: daysUntil,
-                            date: h.date
-                        });
-                    }
-                });
+            // Fallback to hardcoded holidays if Google Calendar not used or failed
+            if (reminders.length === 0 || !config.useGoogleCalendar) {
+                if (config.calendar.nz) {
+                    holidays2026.nz.forEach(h => {
+                        const eventDate = new Date(h.date);
+                        if (eventDate >= now && eventDate <= oneWeek) {
+                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                            reminders.push({ text: `🇳🇿 ${h.name}`, days: daysUntil, date: h.date });
+                        }
+                    });
+                }
+
+                if (config.calendar.hk) {
+                    holidays2026.hk.forEach(h => {
+                        const eventDate = new Date(h.date);
+                        if (eventDate >= now && eventDate <= oneWeek) {
+                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                            reminders.push({ text: `🇭🇰 ${h.name}`, days: daysUntil, date: h.date });
+                        }
+                    });
+                }
             }
 
-            // Check birthdays
-            if (config.calendar.birthday) {
-                birthdays.forEach(b => {
-                    const eventDate = new Date(b.date);
-                    if (eventDate >= now && eventDate <= oneWeek) {
-                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                        reminders.push({
-                            text: `🎂 ${b.name}`,
-                            days: daysUntil,
-                            date: b.date
-                        });
-                    }
-                });
-            }
-
-            // Check game events
-            if (config.calendar.game) {
-                gameEvents.forEach(g => {
-                    const eventDate = new Date(g.date);
-                    if (eventDate >= now && eventDate <= oneWeek) {
-                        const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                        reminders.push({
-                            text: `🎮 ${g.name} @ ${g.time}`,
-                            days: daysUntil,
-                            date: g.date
-                        });
-                    }
-                });
-            }
-
-            // Sort by date
             reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Display
             let html = '';
             if (reminders.length === 0) {
                 html = '<div class="text-slate-400 text-center mt-4">No upcoming events</div>';
@@ -617,35 +926,89 @@
             document.getElementById('upcomingReminders').innerHTML = html;
         }
 
-        // Weather
+        // Photo Memories Feature
+        async function loadTodayPhotos() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+
+            if (config.photoSource === 'demo') {
+                todayPhotos = demoPhotos;
+            } else if (config.photoSource === 'gdrive' && config.gdriveFolderId) {
+                // Google Drive implementation would go here
+                // For now, use demo
+                todayPhotos = demoPhotos;
+            } else if (config.photoSource === 'onedrive' && config.onedrivePath) {
+                // OneDrive implementation would go here
+                // For now, use demo
+                todayPhotos = demoPhotos;
+            } else {
+                todayPhotos = [];
+            }
+
+            if (todayPhotos.length > 0) {
+                document.getElementById('photoStatus').innerHTML = 
+                    `📸 Photos: <span class="text-green-400">${todayPhotos.length} found</span>`;
+            } else {
+                document.getElementById('photoStatus').innerHTML = 
+                    `📸 Photos: <span class="text-slate-400">None for today</span>`;
+            }
+        }
+
+        function showNextPhoto() {
+            if (todayPhotos.length === 0) return;
+
+            const photo = todayPhotos[currentPhotoIndex];
+            const img = document.getElementById('memoryPhoto');
+            
+            img.classList.remove('photo-fade-in');
+            void img.offsetWidth; // Trigger reflow
+            img.classList.add('photo-fade-in');
+            
+            img.src = photo.url;
+            document.getElementById('photoFilename').textContent = photo.filename;
+            document.getElementById('photoYear').textContent = `Year: ${photo.year}`;
+
+            currentPhotoIndex = (currentPhotoIndex + 1) % todayPhotos.length;
+        }
+
+        function initPhotoMemories() {
+            if (photoTimer) {
+                clearInterval(photoTimer);
+                photoTimer = null;
+            }
+
+            if (!config.enablePhotos) {
+                document.getElementById('photoStatus').innerHTML = 
+                    '📸 Photos: <span class="text-slate-400">Disabled</span>';
+                return;
+            }
+
+            loadTodayPhotos().then(() => {
+                if (todayPhotos.length > 0) {
+                    showNextPhoto();
+                    photoTimer = setInterval(showNextPhoto, config.photoInterval);
+                }
+            });
+        }
+
         async function fetchWeather() {
-            if (!config.weatherApiKey) return;
+            if (!config.weatherApiKey) {
+                document.getElementById('weatherContainer').innerHTML = '<p class="text-yellow-400">⚠️ No API key</p>';
+                return;
+            }
             
             let html = '';
+            let success = 0;
             
             for (const loc of config.weatherLocations) {
                 try {
-                    const curr = await fetch(
-                        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
-                    );
+                    const url = getCorsProxy(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`);
+                    const curr = await fetch(url);
+                    
+                    if (!curr.ok) throw new Error(`HTTP ${curr.status}`);
+                    
                     const currData = await curr.json();
-                    
-                    const forecast = await fetch(
-                        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
-                    );
-                    const fcData = await forecast.json();
-                    
-                    const uv = await fetch(
-                        `https://api.openweathermap.org/data/2.5/uvi?lat=${currData.coord.lat}&lon=${currData.coord.lon}&appid=${config.weatherApiKey}`
-                    );
-                    const uvData = await uv.json();
-                    
-                    const next24h = fcData.list.slice(0, 8);
-                    const rainForecast = next24h.map(f => {
-                        const time = new Date(f.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                        const pop = Math.round((f.pop || 0) * 100);
-                        return `${time}:${pop}%`;
-                    }).join(', ');
                     
                     html += `
                         <div class="mb-2 pb-2 border-b border-slate-700">
@@ -654,163 +1017,270 @@
                                 <span class="text-2xl font-bold">${Math.round(currData.main.temp)}°C</span>
                                 <span class="capitalize">${currData.weather[0].description}</span>
                             </div>
-                            <div class="text-xs space-y-0.5 text-slate-300">
-                                <div>☀️ UV: ${uvData.value.toFixed(1)}</div>
-                                <div>💧 24h: ${rainForecast}</div>
+                            <div class="text-xs text-slate-300">
+                                Feels: ${Math.round(currData.main.feels_like)}°C | Humidity: ${currData.main.humidity}%
                             </div>
                         </div>
                     `;
+                    success++;
                 } catch (error) {
                     console.error(`Weather error: ${loc}`, error);
                 }
             }
             
-            document.getElementById('weatherContainer').innerHTML = html || '<p class="text-red-400">Weather unavailable</p>';
-            document.getElementById('weatherStatus').innerHTML = '☁️ Weather: <span class="text-green-400">Updated</span>';
-        }
-
-        // Check if it's time to refresh stocks
-        function shouldRefreshStocks() {
-            const now = new Date();
-            const currentTime = now.toTimeString().slice(0, 5); // HH:MM
-            
-            // Convert EST times to local time (assuming Auckland is UTC+13)
-            // This is a simplified check - you may want to use proper timezone conversion
-            const midTime = config.stockRefreshTimes.mid;
-            const closeTime = config.stockRefreshTimes.close;
-            
-            // Check if current time matches refresh times (within 1 minute window)
-            if (currentTime === midTime || currentTime === closeTime) {
-                // Check if we haven't updated in the last hour
-                if (!lastStockUpdate || (now - lastStockUpdate) > 3600000) {
-                    return true;
-                }
-            }
-            
-            // Also refresh on initial load or if no cache
-            if (stockCache.length === 0) return true;
-            
-            return false;
-        }
-
-        // Stocks - with backup API
-        async function fetchStocks() {
-            if (config.stockApiProvider === 'alphavantage') {
-                await fetchStocksAlphaVantage();
+            if (success === 0) {
+                html = '<p class="text-yellow-400">⚠️ Weather unavailable</p>';
+                document.getElementById('weatherStatus').innerHTML = '☁️ Weather: <span class="text-red-400">Failed</span>';
             } else {
-                await fetchStocksYahoo();
+                document.getElementById('weatherStatus').innerHTML = `☁️ Weather: <span class="text-green-400">${success}/${config.weatherLocations.length}</span>`;
             }
+            
+            document.getElementById('weatherContainer').innerHTML = html;
         }
 
-        async function fetchStocksAlphaVantage() {
-            if (!config.stockApiKey) {
-                displayStocksError('No API key configured');
+        async function fetchStocks() {
+            // Load cache once per page load
+            if (!stockCache) {
+                stockCache = loadStockCache();
+            }
+
+            if (config.stockApiProvider === 'demo') {
+                displayDemoStocks();
                 return;
             }
-            
-            document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-yellow-400">Updating...</span>';
-            
-            let results = [];
-            
-            try {
-                // Use batch approach with small delay
-                for (let i = 0; i < config.stocks.length; i++) {
-                    const stock = config.stocks[i];
-                    
-                    try {
-                        const res = await fetch(
-                            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${stock.symbol}&apikey=${config.stockApiKey}`
-                        );
-                        const data = await res.json();
-                        
-                        if (data['Global Quote'] && data['Global Quote']['05. price']) {
-                            const q = data['Global Quote'];
-                            results.push({
-                                symbol: stock.symbol,
-                                price: parseFloat(q['05. price']),
-                                change: parseFloat(q['09. change']),
-                                changePct: parseFloat(q['10. change percent'].replace('%', '')),
-                                buyPrice: stock.buyPrice
-                            });
-                        } else if (data['Note']) {
-                            console.warn('API limit reached:', data['Note']);
-                            // Use cached data if available
-                            if (stockCache.length > 0) {
-                                displayStocksTicker(stockCache);
-                                document.getElementById('stockStatusPanel').innerHTML = 
-                                    '📈 Stocks: <span class="text-yellow-400">Using cached data</span>';
-                                return;
-                            }
-                        }
-                        
-                        // Progress update
-                        document.getElementById('stockStatusPanel').innerHTML = 
-                            `📈 Stocks: <span class="text-yellow-400">${i + 1}/${config.stocks.length}</span>`;
-                        
-                        // Small delay to avoid rate limit (15 seconds for 5 calls/min)
-                        if (i < config.stocks.length - 1) {
-                            await new Promise(r => setTimeout(r, 15000));
-                        }
-                    } catch (err) {
-                        console.error(`Stock error: ${stock.symbol}`, err);
-                    }
-                }
-                
-                if (results.length > 0) {
-                    stockCache = results;
-                    lastStockUpdate = new Date();
-                    displayStocksTicker(results);
-                    document.getElementById('stockStatusPanel').innerHTML = 
-                        `📈 Stocks: <span class="text-green-400">${results.length}/${config.stocks.length} updated</span>`;
-                } else {
-                    displayStocksError('No data received');
-                }
-            } catch (error) {
-                console.error('Stock fetch error:', error);
-                displayStocksError(error.message);
+
+            // Render cached quotes immediately (fast UI)
+            if (stockCache && stockCache.items && stockCache.items.length) {
+                renderStocksTicker(stockCache.items, {
+                    label: `Cached ${formatTimeAgo(stockCache.updatedAt)}`,
+                    provider: stockCache.provider
+                });
+            }
+
+            // If no cache exists, fetch once on load so the widget is never empty
+            if (!stockCache || !stockCache.items || stockCache.items.length === 0) {
+                await maybeRefreshStocks(true);
             }
         }
 
-        // Yahoo Finance backup (uses unofficial API)
-        async function fetchStocksYahoo() {
-            document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-yellow-400">Using Yahoo backup...</span>';
-            
+        function formatTimeAgo(isoString) {
             try {
-                const symbols = config.stocks.map(s => s.symbol).join(',');
-                const res = await fetch(
-                    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`
-                );
-                const data = await res.json();
-                
-                if (data.quoteResponse && data.quoteResponse.result) {
-                    const results = data.quoteResponse.result.map(q => {
-                        const stockConfig = config.stocks.find(s => s.symbol === q.symbol);
-                        return {
-                            symbol: q.symbol,
-                            price: q.regularMarketPrice,
-                            change: q.regularMarketChange,
-                            changePct: q.regularMarketChangePercent,
-                            buyPrice: stockConfig ? stockConfig.buyPrice : 0
-                        };
-                    });
-                    
-                    stockCache = results;
-                    lastStockUpdate = new Date();
-                    displayStocksTicker(results);
-                    document.getElementById('stockStatusPanel').innerHTML = 
-                        `📈 Stocks: <span class="text-green-400">${results.length} updated (Yahoo)</span>`;
-                } else {
-                    displayStocksError('Yahoo API failed');
-                }
-            } catch (error) {
-                console.error('Yahoo stock error:', error);
-                displayStocksError(error.message);
+                const then = new Date(isoString);
+                const diffMs = Date.now() - then.getTime();
+                const mins = Math.round(diffMs / 60000);
+                if (mins < 1) return 'just now';
+                if (mins < 60) return `${mins}m ago`;
+                const hrs = Math.round(mins / 60);
+                if (hrs < 24) return `${hrs}h ago`;
+                const days = Math.round(hrs / 24);
+                return `${days}d ago`;
+            } catch {
+                return '';
             }
         }
 
-        function displayStocksTicker(results) {
+        function renderStocksTicker(items, meta = {}) {
             let ticker = '';
-            results.forEach(s => {
+            items.forEach(s => {
+                const below = (typeof s.buyPrice === 'number') ? (s.price < s.buyPrice) : false;
+                const vsBuy = (typeof s.buyPrice === 'number') ? ((s.price - s.buyPrice) / s.buyPrice * 100) : null;
+                const icon = (s.changePct ?? 0) >= 0 ? '🟢' : '🔴';
+                const alert = below ? ' ⚠️' : '';
+                const curr = s.currency ? ` ${s.currency}` : '';
+                ticker += `<span class="ticker-item ${below ? 'stock-alert' : ''}"><strong>${s.symbol}</strong>: ${s.price.toFixed(2)}${curr} ${icon} ${(s.changePct ?? 0) >= 0 ? '+' : ''}${(s.changePct ?? 0).toFixed(2)}%`;
+                if (typeof s.buyPrice === 'number' && vsBuy !== null) {
+                    ticker += ` | Buy: ${s.buyPrice} (${vsBuy >= 0 ? '+' : ''}${vsBuy.toFixed(1)}%)${alert}`;
+                }
+                ticker += `</span>`;
+            });
+
+            document.getElementById('stocksContent').innerHTML = ticker || '<span class="ticker-item">No stock data</span>';
+            const label = meta.label ? meta.label : 'Updated';
+            const prov = meta.provider ? ` <span class="text-slate-400">(${meta.provider})</span>` : '';
+            document.getElementById('stockStatusPanel').innerHTML = `📈 Stocks: <span class="text-green-400">${label}</span>${prov}`;
+        }
+
+        function isWithinMinutes(now, targetMinutes, windowMinutes = 5) {
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            return Math.abs(nowMinutes - targetMinutes) <= windowMinutes;
+        }
+
+        function timeStringToMinutes(t) {
+            const [hh, mm] = (t || '00:00').split(':').map(x => parseInt(x, 10));
+            return (hh * 60) + (mm || 0);
+        }
+
+        async function maybeRefreshStocks(force = false) {
+            if (config.stockApiProvider === 'demo') return;
+
+            const now = new Date();
+            const todayKey = now.toISOString().slice(0, 10);
+            const times = Array.isArray(config.stockRefreshTimes) ? config.stockRefreshTimes.slice(0, 2) : ['07:00', '11:00'];
+            const minutesTargets = times.map(timeStringToMinutes);
+
+            const log = loadStockRefreshLog();
+
+            const eligibleIndex = minutesTargets.findIndex((m, idx) => {
+                const marker = `${todayKey}_${times[idx]}`;
+                if (log[marker]) return false;
+                return isWithinMinutes(now, m, 5);
+            });
+
+            if (!force && eligibleIndex === -1) {
+                return;
+            }
+
+            // Mark UI as updating
+            document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-yellow-400">Updating...</span>';
+
+            try {
+                let items;
+                let providerLabel = config.stockApiProvider;
+
+                if (config.stockApiProvider === 'twelvedata') {
+                    try {
+                        items = await fetchStocksTwelveData();
+                        providerLabel = 'Twelve Data';
+                    } catch (e) {
+                        console.warn('Twelve Data failed, fallback to Finnhub', e);
+                        items = await fetchStocksFinnhub();
+                        providerLabel = 'Finnhub (fallback)';
+                    }
+                } else if (config.stockApiProvider === 'finnhub') {
+                    try {
+                        items = await fetchStocksFinnhub();
+                        providerLabel = 'Finnhub';
+                    } catch (e) {
+                        console.warn('Finnhub failed, fallback to Twelve Data', e);
+                        items = await fetchStocksTwelveData();
+                        providerLabel = 'Twelve Data (fallback)';
+                    }
+                } else if (config.stockApiProvider === 'demo') {
+                    displayDemoStocks();
+                    return;
+                } else {
+                    throw new Error(`Unknown provider: ${config.stockApiProvider}`);
+                }
+
+                if (!items || !items.length) {
+                    throw new Error('No quote data returned');
+                }
+
+                const cacheObj = { updatedAt: new Date().toISOString(), provider: providerLabel, items };
+                stockCache = cacheObj;
+                saveStockCache(cacheObj);
+                renderStocksTicker(items, { label: 'Updated', provider: providerLabel });
+
+                // Record the schedule marker if we refreshed due to a schedule window
+                if (!force && eligibleIndex !== -1) {
+                    const marker = `${todayKey}_${times[eligibleIndex]}`;
+                    log[marker] = cacheObj.updatedAt;
+                    saveStockRefreshLog(log);
+                }
+            } catch (error) {
+                console.error('Stock refresh failed', error);
+                if (stockCache && stockCache.items && stockCache.items.length) {
+                    renderStocksTicker(stockCache.items, {
+                        label: `Cached ${formatTimeAgo(stockCache.updatedAt)} (refresh failed)` ,
+                        provider: stockCache.provider
+                    });
+                } else {
+                    document.getElementById('stocksContent').innerHTML = '<span class="ticker-item">Stocks unavailable</span>';
+                    document.getElementById('stockStatusPanel').innerHTML = '📈 Stocks: <span class="text-red-400">Failed</span>';
+                }
+            }
+        }
+
+        async function fetchStocksTwelveData() {
+            if (!config.twelveDataKey) throw new Error('Missing Twelve Data API key');
+
+            // Twelve Data Basic (Free) has a low per-minute credit limit (commonly shown as 8/min).
+            // /quote consumes ~1 credit per symbol, so with 12 symbols we split into chunks <= 8.
+            const maxPerMinute = 8;
+            const symbols = config.stocks.map(s => s.symbol);
+
+            async function waitUntilNextMinute() {
+                const now = new Date();
+                const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 250;
+                await new Promise(r => setTimeout(r, Math.max(250, msToNextMinute)));
+            }
+
+            const results = {};
+            for (let i = 0; i < symbols.length; i += maxPerMinute) {
+                const chunk = symbols.slice(i, i + maxPerMinute);
+                const url = getCorsProxy(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(chunk.join(','))}&apikey=${encodeURIComponent(config.twelveDataKey)}`);
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                // Batch response is typically an object keyed by symbol; single-symbol response is a flat object.
+                const bySymbol = (data && data.symbol) ? { [data.symbol]: data } : data;
+                for (const sym of chunk) {
+                    const r = bySymbol?.[sym];
+                    if (r) results[sym] = r;
+                }
+
+                // If there are more chunks, wait for credit reset (next minute boundary)
+                if (i + maxPerMinute < symbols.length) {
+                    await waitUntilNextMinute();
+                }
+            }
+
+            return config.stocks
+                .map(s => {
+                    const r = results?.[s.symbol];
+                    if (!r || r.status === 'error') return null;
+                    const price = Number(r.close ?? r.price ?? r.last ?? r.open);
+                    const changePct = Number(r.percent_change ?? r.change_percent ?? r.changePercent ?? 0);
+                    if (!Number.isFinite(price)) return null;
+                    return {
+                        symbol: s.symbol,
+                        price,
+                        changePct: Number.isFinite(changePct) ? changePct : 0,
+                        currency: r.currency || 'USD',
+                        buyPrice: typeof s.buyPrice === 'number' ? s.buyPrice : Number(s.buyPrice)
+                    };
+                })
+                .filter(Boolean);
+        }
+
+        async function fetchStocksFinnhub() {
+            if (!config.finnhubKey) throw new Error('Missing Finnhub API key');
+
+            // Finnhub quote is per symbol. With 12 symbols × 2/day, still well within free tier.
+            const out = [];
+            for (let i = 0; i < config.stocks.length; i++) {
+                const s = config.stocks[i];
+                const url = getCorsProxy(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(s.symbol)}&token=${encodeURIComponent(config.finnhubKey)}`);
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const q = await res.json();
+                const price = Number(q?.c);
+                const prev = Number(q?.pc);
+                if (!Number.isFinite(price)) continue;
+                const changePct = (Number.isFinite(prev) && prev !== 0) ? ((price - prev) / prev * 100) : 0;
+                out.push({
+                    symbol: s.symbol,
+                    price,
+                    changePct,
+                    currency: 'USD',
+                    buyPrice: typeof s.buyPrice === 'number' ? s.buyPrice : Number(s.buyPrice)
+                });
+            }
+            return out;
+        }
+
+        function displayDemoStocks() {
+            const demoData = config.stocks.map(s => ({
+                symbol: s.symbol,
+                price: s.buyPrice * (1 + (Math.random() * 0.2 - 0.1)),
+                change: (Math.random() * 20 - 10),
+                changePct: (Math.random() * 5 - 2.5),
+                buyPrice: s.buyPrice
+            }));
+            
+            let ticker = '';
+            demoData.forEach(s => {
                 const below = s.price < s.buyPrice;
                 const vsBuy = ((s.price - s.buyPrice) / s.buyPrice * 100).toFixed(1);
                 const icon = s.changePct >= 0 ? '🟢' : '🔴';
@@ -819,33 +1289,30 @@
             });
             
             document.getElementById('stocksContent').innerHTML = ticker;
-        }
-
-        function displayStocksError(msg) {
-            document.getElementById('stocksContent').innerHTML = 
-                `<span class="ticker-item text-red-400">❌ Stock update failed: ${msg}</span>`;
             document.getElementById('stockStatusPanel').innerHTML = 
-                `📈 Stocks: <span class="text-red-400">Failed</span>`;
+                '📈 Stocks: <span class="text-blue-400">Demo Mode</span>';
         }
 
-        // Currency
         async function fetchCurrencies() {
             let html = '';
+            let success = 0;
             
             for (const c of config.currencies) {
                 try {
                     const [base, quote] = c.pair.split('-');
-                    const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+                    const url = getCorsProxy(`https://api.exchangerate-api.com/v4/latest/${base}`);
+                    const res = await fetch(url);
+                    
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    
                     const data = await res.json();
                     
                     if (data.rates && data.rates[quote]) {
                         const rate = data.rates[quote];
                         const isAlert = c.below ? rate < c.alert : rate > c.alert;
                         
-                        const alertClass = isAlert ? 'stock-alert' : 'bg-slate-800/30';
-                        
                         html += `
-                            <div class="${alertClass} rounded p-2">
+                            <div class="${isAlert ? 'stock-alert' : 'bg-slate-800/30'} rounded p-2">
                                 <div class="flex justify-between items-center">
                                     <span class="font-semibold">${base}/${quote}</span>
                                     <div class="text-right">
@@ -858,86 +1325,108 @@
                                 </div>
                             </div>
                         `;
+                        success++;
                     }
                 } catch (err) {
                     console.error(`Currency error: ${c.pair}`, err);
                 }
             }
             
+            if (success > 0) {
+                document.getElementById('currencyStatus').innerHTML = `💱 Currency: <span class="text-green-400">${success}/${config.currencies.length}</span>`;
+            } else {
+                html = '<p class="text-yellow-400">⚠️ Currency unavailable</p>';
+                document.getElementById('currencyStatus').innerHTML = '💱 Currency: <span class="text-red-400">Failed</span>';
+            }
+            
             document.getElementById('currencyList').innerHTML = html;
         }
 
-        // News with Traditional Chinese sources
+        async function fetchRss(url, limit = 12) {
+            const res = await fetch(getCorsProxy(url));
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const text = await res.text();
+            const doc = new DOMParser().parseFromString(text, 'text/xml');
+            const items = Array.from(doc.querySelectorAll('item')).slice(0, limit);
+            return items.map(it => {
+                const title = (it.querySelector('title')?.textContent || '').trim();
+                const link = (it.querySelector('link')?.textContent || '').trim();
+                const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
+                return {
+                    title,
+                    link,
+                    pubDate: pubDate ? new Date(pubDate) : null
+                };
+            }).filter(x => x.title);
+        }
+
         async function fetchNews() {
-            let allNews = [];
-            
-            // Traditional Chinese sources
+            // Demo mode remains the fastest / most reliable option for offline testing
+            if (config.newsFeeds.demo) {
+                const demo = [
+                    '[示範] 農曆新年即將來臨，預計將有大量人流前往各大景點',
+                    '[示範] 新西蘭宣布新的氣候政策，目標2030年減排50%',
+                    '[示範] 香港股市今日上漲2.3%，恒生指數創新高',
+                    '[示範] 本地科技公司獲得1億美元融資，計劃擴展業務',
+                    '[示範] 天氣預報：本週末將有大雨，市民請注意防範'
+                ];
+                document.getElementById('newsContent').innerHTML = demo.map(n => `<span class="ticker-item">${n}</span>`).join('');
+                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-blue-400">Demo Mode</span>';
+                return;
+            }
+
             const feeds = [];
-            
-            if (config.newsFeeds.hket) {
-                feeds.push({ 
-                    name: '經濟日報', 
-                    url: 'https://www.hket.com/rss/hongkong',
-                    lang: 'tc'
-                });
+            if (config.newsFeeds.ltn) feeds.push({ name: 'LTN', url: 'https://news.ltn.com.tw/rss/all.xml' });
+            if (config.newsFeeds.scmp) feeds.push({ name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' });
+            if (config.newsFeeds.bbc) feeds.push({ name: 'BBC', url: 'http://feeds.bbci.co.uk/news/rss.xml' });
+
+            if (feeds.length === 0) {
+                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">No news sources enabled</span>';
+                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-yellow-400">No sources</span>';
+                return;
             }
-            
-            if (config.newsFeeds.scmp) {
-                feeds.push({ 
-                    name: 'SCMP', 
-                    url: 'https://www.scmp.com/rss/2/feed',
-                    lang: 'en'
-                });
-            }
-            
-            if (config.newsFeeds.bbc) {
-                feeds.push({ 
-                    name: 'BBC', 
-                    url: 'https://feeds.bbci.co.uk/news/rss.xml',
-                    lang: 'en'
-                });
-            }
-            
-            for (const feed of feeds) {
-                try {
-                    const res = await fetch(
-                        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`
-                    );
-                    const data = await res.json();
-                    
-                    if (data.status === 'ok' && data.items) {
-                        data.items.slice(0, 5).forEach(item => {
-                            allNews.push(`[${feed.name}] ${item.title}`);
-                        });
+
+            document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-yellow-400">Updating...</span>';
+
+            try {
+                const all = [];
+                for (const f of feeds) {
+                    try {
+                        const items = await fetchRss(f.url, 10);
+                        items.forEach(it => all.push({ ...it, source: f.name }));
+                    } catch (e) {
+                        console.warn(`News feed failed: ${f.name}`, e);
                     }
-                } catch (err) {
-                    console.error(`RSS error: ${feed.name}`, err);
                 }
-            }
-            
-            if (allNews.length > 0) {
-                let ticker = '';
-                allNews.forEach(n => {
-                    ticker += `<span class="ticker-item">${n}</span>`;
-                });
+
+                if (!all.length) throw new Error('No news items');
+
+                all.sort((a, b) => (b.pubDate?.getTime() || 0) - (a.pubDate?.getTime() || 0));
+                const top = all.slice(0, 20);
+
+                const ticker = top.map(it => {
+                    const label = `<span class="text-slate-400">[${it.source}]</span> `;
+                    const safeTitle = it.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const body = it.link ? `<a href="${it.link}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>` : safeTitle;
+                    return `<span class="ticker-item">${label}${body}</span>`;
+                }).join('');
+
                 document.getElementById('newsContent').innerHTML = ticker;
-                document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-green-400">Updated</span>';
-            } else {
-                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">⚠️ RSS feeds unavailable</span>';
+                document.getElementById('newsStatus').innerHTML = `📰 News: <span class="text-green-400">${top.length} items</span> <span class="text-slate-400">(${feeds.map(f => f.name).join(', ')})</span>`;
+            } catch (error) {
+                console.error('News fetch failed', error);
+                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">⚠️ News unavailable</span>';
                 document.getElementById('newsStatus').innerHTML = '📰 News: <span class="text-red-400">Failed</span>';
             }
         }
 
-        // Bible Verse
         function fetchBibleVerse() {
             const verses = [
                 { ref: '約翰福音 3:16', text: '神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不至滅亡，反得永生。' },
                 { ref: '詩篇 23:1', text: '耶和華是我的牧者，我必不致缺乏。' },
                 { ref: '箴言 3:5-6', text: '你要專心仰賴耶和華，不可倚靠自己的聰明，在你一切所行的事上都要認定他，他必指引你的路。' },
                 { ref: '腓立比書 4:13', text: '我靠著那加給我力量的，凡事都能做。' },
-                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力，叫愛神的人得益處，就是按他旨意被召的人。' },
-                { ref: '以賽亞書 40:31', text: '但那等候耶和華的必重新得力。他們必如鷹展翅上騰；他們奔跑卻不困倦，行走卻不疲乏。' },
-                { ref: '馬太福音 11:28', text: '凡勞苦擔重擔的人可以到我這裡來，我就使你們得安息。' }
+                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力，叫愛神的人得益處，就是按他旨意被召的人。' }
             ];
             
             const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -949,27 +1438,11 @@
             `;
         }
 
-        // Calendar
         function fetchCalendar() {
             const now = new Date();
             const day = now.getDay();
-            const today = now.toISOString().slice(0, 10);
-            const tomorrowDate = new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
-            
             let events = [];
             
-            // Today's holidays
-            if (config.calendar.nz) {
-                const nzToday = holidays2026.nz.find(h => h.date === today);
-                if (nzToday) events.push({ day: 'Today', time: 'All day', title: `🇳🇿 ${nzToday.name}` });
-            }
-            
-            if (config.calendar.hk) {
-                const hkToday = holidays2026.hk.find(h => h.date === today);
-                if (hkToday) events.push({ day: 'Today', time: 'All day', title: `🇭🇰 ${hkToday.name}` });
-            }
-            
-            // Weekly schedule
             const schedule = {
                 0: [{ title: '主日崇拜', time: '10:00 AM' }],
                 3: [{ title: '查經班', time: '7:30 PM' }]
@@ -979,15 +1452,9 @@
                 schedule[day].forEach(e => events.push({ day: 'Today', ...e }));
             }
             
-            const tomorrowDay = (day + 1) % 7;
-            if (schedule[tomorrowDay] && config.calendar.personal) {
-                schedule[tomorrowDay].forEach(e => events.push({ day: 'Tomorrow', ...e }));
-            }
-            
-            // Display
             let html = '';
             if (events.length === 0) {
-                html = '<p class="text-slate-400">No events today/tomorrow</p>';
+                html = '<p class="text-slate-400">No events today</p>';
             } else {
                 events.forEach(e => {
                     html += `
@@ -1009,59 +1476,403 @@
             fetchWeather();
             fetchCurrencies();
             fetchNews();
+            fetchAlerts();
             fetchBibleVerse();
             fetchCalendar();
             updateReminders();
-            
-            // Only fetch stocks if it's the right time
-            if (shouldRefreshStocks()) {
-                fetchStocks();
-            } else if (stockCache.length > 0) {
-                // Use cached data
-                displayStocksTicker(stockCache);
-                document.getElementById('stockStatusPanel').innerHTML = 
-                    '📈 Stocks: <span class="text-blue-400">Using cached data</span>';
+            fetchStocks();
+        }
+
+        // -----------------------------
+        // YouTube Players (Music + Video)
+        // -----------------------------
+        let ytMusicPlayer = null;
+        let ytVideoPlayer = null;
+        let ytApiLoading = false;
+
+        function loadYouTubeIframeApiOnce() {
+            if (window.YT && window.YT.Player) return;
+            if (ytApiLoading) return;
+            ytApiLoading = true;
+            const tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+        }
+
+        function createYtPlayer(elId, playlistId) {
+            return new YT.Player(elId, {
+                width: '100%',
+                height: '100%',
+                playerVars: {
+                    playsinline: 1,
+                    rel: 0,
+                    modestbranding: 1,
+                    controls: 1,
+                    listType: 'playlist',
+                    list: playlistId,
+                    loop: 1
+                },
+                events: {
+                    onReady: (e) => {
+                        try { e.target.setVolume(Number(config.ytVolume) || 80); } catch {}
+                        // Cue only (no autoplay) to satisfy kiosk/browser policies.
+                        try { e.target.cuePlaylist({ listType: 'playlist', list: playlistId }); }
+                        catch { try { e.target.cuePlaylist(playlistId); } catch {} }
+                        try { e.target.setShuffle(true); } catch {}
+                    }
+                }
+            });
+        }
+
+        // YouTube iframe API callback
+        window.onYouTubeIframeAPIReady = function () {
+            try {
+                ytMusicPlayer = createYtPlayer('ytMusicPlayer', config.ytMusicPlaylistId);
+            } catch (e) {
+                console.warn('YT music player init failed', e);
+            }
+            try {
+                ytVideoPlayer = createYtPlayer('ytVideoPlayer', config.ytVideoPlaylistId);
+            } catch (e) {
+                console.warn('YT video player init failed', e);
+            }
+        };
+
+        function safeTogglePlay(player) {
+            if (!player) return;
+            try {
+                const st = player.getPlayerState();
+                if (st === YT.PlayerState.PLAYING) player.pauseVideo();
+                else player.playVideo();
+            } catch {
+                try { player.playVideo(); } catch {}
             }
         }
 
-        function init() {
+        function safeStop(player) {
+            if (!player) return;
+            try { player.stopVideo(); } catch {}
+            try { player.seekTo(0, true); } catch {}
+        }
+
+        function reshuffleAndReload(player, playlistId) {
+            if (!player) return;
+            try { player.cuePlaylist({ listType: 'playlist', list: playlistId }); }
+            catch { try { player.cuePlaylist(playlistId); } catch {} }
+            setTimeout(() => {
+                try { player.setShuffle(true); } catch {}
+                try {
+                    const pl = player.getPlaylist ? player.getPlaylist() : null;
+                    const len = Array.isArray(pl) ? pl.length : 0;
+                    const idx = len ? Math.floor(Math.random() * len) : 0;
+                    player.playVideoAt(idx);
+                } catch {
+                    try { player.playVideo(); } catch {}
+                }
+            }, 250);
+        }
+
+        function initYouTubeUI() {
+            // Toggle video section visibility
+            const section = document.getElementById('videoPlayerSection');
+            const btn = document.getElementById('toggleVideoSectionBtn');
+            const shouldShow = !!config.ytShowVideo || (window.innerWidth >= 1600 && window.matchMedia('(orientation: landscape)').matches);
+            if (shouldShow) {
+                section.classList.remove('hidden');
+                btn.textContent = '隱藏影片';
+            }
+            btn.addEventListener('click', () => {
+                const isHidden = section.classList.contains('hidden');
+                section.classList.toggle('hidden');
+                btn.textContent = isHidden ? '隱藏影片' : '顯示影片';
+                config.ytShowVideo = isHidden;
+                try { localStorage.setItem('panelConfig', JSON.stringify(config)); } catch {}
+            });
+
+            // Music controls
+            document.getElementById('musicPrev').addEventListener('click', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
+            document.getElementById('musicPlay').addEventListener('click', () => safeTogglePlay(ytMusicPlayer));
+            document.getElementById('musicStop').addEventListener('click', () => safeStop(ytMusicPlayer));
+            document.getElementById('musicNext').addEventListener('click', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
+            document.getElementById('musicReshuffle').addEventListener('click', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
+
+            // Video controls
+            document.getElementById('videoPrev').addEventListener('click', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
+            document.getElementById('videoPlay').addEventListener('click', () => safeTogglePlay(ytVideoPlayer));
+            document.getElementById('videoStop').addEventListener('click', () => safeStop(ytVideoPlayer));
+            document.getElementById('videoNext').addEventListener('click', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
+            document.getElementById('videoReshuffle').addEventListener('click', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
+
+            loadYouTubeIframeApiOnce();
+        }
+
+                // -----------------------------
+        // Launch v4 overrides (GitHub-friendly)
+        // - Weather: Open-Meteo (no key), 30-min refresh, +1/+4/+12/+明日 (雨/UV)
+        // - Reminders: demo (birthdays/game) + hardcoded holidays (NZ/HK) now; later can switch to Calendar WebApp (方案A)
+        // - Alerts ticker: MetService + HKO (optional; may require proxy depending on CORS)
+        // -----------------------------
+
+        function safeNum(v) {
+            const n = Number(v);
+            return Number.isFinite(n) ? (Math.round(n * 10) / 10) : null;
+        }
+
+        function weatherCodeToText(code) {
+            const m = {
+                0: '晴朗',
+                1: '大致晴朗',
+                2: '部分多雲',
+                3: '多雲',
+                45: '霧',
+                48: '霧凇',
+                51: '毛毛雨',
+                53: '毛毛雨',
+                55: '毛毛雨',
+                61: '小雨',
+                63: '中雨',
+                65: '大雨',
+                71: '小雪',
+                73: '中雪',
+                75: '大雪',
+                80: '陣雨',
+                81: '陣雨',
+                82: '強陣雨',
+                95: '雷暴',
+                96: '雷暴冰雹',
+                99: '雷暴冰雹'
+            };
+            return m[code] || ('WeatherCode ' + code);
+        }
+
+        async function fetchWeather() {
+            const now = new Date();
+            const parts = [];
+
+            for (const loc of (config.weatherLocations || [])) {
+                try {
+                    const base = 'https://api.open-meteo.com/v1/forecast';
+                    const url = base +
+                        '?latitude=' + encodeURIComponent(loc.lat) +
+                        '&longitude=' + encodeURIComponent(loc.lon) +
+                        '&current=temperature_2m,weather_code' +
+                        '&hourly=temperature_2m,precipitation,precipitation_probability,uv_index,weather_code' +
+                        '&daily=uv_index_max,precipitation_sum' +
+                        '&forecast_days=2&timezone=auto';
+
+                    const resp = await fetch(url, { cache: 'no-store' });
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+
+                    const times = (data.hourly.time || []).map(t => new Date(t));
+                    let idx = 0;
+                    for (let i = 0; i < times.length; i++) {
+                        if (times[i] <= now) idx = i;
+                        else break;
+                    }
+
+                    const currentTemp = Math.round(data.current.temperature_2m);
+                    const desc = weatherCodeToText(data.current.weather_code);
+
+                    const uvNow = safeNum((data.hourly.uv_index || [])[idx]);
+                    const uvTomorrowMax = safeNum((data.daily.uv_index_max || [])[1]);
+                    const rainTomorrow = safeNum((data.daily.precipitation_sum || [])[1]);
+
+                    const fmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const pick = (off) => {
+                        const j = Math.min(idx + off, times.length - 1);
+                        const t = times[j] ? fmt(times[j]) : ('+' + off + 'h');
+                        const p = safeNum((data.hourly.precipitation_probability || [])[j]);
+                        const mm = safeNum((data.hourly.precipitation || [])[j]);
+                        const pStr = (p === null) ? '?' : (Math.round(p) + '%');
+                        const mmStr = (mm === null) ? '?' : (mm + 'mm');
+                        return t + ':' + pStr + '/' + mmStr;
+                    };
+
+                    const line1 = 'UV: ' + (uvNow === null ? '?' : uvNow) + (uvTomorrowMax === null ? '' : '（明日最高:' + uvTomorrowMax + '）');
+                    const line2 = '雨: +1h ' + pick(1) + ', +4h ' + pick(4) + ', +12h ' + pick(12) + ', 明日' + (rainTomorrow === null ? '?' : rainTomorrow) + 'mm';
+
+                    parts.push(
+                        '<div class="weather-location">' +
+                            '<div class="flex justify-between items-start">' +
+                                '<div>' +
+                                    '<div class="text-sm font-semibold">' + escapeHtml(loc.label) + '</div>' +
+                                    '<div class="text-2xl font-bold">' + currentTemp + '°C</div>' +
+                                '</div>' +
+                                '<div class="text-right">' +
+                                    '<div class="text-xs text-slate-400">' + escapeHtml(desc) + '</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="text-xs text-slate-300 mt-1">☀️ ' + escapeHtml(line1) + '</div>' +
+                            '<div class="text-xs text-slate-300">💧 ' + escapeHtml(line2) + '</div>' +
+                        '</div>'
+                    );
+                } catch (e) {
+                    console.warn('Weather failed for', loc && loc.label, e);
+                    parts.push(
+                        '<div class="weather-location">' +
+                            '<div class="text-sm font-semibold">' + escapeHtml((loc && loc.label) || 'Weather') + '</div>' +
+                            '<div class="text-xs text-red-300">⚠️ Weather unavailable</div>' +
+                        '</div>'
+                    );
+                }
+            }
+
+            const wc = document.getElementById('weatherContainer');
+            if (wc) wc.innerHTML = parts.join('');
+            const ws = document.getElementById('weatherStatus');
+            if (ws) ws.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>Weather: <span class="text-green-400">Updated</span>';
+        }
+
+        // Alerts ticker (重要快訊：惡劣天氣/警報)
+        async function fetchAlerts() {
+            const out = [];
+
+            // HKO warnings (tc)
+            try {
+                const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc';
+                const resp = await fetch(url, { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.details && Array.isArray(data.details) && data.details.length) {
+                        data.details.forEach(d => {
+                            const name = d.warningStatement || d.warningName || d.type || '香港天氣警告';
+                            out.push({ source: 'HKO', text: name });
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('HKO warnsum failed', e);
+            }
+
+            // MetService severe weather (CAP RSS) - may need CORS proxy depending on browser
+            try {
+                const rss = 'https://alerts.metservice.com/cap/rss';
+                const resp = await fetch(getCorsProxy(rss), { cache: 'no-store' });
+                if (resp.ok) {
+                    const xml = await resp.text();
+                    const items = parseRssTitles(xml).slice(0, 6);
+                    items.forEach(t => out.push({ source: 'MetService', text: t }));
+                }
+            } catch (e) {
+                console.warn('MetService alerts failed', e);
+            }
+
+            const el = document.getElementById('alertsContent');
+            if (!el) return;
+
+            if (!out.length) {
+                el.innerHTML = '<span class="ticker-item">（未能取得警報；如要用 MetService RSS，可能需要開啟 CORS Proxy／自建 proxy）</span>';
+                return;
+            }
+
+            const html = out.map(it => {
+                const label = '<span class="text-yellow-300">[' + it.source + ']</span> ';
+                return '<span class="ticker-item">' + label + escapeHtml(it.text) + '</span>';
+            }).join('');
+
+            el.innerHTML = html;
+        }
+
+        function parseRssTitles(xmlText) {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xmlText, 'text/xml');
+                const items = Array.from(doc.querySelectorAll('item > title'));
+                return items.map(n => (n.textContent || '').trim()).filter(Boolean);
+            } catch {
+                return [];
+            }
+        }
+
+        // Reminders override (Launch): demo birthdays/game + hardcoded holidays (NZ/HK)
+        async function updateReminders() {
+            const now = new Date();
+            const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const reminders = [];
+
+            // Demo birthday/game (replace later with Calendar WebApp)
+            const demoBirthdays = [
+                { date: '2026-01-25', name: '🎂 John\'s Birthday' },
+                { date: '2026-02-14', name: '🎂 Valentine\'s Birthday' }
+            ];
+            const demoGames = [
+                { date: '2026-01-22', name: '🎮 Game Night @ 20:00' },
+                { date: '2026-01-29', name: '🎮 Game Night @ 20:00' }
+            ];
+
+            if (config.calendar && config.calendar.birthday) {
+                demoBirthdays.forEach(e => {
+                    const d = new Date(e.date);
+                    if (d >= now && d <= oneWeek) reminders.push({ text: e.name, date: e.date });
+                });
+            }
+            if (config.calendar && config.calendar.game) {
+                demoGames.forEach(e => {
+                    const d = new Date(e.date);
+                    if (d >= now && d <= oneWeek) reminders.push({ text: e.name, date: e.date });
+                });
+            }
+
+            // Holidays (hardcoded fallback already present)
+            if (config.calendar && config.calendar.nz && typeof holidays2026 !== 'undefined' && holidays2026.nz) {
+                holidays2026.nz.forEach(h => {
+                    const d = new Date(h.date);
+                    if (d >= now && d <= oneWeek) reminders.push({ text: '🇳🇿 ' + h.name, date: h.date });
+                });
+            }
+            if (config.calendar && config.calendar.hk && typeof holidays2026 !== 'undefined' && holidays2026.hk) {
+                holidays2026.hk.forEach(h => {
+                    const d = new Date(h.date);
+                    if (d >= now && d <= oneWeek) reminders.push({ text: '🇭🇰 ' + h.name, date: h.date });
+                });
+            }
+
+            reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const box = document.getElementById('upcomingReminders');
+            if (!box) return;
+
+            if (!reminders.length) {
+                box.innerHTML = '<div class="text-slate-400 text-center mt-4">No upcoming events</div>';
+                return;
+            }
+
+            box.innerHTML = reminders.map(r => {
+                const d = new Date(r.date);
+                const daysUntil = Math.ceil((d - now) / (24 * 60 * 60 * 1000));
+                const dayText = daysUntil === 0 ? 'Today' : (daysUntil === 1 ? 'Tomorrow' : ('In ' + daysUntil + ' days'));
+                return '<div class="reminder-item"><div class="flex justify-between"><span>' + escapeHtml(r.text) + '</span><span class="text-yellow-400">' + dayText + '</span></div></div>';
+            }).join('');
+        }
+
+
+
+function init() {
             loadSavedSettings();
+            populateSettingsUI();
             updateDigitalClock();
             updateAnalogClock();
+            initYouTubeUI();
             fetchAllData();
-            
-            // Update clock every second
+            // Launch版：相片功能暫時移除
             setInterval(() => {
                 updateDigitalClock();
                 updateAnalogClock();
             }, 1000);
             
-            // Update reminders every hour
             setInterval(updateReminders, 3600000);
-            
-            // Update weather every hour
-            setInterval(fetchWeather, 3600000);
-            
-            // Update currencies every 30 min
+            setInterval(fetchWeather, 1800000);
             setInterval(fetchCurrencies, 1800000);
-            
-            // Update news every 30 min
             setInterval(fetchNews, 1800000);
-            
-            // Check for stock refresh every minute
-            setInterval(() => {
-                if (shouldRefreshStocks()) {
-                    fetchStocks();
-                }
-            }, 60000);
+            setInterval(fetchAlerts, 1800000);
+
+            // Stocks: check schedule every 5 minutes, but only fetch near the configured times (max 2x/day)
+            setInterval(() => maybeRefreshStocks(false), 300000);
+            maybeRefreshStocks(false);
         }
 
         window.addEventListener('load', init);
-
-        // Wake Lock
-        if ('wakeLock' in navigator) {
-            navigator.wakeLock.request('screen').catch(e => console.log('Wake Lock:', e));
-        }
     </script>
 </body>
 </html>
