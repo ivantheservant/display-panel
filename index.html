@@ -235,15 +235,7 @@ to { opacity: 1; }
                 </div>
             </div>
 
-            <!-- CORS Proxy -->
-            <div class="bg-yellow-900/30 border border-yellow-700 rounded p-3">
-                <label class="flex items-center">
-                    <input type="checkbox" id="useCorsProxy" class="mr-2">
-                    <span class="text-xs">Use CORS Proxy (slower, for testing)</span>
-                </label>
-            </div>
-            
-            <!-- API Keys -->
+<!-- API Keys -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">API Keys</h3>
                 <div class="space-y-2">
@@ -431,8 +423,7 @@ to { opacity: 1; }
                     </div>
                 </div>
 </div>
-
-        
+        </div>
 
         <!-- Video Player (大屏；可於設定開關) -->
         <div id="videoCard" class="glass card hidden" style="grid-column: span 4; grid-row: span 2;">
@@ -663,10 +654,8 @@ to { opacity: 1; }
         ];
 
         function getCorsProxy(url) {
-            if (config.useCorsProxy) {
-                return `https://corsproxy.io/?${encodeURIComponent(url)}`;
-            }
-            return url;
+            // Launch build: always use a CORS-friendly proxy for RSS fetching (no browser extension required).
+            return `https://corsproxy.io/?${encodeURIComponent(url)}`;
         }
 
         function loadSavedSettings() {
@@ -1646,6 +1635,16 @@ to { opacity: 1; }
             return Number.isFinite(n) ? (Math.round(n * 10) / 10) : null;
         }
 
+        function escapeHtml(s) {
+            if (s === null || s === undefined) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function weatherCodeToText(code) {
             const m = {
                 0: '晴朗',
@@ -1755,6 +1754,7 @@ to { opacity: 1; }
         // Alerts ticker（重要快訊：天氣／交通／警報）
         async function fetchAlerts() {
             const out = [];
+            let hadError = false;
 
             // NZTA traffic (Road Events) via ArcGIS FeatureServer (JSON) — usually CORS-friendly
             try {
@@ -1781,7 +1781,7 @@ to { opacity: 1; }
                     }
                 }
             } catch (e) {
-                console.warn('NZTA alerts failed', e);
+                console.warn('NZTA alerts failed', e); hadError = true;
             }
 
             // HKO warnings (tc)
@@ -1798,14 +1798,16 @@ to { opacity: 1; }
                     }
                 }
             } catch (e) {
-                console.warn('HKO warnsum failed', e);
+                console.warn('HKO warnsum failed', e); hadError = true;
             }
 
             const el = document.getElementById('alertsContent');
             if (!el) return;
 
             if (!out.length) {
-                el.innerHTML = '<span class="ticker-item">（暫無重要快訊）</span>';
+                el.innerHTML = hadError
+                    ? '<span class="ticker-item">（重要快訊讀取失敗）</span>'
+                    : '<span class="ticker-item">（暫無重要快訊）</span>';
                 return;
             }
 
