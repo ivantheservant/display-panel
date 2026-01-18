@@ -83,6 +83,7 @@ to { opacity: 1; }
             padding-left: 100%;
         }
         .news-ticker-content { animation: scroll-left 100s linear infinite; }
+        .alerts-ticker-content { animation: scroll-left 40s linear infinite; }
         .stock-ticker-content { animation: scroll-left 80s linear infinite; }
         @keyframes scroll-left {
             0% { transform: translateX(0); }
@@ -120,7 +121,9 @@ to { opacity: 1; }
             border-radius: 0.5rem;
             overflow: hidden;
         }
-        .yt-frame-video { height: 160px; }
+        .yt-frame-video { height: 320px; }
+        /* music player: keep iframe alive but effectively invisible */
+        .yt-frame-music { height: 1px; opacity: 0.02; pointer-events: none; }
         .yt-player { width: 100%; height: 100%; }
         .media-btn {
             padding: 0.35rem 0.55rem;
@@ -279,7 +282,20 @@ to { opacity: 1; }
                 </div>
             </div>
             
-            <!-- News Sources -->
+            
+            <!-- Media -->
+            <div>
+                <h3 class="font-semibold mb-2 text-blue-400">媒體</h3>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="ytEnableVideo" class="mr-2">
+                        <span class="text-xs">啟用大屏影片播放（只喺 1600px+ 橫向顯示）</span>
+                    </label>
+                    <p class="text-[11px] text-slate-400">預設關閉：只播放 YouTube 音樂並顯示歌名。</p>
+                </div>
+            </div>
+
+<!-- News Sources -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">News Sources</h3>
                 <div class="space-y-1">
@@ -396,19 +412,16 @@ to { opacity: 1; }
         <!-- Media (replaces Status Panel in production UI) -->
         <div class="glass card" style="grid-column: span 2; grid-row: span 2;">
             <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold"><i class="fas fa-play-circle mr-1"></i>媒體</h3>
-                <button id="toggleVideoSectionBtn" class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] hover:bg-slate-700">
-                    顯示影片
-                </button>
-            </div>
+                <h3 class="text-sm font-semibold"><i class="fas fa-play-circle mr-1"></i>媒體</h3></div>
 
             <div class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-3">
                 <!-- YouTube Music -->
                 <div>
                     <div class="text-[11px] text-slate-400 mb-1">🎵 YouTube 音樂播放清單</div>
-                    <div class="yt-frame">
+                    <div class="yt-frame yt-frame-music">
                         <div id="ytMusicPlayer" class="yt-player"></div>
                     </div>
+                    <div id="musicNowPlaying" class="mt-1 text-xs text-slate-200 truncate">未播放</div>
                     <div class="mt-2 flex flex-wrap gap-1">
                         <button class="media-btn" id="musicPrev">Prev</button>
                         <button class="media-btn" id="musicPlay">Play / Pause</button>
@@ -417,35 +430,31 @@ to { opacity: 1; }
                         <button class="media-btn" id="musicReshuffle">Reshuffle / 更新</button>
                     </div>
                 </div>
+</div>
 
-                <!-- YouTube Video (large screen recommended) -->
-                <div id="videoPlayerSection" class="hidden">
-                    <div class="text-[11px] text-slate-400 mb-1">🎬 大屏影片播放清單</div>
-                    <div class="yt-frame yt-frame-video">
-                        <div id="ytVideoPlayer" class="yt-player"></div>
-                    </div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        <button class="media-btn" id="videoPrev">Prev</button>
-                        <button class="media-btn" id="videoPlay">Play / Pause</button>
-                        <button class="media-btn" id="videoStop">Stop</button>
-                        <button class="media-btn" id="videoNext">Next</button>
-                        <button class="media-btn" id="videoReshuffle">Reshuffle / 更新</button>
-                    </div>
+        
+
+        <!-- Video Player (大屏；可於設定開關) -->
+        <div id="videoCard" class="glass card hidden" style="grid-column: span 4; grid-row: span 2;">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold"><i class="fas fa-film mr-1"></i>影片播放（大屏）</h3>
+                <button id="videoHideBtn" class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] hover:bg-slate-700">隱藏</button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-2">
+                <div class="yt-frame yt-frame-video">
+                    <div id="ytVideoPlayer" class="yt-player"></div>
+                </div>
+                <div id="videoNowPlaying" class="text-xs text-slate-200 truncate">未播放</div>
+                <div class="mt-1 flex flex-wrap gap-1">
+                    <button class="media-btn" id="videoPrev">Prev</button>
+                    <button class="media-btn" id="videoPlay">Play / Pause</button>
+                    <button class="media-btn" id="videoStop">Stop</button>
+                    <button class="media-btn" id="videoNext">Next</button>
+                    <button class="media-btn" id="videoReshuffle">Reshuffle / 更新</button>
                 </div>
             </div>
-
-            <!-- Hidden status hooks (keep IDs to avoid JS errors) -->
-            <div id="systemStatus" class="hidden">
-                <div>⏰ Clock: <span class="text-green-400">Running</span></div>
-                <div id="weatherStatus">☁️ Weather: <span class="text-yellow-400">Updating...</span></div>
-                <div id="stockStatusPanel">📈 Stocks: <span class="text-yellow-400">Updating...</span></div>
-                <div id="newsStatus">📰 News: <span class="text-yellow-400">Updating...</span></div>
-                <div id="currencyStatus">💱 Currency: <span class="text-yellow-400">Updating...</span></div>
-                <div id="photoStatus">📸 Photos: <span class="text-slate-400">Disabled</span></div>
-            </div>
         </div>
-
-        <!-- News Ticker (two lines) -->
+<!-- News Ticker (two lines) -->
         <div class="glass card" style="grid-column: span 6; grid-row: 5;">
             <h3 class="text-sm font-semibold mb-2">
                 <i class="fas fa-newspaper mr-1"></i>新聞
@@ -458,7 +467,7 @@ to { opacity: 1; }
             </div>
             <div class="text-[11px] text-slate-400 mb-1">重要快訊（天氣／交通／警報）</div>
             <div class="ticker">
-                <div class="ticker-content news-ticker-content" id="alertsContent">
+                <div class="ticker-content alerts-ticker-content" id="alertsContent">
                     <span class="ticker-item">Loading...</span>
                 </div>
             </div>
@@ -493,6 +502,7 @@ to { opacity: 1; }
             ytVideoPlaylistId: 'PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC',
             ytVolume: 80,
             ytShowVideo: false,
+            ytEnableVideo: false,
             useCorsProxy: false,
 
             // Stocks refresh (local time, 2x/day)
@@ -696,6 +706,9 @@ to { opacity: 1; }
             const fh = document.getElementById('finnhubKey'); if (fh) fh.value = config.finnhubKey || '';
             const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'demo';
             const cors = document.getElementById('useCorsProxy'); if (cors) cors.checked = !!config.useCorsProxy;
+            // Media
+            const ev = document.getElementById('ytEnableVideo'); if (ev) ev.checked = !!config.ytEnableVideo;
+
 
             // Stock schedule
             const r1 = document.getElementById('stockRefresh1'); if (r1) r1.value = (config.stockRefreshTimes && config.stockRefreshTimes[0]) ? config.stockRefreshTimes[0] : '07:00';
@@ -726,6 +739,9 @@ to { opacity: 1; }
             const fh = document.getElementById('finnhubKey'); if (fh) config.finnhubKey = fh.value;
             const prov = document.getElementById('stockApiProvider'); if (prov) config.stockApiProvider = prov.value;
             const cors = document.getElementById('useCorsProxy'); if (cors) config.useCorsProxy = cors.checked;
+            // Media
+            const ev = document.getElementById('ytEnableVideo'); if (ev) config.ytEnableVideo = ev.checked;
+
 
             // Stock schedule
             const r1 = document.getElementById('stockRefresh1');
@@ -1531,10 +1547,12 @@ to { opacity: 1; }
             } catch (e) {
                 console.warn('YT music player init failed', e);
             }
-            try {
-                ytVideoPlayer = createYtPlayer('ytVideoPlayer', config.ytVideoPlaylistId);
-            } catch (e) {
-                console.warn('YT video player init failed', e);
+            if (!!config.ytEnableVideo && window.innerWidth >= 1600 && window.matchMedia('(orientation: landscape)').matches) {
+                try {
+                    ytVideoPlayer = createYtPlayer('ytVideoPlayer', config.ytVideoPlaylistId);
+                } catch (e) {
+                    console.warn('YT video player init failed', e);
+                }
             }
         };
 
@@ -1573,22 +1591,6 @@ to { opacity: 1; }
         }
 
         function initYouTubeUI() {
-            // Toggle video section visibility
-            const section = document.getElementById('videoPlayerSection');
-            const btn = document.getElementById('toggleVideoSectionBtn');
-            const shouldShow = !!config.ytShowVideo || (window.innerWidth >= 1600 && window.matchMedia('(orientation: landscape)').matches);
-            if (shouldShow) {
-                section.classList.remove('hidden');
-                btn.textContent = '隱藏影片';
-            }
-            btn.addEventListener('click', () => {
-                const isHidden = section.classList.contains('hidden');
-                section.classList.toggle('hidden');
-                btn.textContent = isHidden ? '隱藏影片' : '顯示影片';
-                config.ytShowVideo = isHidden;
-                try { localStorage.setItem('panelConfig', JSON.stringify(config)); } catch {}
-            });
-
             // Music controls
             document.getElementById('musicPrev').addEventListener('click', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
             document.getElementById('musicPlay').addEventListener('click', () => safeTogglePlay(ytMusicPlayer));
@@ -1596,12 +1598,38 @@ to { opacity: 1; }
             document.getElementById('musicNext').addEventListener('click', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
             document.getElementById('musicReshuffle').addEventListener('click', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
 
-            // Video controls
-            document.getElementById('videoPrev').addEventListener('click', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
-            document.getElementById('videoPlay').addEventListener('click', () => safeTogglePlay(ytVideoPlayer));
-            document.getElementById('videoStop').addEventListener('click', () => safeStop(ytVideoPlayer));
-            document.getElementById('videoNext').addEventListener('click', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
-            document.getElementById('videoReshuffle').addEventListener('click', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
+            // Video controls (only if enabled)
+            const vc = document.getElementById('videoCard');
+            const hideBtn = document.getElementById('videoHideBtn');
+            if (hideBtn) hideBtn.addEventListener('click', () => { vc?.classList.add('hidden'); });
+
+            const enable = !!config.ytEnableVideo && (window.innerWidth >= 1600) && window.matchMedia('(orientation: landscape)').matches;
+            if (enable && vc) vc.classList.remove('hidden');
+
+            const bindIf = (id, fn) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', fn);
+            };
+            bindIf('videoPrev', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
+            bindIf('videoPlay', () => safeTogglePlay(ytVideoPlayer));
+            bindIf('videoStop', () => safeStop(ytVideoPlayer));
+            bindIf('videoNext', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
+            bindIf('videoReshuffle', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
+
+            // Now playing labels
+            function updateLabel(player, elId) {
+                const el = document.getElementById(elId);
+                if (!el || !player) return;
+                try {
+                    const data = player.getVideoData ? player.getVideoData() : null;
+                    const title = data && data.title ? data.title : '';
+                    if (title) el.textContent = title;
+                } catch {}
+            }
+            setInterval(() => {
+                updateLabel(ytMusicPlayer, 'musicNowPlaying');
+                updateLabel(ytVideoPlayer, 'videoNowPlaying');
+            }, 2000);
 
             loadYouTubeIframeApiOnce();
         }
@@ -1610,7 +1638,7 @@ to { opacity: 1; }
         // Launch v4 overrides (GitHub-friendly)
         // - Weather: Open-Meteo (no key), 30-min refresh, +1/+4/+12/+明日 (雨/UV)
         // - Reminders: demo (birthdays/game) + hardcoded holidays (NZ/HK) now; later can switch to Calendar WebApp (方案A)
-        // - Alerts ticker: MetService + HKO (optional; may require proxy depending on CORS)
+        // - Alerts ticker: NZTA 交通 + HKO 警報（免 CORS proxy）
         // -----------------------------
 
         function safeNum(v) {
@@ -1724,9 +1752,37 @@ to { opacity: 1; }
             if (ws) ws.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>Weather: <span class="text-green-400">Updated</span>';
         }
 
-        // Alerts ticker (重要快訊：惡劣天氣/警報)
+        // Alerts ticker（重要快訊：天氣／交通／警報）
         async function fetchAlerts() {
             const out = [];
+
+            // NZTA traffic (Road Events) via ArcGIS FeatureServer (JSON) — usually CORS-friendly
+            try {
+                const base = 'https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/0/query';
+                const params = new URLSearchParams({
+                    where: '1=1',
+                    outFields: 'eventType,locationArea,eventDescription,impact,status,eventModified',
+                    orderByFields: 'eventModified DESC',
+                    resultRecordCount: '6',
+                    f: 'json'
+                });
+                const resp = await fetch(base + '?' + params.toString(), { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const feats = (data && data.features) ? data.features : [];
+                    for (const f of feats) {
+                        const a = (f && f.attributes) ? f.attributes : {};
+                        const type = (a.eventType || '').toString().trim();
+                        const loc = (a.locationArea || '').toString().trim();
+                        const desc = (a.eventDescription || '').toString().trim();
+                        const impact = (a.impact || '').toString().trim();
+                        const text = [type, loc, impact || desc].filter(Boolean).join(' - ');
+                        if (text) out.push({ source: 'NZTA', text });
+                    }
+                }
+            } catch (e) {
+                console.warn('NZTA alerts failed', e);
+            }
 
             // HKO warnings (tc)
             try {
@@ -1745,24 +1801,11 @@ to { opacity: 1; }
                 console.warn('HKO warnsum failed', e);
             }
 
-            // MetService severe weather (CAP RSS) - may need CORS proxy depending on browser
-            try {
-                const rss = 'https://alerts.metservice.com/cap/rss';
-                const resp = await fetch(getCorsProxy(rss), { cache: 'no-store' });
-                if (resp.ok) {
-                    const xml = await resp.text();
-                    const items = parseRssTitles(xml).slice(0, 6);
-                    items.forEach(t => out.push({ source: 'MetService', text: t }));
-                }
-            } catch (e) {
-                console.warn('MetService alerts failed', e);
-            }
-
             const el = document.getElementById('alertsContent');
             if (!el) return;
 
             if (!out.length) {
-                el.innerHTML = '<span class="ticker-item">（未能取得警報；如要用 MetService RSS，可能需要開啟 CORS Proxy／自建 proxy）</span>';
+                el.innerHTML = '<span class="ticker-item">（暫無重要快訊）</span>';
                 return;
             }
 
@@ -1772,17 +1815,6 @@ to { opacity: 1; }
             }).join('');
 
             el.innerHTML = html;
-        }
-
-        function parseRssTitles(xmlText) {
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(xmlText, 'text/xml');
-                const items = Array.from(doc.querySelectorAll('item > title'));
-                return items.map(n => (n.textContent || '').trim()).filter(Boolean);
-            } catch {
-                return [];
-            }
         }
 
         // Reminders override (Launch): demo birthdays/game + hardcoded holidays (NZ/HK)
