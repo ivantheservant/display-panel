@@ -239,11 +239,12 @@
                     <div>
                         <label class="block text-xs mb-1">Stocks API Provider</label>
                         <select id="stockApiProvider" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                            <option value="auto">Auto（推薦：TwelveData→Finnhub→快取）</option>
                             <option value="demo">Demo Mode (No API)</option>
                             <option value="twelvedata">Twelve Data (推薦：可一次取多隻股票)</option>
                             <option value="finnhub">Finnhub (備用：逐隻股票查詢)</option>
                         </select>
-                        <p class="text-[11px] text-slate-400 mt-1">建議：Finnhub 做主（60/min，適合 12 隻股票），Twelve Data 做備用（Free plan 8/min，需要分段）。預設每日只更新 2 次以控制免費額度。</p>
+                        <p class="text-[11px] text-slate-400 mt-1">推薦：選 Auto。正常用 Twelve Data（可一次取多隻），失敗自動切 Finnhub；仍維持每日 2 次更新＋快取，避免超出免費額度。</p>
                     </div>
                     <div>
                         <label class="block text-xs mb-1">Twelve Data API Key</label>
@@ -283,27 +284,9 @@
 <!-- News Sources -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">新聞來源</h3>
-                <div class="space-y-1">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="newsInmediaHK" checked class="mr-2">
-                        <span>獨立媒體（香港）</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="newsRNZChinese" checked class="mr-2">
-                        <span>RNZ 中文</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="newsRNZCountry" checked class="mr-2">
-                        <span>RNZ 國內</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="newsCNAWorld" checked class="mr-2">
-                        <span>中央社｜國際</span>
-                    </label>
-                </div>
-                <p class="text-[11px] text-slate-400 mt-2">已把舊來源（LTN/SCMP/BBC）移到程式註解作備用。</p>
+                <p class="text-[11px] text-slate-400">新聞來源已固定（不提供選擇）：InMediaHK、RNZ（中文/國內）、BBC。第二行重要快訊：MetService、Civil Defence、Awaikato、NZTA（Auckland）。</p>
             </div>
-            
+
             <!-- Calendar Toggles -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">Calendar Display</h3>
@@ -408,8 +391,7 @@
                 <div class="mt-2 flex flex-wrap gap-1">
                     <button class="media-btn" id="musicPrev" title="上一首">⏮</button>
                     <button class="media-btn" id="musicPlay" title="播放/暫停">⏯</button>
-                    <button class="media-btn" id="musicStop" title="停止">⏹</button>
-                    <button class="media-btn" id="musicNext" title="下一首">⏭</button>
+<button class="media-btn" id="musicNext" title="下一首">⏭</button>
                     <button class="media-btn" id="musicReshuffle" title="重排+重播/更新">🔀</button>
                 </div>
             </div>
@@ -430,8 +412,7 @@
                 <div class="mt-1 flex flex-wrap gap-1">
                     <button class="media-btn" id="videoPrev">Prev</button>
                     <button class="media-btn" id="videoPlay">Play / Pause</button>
-                    <button class="media-btn" id="videoStop">Stop</button>
-                    <button class="media-btn" id="videoNext">Next</button>
+<button class="media-btn" id="videoNext">Next</button>
                     <button class="media-btn" id="videoReshuffle">Reshuffle / 更新</button>
                 </div>
             </div>
@@ -536,7 +517,7 @@
                 nz: true,
                 hk: true
             },
-            newsFeeds: { inmediahk: true, rnzchinese: true, rnzcountry: true, cnaworld: true }
+            newsFeeds: { inmediahk: true, rnzchinese: true, rnzcountry: true, bbc: true }
         };
 
 	        // Timers / state
@@ -613,8 +594,7 @@
                 config.newsFeeds.inmediahk = true;
                 config.newsFeeds.rnzchinese = true;
                 config.newsFeeds.rnzcountry = true;
-                config.newsFeeds.cnaworld = true;
-            }
+                            }
 
             const saved = SafeStore.get('panelConfig');
             if (saved) {
@@ -673,7 +653,6 @@
             const n1 = document.getElementById('newsInmediaHK'); if (n1) n1.checked = !!config.newsFeeds.inmediahk;
             const n2 = document.getElementById('newsRNZChinese'); if (n2) n2.checked = !!config.newsFeeds.rnzchinese;
             const n3 = document.getElementById('newsRNZCountry'); if (n3) n3.checked = !!config.newsFeeds.rnzcountry;
-            const n4 = document.getElementById('newsCNAWorld'); if (n4) n4.checked = !!config.newsFeeds.cnaworld;
 
             const url = document.getElementById('calendarWebAppUrl'); if (url) url.value = config.calendarWebAppUrl || '';
             const tok = document.getElementById('calendarToken'); if (tok) tok.value = config.calendarToken || '';
@@ -719,7 +698,6 @@
             const n1 = document.getElementById('newsInmediaHK'); if (n1) config.newsFeeds.inmediahk = !!n1.checked;
             const n2 = document.getElementById('newsRNZChinese'); if (n2) config.newsFeeds.rnzchinese = !!n2.checked;
             const n3 = document.getElementById('newsRNZCountry'); if (n3) config.newsFeeds.rnzcountry = !!n3.checked;
-            const n4 = document.getElementById('newsCNAWorld'); if (n4) config.newsFeeds.cnaworld = !!n4.checked;
 // Calendar toggles
             const cp = document.getElementById('calPersonal'); if (cp) config.calendar.personal = cp.checked;
             const cb = document.getElementById('calBirthday'); if (cb) config.calendar.birthday = cb.checked;
@@ -966,23 +944,87 @@
             }).filter(x => x.title);
         }
 
+        function _findByLocalName(node, localName) {
+            try {
+                const all = node.getElementsByTagName('*');
+                for (let i = 0; i < all.length; i++) {
+                    const el = all[i];
+                    if ((el.localName || '').toLowerCase() === localName.toLowerCase()) {
+                        const t = (el.textContent || '').trim();
+                        if (t) return t;
+                    }
+                }
+            } catch {}
+            return '';
+        }
+
+        async function fetchMetServiceCap(limit = 8) {
+            const urls = [
+                'https://alerts.metservice.com/cap/rss',
+                'https://alerts.metservice.com/cap/atom'
+            ];
+            let lastErr = null;
+            for (const url of urls) {
+                try {
+                    const res = await fetch(getCorsProxy(url), { cache: 'no-store' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const xml = await res.text();
+                    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+                    const items = Array.from(doc.querySelectorAll('item'));
+                    const entries = items.length ? items : Array.from(doc.querySelectorAll('entry'));
+                    const out = [];
+                    for (const it of entries.slice(0, limit)) {
+                        const title = (it.querySelector('title')?.textContent || '').trim();
+                        if (!title) continue;
+                        // CAP details
+                        let area = _findByLocalName(it, 'areaDesc');
+                        let sev = _findByLocalName(it, 'severity');
+                        // Fallback: try description text
+                        if (!area) {
+                            const desc = (it.querySelector('description')?.textContent || it.querySelector('summary')?.textContent || '').trim();
+                            const m =
+                            desc.match(/Area(?:\(s\))?:\s*([^\r\n<]+)/i) ||
+                            desc.match(/Areas?:\s*([^\r\n<]+)/i) ||
+                            desc.match(/Location:\s*([^\r\n<]+)/i);
+                            if (m) area = (m[1] || '').trim();
+                        }
+                        let text = title;
+                        if (area) text += ' — ' + area;
+                        if (sev) text += '（' + sev + '）';
+                        out.push(text);
+                    }
+                    // de-dup
+                    const seen = new Set();
+                    const uniq = [];
+                    for (const t of out) {
+                        const k = t.toLowerCase();
+                        if (seen.has(k)) continue;
+                        seen.add(k);
+                        uniq.push(t);
+                    }
+                    if (uniq.length) return uniq.slice(0, limit);
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+            if (lastErr) throw lastErr;
+            return [];
+        }
+
+
         async function fetchNews() {
             // v5 feeds (replace old LTN/SCMP/BBC; keep them in comments as fallback)
             // Old (fallback only):
             // - LTN: https://news.ltn.com.tw/rss/all.xml
             // - SCMP: https://www.scmp.com/rss/2/feed
-            // - BBC:  http://feeds.bbci.co.uk/news/rss.xml
+            // - BBC:  https://feeds.bbci.co.uk/news/rss.xml (啟用)
 
-            const feeds = [];
-            if (config.newsFeeds.inmediahk) feeds.push({ name: '獨立媒體', url: 'https://www.inmediahk.net/rss.xml' });
-            if (config.newsFeeds.rnzchinese) feeds.push({ name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' });
-            if (config.newsFeeds.rnzcountry) feeds.push({ name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' });
-            if (config.newsFeeds.cnaworld) feeds.push({ name: 'CNA國際', url: 'https://feeds.feedburner.com/rsscna/intworld' });
-
-            if (feeds.length === 0) {
-                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">（未啟用新聞來源）</span>';
-                return;
-            }
+            const feeds = [
+                { name: 'InMediaHK', url: 'https://www.inmediahk.net/rss.xml' },
+                { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
+                { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
+                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' }
+            ];
 
             try {
                 const all = [];
@@ -1180,7 +1222,6 @@
             // Music controls
             document.getElementById('musicPrev').addEventListener('click', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
             document.getElementById('musicPlay').addEventListener('click', () => safeTogglePlay(ytMusicPlayer));
-            document.getElementById('musicStop').addEventListener('click', () => safeStop(ytMusicPlayer, config.ytMusicPlaylistId, 'musicNowPlaying'));
             document.getElementById('musicNext').addEventListener('click', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
             document.getElementById('musicReshuffle').addEventListener('click', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
 
@@ -1198,7 +1239,6 @@
             };
             bindIf('videoPrev', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
             bindIf('videoPlay', () => safeTogglePlay(ytVideoPlayer));
-            bindIf('videoStop', () => safeStop(ytVideoPlayer, config.ytVideoPlaylistId, 'videoNowPlaying'));
             bindIf('videoNext', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
             bindIf('videoReshuffle', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
 
@@ -1418,34 +1458,12 @@
                 console.warn('NZTA alerts failed', e); hadError = true;
             }
 
-            // 2) HKO warnings (tc)
+            // 2) MetService CAP alerts (RSS + Atom fallback, include area)
             try {
-                const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc';
-                const resp = await fetch(url, { cache: 'no-store' });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data && data.details && Array.isArray(data.details) && data.details.length) {
-                        const texts = data.details.map(d => (d.warningStatement || d.warningName || d.type || '')).filter(Boolean);
-                        pushItems('HKO', texts, 6);
-                    }
-                }
-            } catch (e) {
-                console.warn('HKO warnsum failed', e); hadError = true;
-            }
-
-            // 3) MetService CAP alerts (RSS + Atom fallback)
-            try {
-                const items = await fetchRss('https://alerts.metservice.com/cap/rss', 8);
-                const texts = items.map(it => it.title).filter(Boolean);
+                const texts = await fetchMetServiceCap(8);
                 pushItems('MetService', texts, 6);
-            } catch (e1) {
-                try {
-                    const items = await fetchRss('https://alerts.metservice.com/cap/atom', 8);
-                    const texts = items.map(it => it.title).filter(Boolean);
-                    pushItems('MetService', texts, 6);
-                } catch (e2) {
-                    console.warn('MetService feed failed', e2); hadError = true;
-                }
+            } catch (e) {
+                console.warn('MetService feed failed', e); hadError = true;
             }
 
             // 4) Civil Defence RSS
@@ -1465,15 +1483,6 @@
                 pushItems('Awaikato', texts, 3);
             } catch (e) {
                 console.warn('Awaikato feed failed', e); hadError = true;
-            }
-
-// 5) World headlines (CNA international)
-            try {
-                const items = await fetchRss('https://feeds.feedburner.com/rsscna/intworld', 8);
-                const texts = items.map(it => it.title).filter(Boolean);
-                pushItems('世界', texts, 4);
-            } catch (e) {
-                console.warn('World feed failed', e); hadError = true;
             }
 
             const el = document.getElementById('alertsContent');
