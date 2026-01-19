@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v5.0.7</title>
+    <title>Display Panel - v5.0.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -28,15 +28,26 @@
             flex-direction: column;
         }
         
-        /* Landscape-optimized Grid */
+        /* Dynamic Grid - Adjusts based on big screen settings */
         .grid-container {
             display: grid;
             gap: 0.75rem;
             height: 100vh;
             padding: 0.75rem;
             grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(6, 1fr);
+            transition: all 0.3s ease;
         }
+        
+        /* Default layout (no big screen) - 6 rows */
+        .grid-container.no-bigscreen {
+            grid-template-rows: auto auto auto auto auto auto;
+        }
+        
+        /* With big screen - 7 rows (adds row for media) */
+        .grid-container.has-bigscreen {
+            grid-template-rows: auto auto auto minmax(200px, 1fr) auto auto auto;
+        }
+        
         /* Clock */
         .clock-face {
             width: 72px; height: 72px;
@@ -44,11 +55,8 @@
             background: radial-gradient(circle, #1e293b, #0f172a);
             border: 2px solid rgba(148, 163, 184, 0.3);
             position: relative;
-            z-index: 0;
         }
-        
-        #upcomingReminders { position: relative; z-index: 1; }
-.clock-hand {
+        .clock-hand {
             position: absolute;
             bottom: 50%;
             left: 50%;
@@ -81,9 +89,10 @@
             white-space: nowrap;
             padding-left: 100%;
         }
-        .news-ticker-content { animation: scroll-left 104s linear infinite; }
-        .alerts-ticker-content { animation: scroll-left 50s linear infinite; }
-        .stock-ticker-content { animation: scroll-left 35s linear infinite; }
+        .news-ticker-1 { animation: scroll-left 120s linear infinite; }
+        .news-ticker-2 { animation: scroll-left 90s linear infinite; }
+        .news-ticker-3 { animation: scroll-left 75s linear infinite; }
+        .stock-ticker { animation: scroll-left 35s linear infinite; }
         @keyframes scroll-left {
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
@@ -92,7 +101,7 @@
             display: inline-block;
             margin-right: 3rem;
             padding: 0 0.5rem;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
         .ticker-item::before {
             content: '●';
@@ -100,44 +109,30 @@
             margin-right: 0.75rem;
         }
         
-        /* Alerts */
-        @keyframes alert-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        .stock-alert {
-            animation: alert-pulse 1.5s ease-in-out infinite;
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-        }
-
-        /* Media (YouTube) */
-        .yt-frame {
+        /* Media Players */
+        .media-player {
             width: 100%;
-            height: 120px;
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(148, 163, 184, 0.25);
+            height: 100%;
             border-radius: 0.5rem;
             overflow: hidden;
+            background: #000;
         }
-        .yt-frame-video { height: 320px; }
-        /* music player: keep iframe alive but effectively invisible */
-        .yt-frame-music { height: 1px; opacity: 0.02; pointer-events: none; }
-        .yt-player { width: 100%; height: 100%; }
         .media-btn {
-            padding: 0.35rem 0.55rem;
+            padding: 0.4rem 0.6rem;
             border-radius: 0.5rem;
             background: rgba(30, 41, 59, 0.85);
             border: 1px solid rgba(148, 163, 184, 0.25);
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         .media-btn:hover { background: rgba(51, 65, 85, 0.9); }
         
         /* Settings */
         .settings-panel {
             position: fixed;
-            top: 0; right: -550px;
-            width: 550px;
+            top: 0; right: -650px;
+            width: 650px;
             height: 100vh;
             background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(20px);
@@ -165,7 +160,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* Bible & Calendar */
+        /* Calendar & Bible */
         .bible-verse {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
             border-left: 3px solid #3b82f6;
@@ -182,18 +177,11 @@
             margin-bottom: 0.5rem;
             font-size: 0.85rem;
         }
-        .reminder-item {
+        .holiday-event {
             background: rgba(234, 179, 8, 0.1);
             border-left: 2px solid #eab308;
-            padding: 0.4rem;
-            border-radius: 0.5rem;
-            margin-top: 0.3rem;
-            font-size: 0.75rem;
         }
-    
-/* hide-news-sources */
-#newsSourcesSection{display:none!important;}
-</style>
+    </style>
 </head>
 <body>
 
@@ -212,112 +200,68 @@
         </div>
         
         <div class="space-y-4 text-sm">
-<!-- Calendar (方案A: Apps Script Web App) -->
-            <div>
-                <h3 class="font-semibold mb-2 text-green-400">📅 日曆（方案A）</h3>
-                <p class="text-xs text-slate-400 mb-2">用 Google Apps Script Web App 讀取你已勾選的行事曆（私密亦可）。</p>
-                <div class="space-y-2 ml-4">
-                    <div>
-                        <label class="block text-xs mb-1">Calendar Web App URL</label>
-                        <input type="text" id="calendarWebAppUrl" placeholder="https://script.google.com/macros/s/.../exec"
-                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-xs mb-1">Token（可選）</label>
-                        <input type="text" id="calendarToken" placeholder="留空亦可"
-                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                    </div>
-                    <p class="text-[11px] text-slate-400">未填 URL 會用示範資料。</p>
-                </div>
-            </div>
-
-<!-- API Keys -->
+            <!-- API Keys -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">API Keys</h3>
                 <div class="space-y-2">
                     <div>
-                        <label class="block text-xs mb-1">Weather（Open-Meteo，免 API Key）</label>
-                        <div class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs text-slate-300">已改用 Open‑Meteo：雨量/降雨機率/UV（+1/+4/+12/明日），每 30 分鐘更新</div>
-                    </div>
-                    <div>
-                        <label class="block text-xs mb-1">Stocks API Provider</label>
-                        <select id="stockApiProvider" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                            <option value="auto">Auto（推薦：TwelveData→Finnhub→快取）</option>
-                            <option value="demo">Demo Mode (No API)</option>
-                            <option value="twelvedata">Twelve Data (推薦：可一次取多隻股票)</option>
-                            <option value="finnhub">Finnhub (備用：逐隻股票查詢)</option>
-                        </select>
-                        <p class="text-[11px] text-slate-400 mt-1">推薦：選 Auto。正常用 Twelve Data（可一次取多隻），失敗自動切 Finnhub；仍維持每日 2 次更新＋快取，避免超出免費額度。</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs mb-1">Twelve Data API Key</label>
-                        <input type="text" id="twelveDataKey" value=""
+                        <label class="block text-xs mb-1">Weather (OpenWeatherMap)</label>
+                        <input type="text" id="weatherApiKey" 
                             class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
                     </div>
                     <div>
-                        <label class="block text-xs mb-1">Finnhub API Key</label>
-                        <input type="text" id="finnhubKey" value=""
+                        <label class="block text-xs mb-1">Stocks (TwelveData)</label>
+                        <input type="text" id="twelveDataKey" 
                             class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
                     </div>
-
-                    <div class="mt-3">
-                        <label class="block text-xs mb-1">Stocks Refresh Times (Local Time, 2x/day)</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="time" id="stockRefresh1" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs" value="07:00">
-                            <input type="time" id="stockRefresh2" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs" value="11:00">
-                        </div>
-                        <p class="text-[11px] text-slate-400 mt-1">Panel checks every 5 minutes but only fetches near these times (±5 min), maximum 2 updates per day.</p>
+                    <div>
+                        <label class="block text-xs mb-1">Stocks (Finnhub - Backup)</label>
+                        <input type="text" id="finnhubKey" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
                     </div>
                 </div>
             </div>
             
-            
-            <!-- Media -->
+            <!-- Calendar Settings -->
             <div>
-                <h3 class="font-semibold mb-2 text-blue-400">媒體</h3>
+                <h3 class="font-semibold mb-2 text-blue-400">Google Calendar</h3>
                 <div class="space-y-2">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="ytEnableVideo" class="mr-2">
-                        <span class="text-xs">啟用大屏影片播放（只喺 1600px+ 橫向顯示）</span>
-                    </label>
-                    <p class="text-[11px] text-slate-400">預設關閉：只播放 YouTube 音樂並顯示歌名。</p>
+                    <div>
+                        <label class="block text-xs mb-1">Web App URL</label>
+                        <input type="text" id="calendarWebAppUrl" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
+                            placeholder="https://script.google.com/macros/s/...">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Token</label>
+                        <input type="text" id="calendarToken" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
+                            placeholder="mediapanel">
+                    </div>
                 </div>
             </div>
 
-<!-- News Sources -->
+            <!-- Big Screen Media Settings -->
             <div>
-                <h3 class="font-semibold mb-2 text-blue-400">新聞來源</h3>
-                <p class="text-[11px] text-slate-400">新聞來源已固定（不提供選擇）：InMediaHK、RNZ（中文/國內）、BBC。第二行重要快訊：MetService、Civil Defence、Awaikato、NZTA（Auckland）。</p>
-            </div>
-
-            <!-- Calendar Toggles -->
-            <div>
-                <h3 class="font-semibold mb-2 text-blue-400">Calendar Display</h3>
-                <div class="space-y-1">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="calPersonal" checked class="mr-2">
-                        <span>Personal Events</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="calBirthday" checked class="mr-2">
-                        <span>Birthdays (1 week reminder)</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="calFamily" checked class="mr-2">
-                        <span>Family Events</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="calGame" checked class="mr-2">
-                        <span>Game Events (1 week reminder)</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="calNZ" checked class="mr-2">
-                        <span>NZ Holidays (1 week reminder)</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="calHK" checked class="mr-2">
-                        <span>HK Holidays (1 week reminder)</span>
-                    </label>
+                <h3 class="font-semibold mb-2 text-blue-400">Big Screen Media (Independent Options)</h3>
+                <div class="space-y-3">
+                    <div class="border border-slate-700 rounded p-3 bg-slate-800/30">
+                        <label class="flex items-center mb-2">
+                            <input type="checkbox" id="enableYTVideo" class="mr-2">
+                            <span class="font-semibold">Enable YouTube Video Player</span>
+                        </label>
+                        <input type="text" id="ytVideoPlaylist" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs mt-2"
+                            placeholder="Playlist ID or URL (e.g., PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC)">
+                    </div>
+                    
+                    <div class="border border-slate-700 rounded p-3 bg-slate-800/30">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="enableNewsLive" class="mr-2">
+                            <span class="font-semibold">Enable Now News Live Stream</span>
+                        </label>
+                        <p class="text-xs text-slate-400 mt-1">Shows Now 332 news live broadcast</p>
+                    </div>
                 </div>
             </div>
             
@@ -327,186 +271,122 @@
         </div>
     </div>
 
-    <div class="grid-container" id="mainGrid">
-        <!-- Clock, Date & Reminders -->
-        <div class="glass card" style="grid-column: 1 / span 2; grid-row: 1 / span 2;">
-            <div class="mb-2">
-                <div class="flex items-center gap-3">
-                    <div id="digitalClock" class="text-4xl font-bold">00:00:00</div>
-                    <div class="clock-face clock-face-inline">
-                        <div class="clock-hand hour-hand" id="hourHand"></div>
-                        <div class="clock-hand minute-hand" id="minuteHand"></div>
-                        <div class="clock-hand second-hand" id="secondHand"></div>
-                        <div class="clock-center"></div>
-                    </div>
+    <div class="grid-container no-bigscreen" id="mainGrid">
+        <!-- Row 1: Clock & Date, Weather, Bible -->
+        <div class="glass card" style="grid-column: 1 / 3; grid-row: 1;">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex-1">
+                    <div id="digitalClock" class="text-5xl font-bold">00:00:00</div>
+                    <div id="dateStr" class="text-sm text-slate-400 mt-1">Loading...</div>
+                    <div id="specialDays" class="text-xs text-yellow-400 mt-1"></div>
                 </div>
-                <div id="dateStr" class="text-sm text-slate-400 mt-1">Loading...</div>
-            </div>
-            <div id="upcomingReminders" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
-                <div class="text-slate-400 text-center mt-4">Loading reminders...</div>
+                <div class="clock-face">
+                    <div class="clock-hand hour-hand" id="hourHand"></div>
+                    <div class="clock-hand minute-hand" id="minuteHand"></div>
+                    <div class="clock-hand second-hand" id="secondHand"></div>
+                    <div class="clock-center"></div>
+                </div>
             </div>
         </div>
 
-        <!-- Weather -->
-        <div class="glass card" style="grid-column: 3 / span 2; grid-row: 1 / span 4;">
+        <div class="glass card" style="grid-column: 3 / 5; grid-row: 1;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-cloud-sun mr-1"></i>Weather</h3>
             <div id="weatherContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
                 <div class="loading"></div>
             </div>
         </div>
 
-        <!-- Bible Verse -->
-        <div class="glass card" style="grid-column: 5 / span 2; grid-row: 1 / span 2;">
+        <div class="glass card" style="grid-column: 5 / 7; grid-row: 1;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-book-bible mr-1"></i>今日金句</h3>
             <div id="bibleVerse" class="bible-verse flex-1 overflow-y-auto custom-scrollbar">
                 <div class="loading"></div>
             </div>
         </div>
 
-        <!-- Calendar -->
-        <div class="glass card" style="grid-column: 1 / span 2; grid-row: 3 / span 2;">
+        <!-- Row 2: Schedule & Currencies -->
+        <div class="glass card" style="grid-column: 1 / 4; grid-row: 2;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-calendar-alt mr-1"></i>Schedule</h3>
             <div id="calendarContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-1">
-                <p class="text-slate-400">Loading...</p>
+                <p class="text-slate-400">Loading calendar...</p>
             </div>
         </div>
 
-        <!-- Currencies + Music (Combined) -->
-        <div class="glass card" style="grid-column: 5 / span 2; grid-row: 3 / span 2;">
-            <div class="flex items-center justify-between mb-2">
-                
-            </div>
-
-            <!-- Currencies -->
-            <div class="mb-3">
-                <div id="currencyList" class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="loading"></div>
-                </div>
-            </div>
-
-            <!-- YouTube Music (audio controls, minimal UI) -->
-            <div class="mt-auto">
-                
-                <div class="yt-frame yt-frame-music" style="height:1px; opacity:0; pointer-events:none;">
-                    <div id="ytMusicPlayer" class="yt-player"></div>
-                </div>
-                <div id="musicNowPlaying" class="text-xs text-slate-200 truncate">未播放</div>
-                <div class="mt-2 flex flex-wrap gap-1">
-                    <button class="media-btn" id="musicPrev" title="上一首">⏮</button>
-                    <button class="media-btn" id="musicPlay" title="播放/暫停">⏯</button>
-<button class="media-btn" id="musicNext" title="下一首">⏭</button>
-                    <button class="media-btn" id="musicReshuffle" title="重排+重播/更新">🔀</button>
-                </div>
+        <div class="glass card" style="grid-column: 4 / 7; grid-row: 2;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-exchange-alt mr-1"></i>Currencies</h3>
+            <div id="currencyList" class="flex-1 text-xs">
+                <div class="loading"></div>
             </div>
         </div>
 
-
-        <!-- Video Player (大屏；可於設定開關) -->
-        <div id="videoCard" class="glass card hidden" style="grid-column: 3 / span 4; grid-row: 1 / span 4;">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-semibold"><i class="fas fa-film mr-1"></i>影片播放（大屏）</h3>
-                <button id="videoHideBtn" class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] hover:bg-slate-700">隱藏</button>
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-2">
-                <div class="yt-frame yt-frame-video">
-                    <div id="ytVideoPlayer" class="yt-player"></div>
-                </div>
-                <div id="videoNowPlaying" class="text-xs text-slate-200 truncate">未播放</div>
-                <div class="mt-1 flex flex-wrap gap-1">
-                    <button class="media-btn" id="videoPrev">Prev</button>
-                    <button class="media-btn" id="videoPlay">Play / Pause</button>
-<button class="media-btn" id="videoNext">Next</button>
-                    <button class="media-btn" id="videoReshuffle">Reshuffle / 更新</button>
-                </div>
-            </div>
-        </div>
-<!-- News Ticker (two lines) -->
-        <div class="glass card" style="grid-column: 1 / span 6; grid-row: 5;">
-<div class="ticker mb-2">
-                <div class="ticker-content news-ticker-content" id="newsContent">
-                    <span class="ticker-item">Loading...</span>
-                </div>
-            </div>
-<div class="ticker">
-                <div class="ticker-content alerts-ticker-content" id="alertsContent">
-                    <span class="ticker-item">Loading...</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Stocks Ticker -->
-        <div class="glass card" style="grid-column: 1 / span 6; grid-row: 6;">
-<div class="ticker">
-                <div class="ticker-content stock-ticker-content" id="stocksContent">
+        <!-- Row 3: My Stocks - ALWAYS visible -->
+        <div class="glass card" style="grid-column: 1 / 7; grid-row: 3;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-chart-line mr-1"></i>My Stocks (買入價)</h3>
+            <div class="ticker">
+                <div class="ticker-content stock-ticker" id="stocksContent">
                     <span class="ticker-item">Loading stocks...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: Big Screen Media - Hidden by default, shown when enabled -->
+        <div id="bigScreenSection" class="glass card" style="grid-column: 1 / 7; grid-row: 4; display: none;">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-semibold">
+                    <i class="fas fa-video mr-1"></i>
+                    <span id="bigScreenTitle">Video / Live Stream</span>
+                </h3>
+                <div class="flex gap-2">
+                    <button class="media-btn" onclick="controlBigScreen('play')"><i class="fas fa-play"></i></button>
+                    <button class="media-btn" onclick="controlBigScreen('pause')"><i class="fas fa-pause"></i></button>
+                </div>
+            </div>
+            <div class="media-player" style="height: calc(100% - 40px);">
+                <iframe id="bigScreenPlayer" class="w-full h-full" frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <!-- Row 5: News Line 1 - Chinese -->
+        <div class="glass card" id="news1Card" style="grid-column: 1 / 7; grid-row: 5;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-newspaper mr-1"></i>中文新聞</h3>
+            <div class="ticker">
+                <div class="ticker-content news-ticker-1" id="news1Content">
+                    <span class="ticker-item">Loading news...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 6: News Line 2 - International -->
+        <div class="glass card" id="news2Card" style="grid-column: 1 / 7; grid-row: 6;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-globe mr-1"></i>International News</h3>
+            <div class="ticker">
+                <div class="ticker-content news-ticker-2" id="news2Content">
+                    <span class="ticker-item">Loading news...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 7: News Line 3 - NZTA Traffic (only when big screen disabled) -->
+        <div class="glass card" id="news3Card" style="grid-column: 1 / 7; grid-row: 7;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-traffic-light mr-1"></i>Traffic & Alerts</h3>
+            <div class="ticker">
+                <div class="ticker-content news-ticker-3" id="news3Content">
+                    <span class="ticker-item">Loading alerts...</span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-
-        // Safe storage: file:// 或某些瀏覽器設定下，localStorage 可能拋 SecurityError
-        const SafeStore = {
-            get(key){ try { return localStorage.getItem(key); } catch(e){ return null; } },
-            set(key, val){ try { localStorage.setItem(key, val); } catch(e){} }
-        };
-
-        
-        function getEl(id){ return document.getElementById(id) || null; }
-        function setStatus(id, value){ const el=getEl(id); if(el) el.innerHTML=value; }
-// Configuration
+        // Configuration
         const config = {
-            // APIs
-            weatherApiKey: '',
-            // WARNING: Do NOT commit real API keys to public GitHub.
-            // Put keys in Settings in production, or keep this file private.
+            weatherApiKey: '4d4ff0180678e887714547a90289db00',
             twelveDataKey: '',
             finnhubKey: '',
-            stockApiProvider: 'auto',
-
-            // YouTube
-            ytMusicPlaylistId: 'PLK1NiZBn99vRvPpps7r9wMB0KLUacyRKT',
-            ytVideoPlaylistId: 'PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC',
-            ytVolume: 80,
-            ytShowVideo: false,
-            ytEnableVideo: false,
-            // Calendar WebApp (方案 A)
-            calendarWebAppUrl: '',
-            calendarWebAppToken: '',
-            calendarIds: {
-                primary: 'ivantheservant@gmail.com',
-                personal2: '2ldu0nsu2v4h2jctpil9ph9gso@group.calendar.google.com',
-                family1: 'family07947208283780325176@group.calendar.google.com',
-                family2: 'family08138198902160461554@group.calendar.google.com',
-                luciaivan: 'luciaivan@gmail.com',
-                game: 'a0no5gmq2ko8q2koqm2qptcflc@group.calendar.google.com',
-                nzHolidays: 'en.new_zealand#holiday@group.v.calendar.google.com',
-                hkHolidays: 'en.hong_kong#holiday@group.v.calendar.google.com'
-            },
-// Stocks refresh (local time, 2x/day)
-            stockRefreshTimes: ['07:00', '11:00'],
-            
-            // Google Calendar (NEW)
-            useGoogleCalendar: false,
-            gcalApiKey: '',
-            nzCalendarId: 'en.new_zealand#holiday@group.v.calendar.google.com',
-            hkCalendarId: 'en.hong_kong#holiday@group.v.calendar.google.com',
-            personalCalendarId: '',
-            
-            // Photo Memories (NEW)
-            enablePhotos: false,
-            photoSource: 'demo', // 'demo', 'gdrive', 'onedrive'
-            gdriveFolderId: '',
-            onedrivePath: '',
-            photoInterval: 300000, // 5 minutes
-            
-            // Existing config
-            weatherLocations: [
-                { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
-                { label: 'Botany Downs', lat: -36.9167, lon: 174.9110 },
-                { label: 'Hong Kong', lat: 22.3193, lon: 114.1694 }
-            ],
+            calendarWebAppUrl: 'https://script.google.com/macros/s/AKfycbzmf7RncKyS0plliw8_qdlssixC1kl2bGvj-hau8Nuj7DnIW-naUirBzrToFwPi7Ka0ZQ/exec',
+            calendarToken: 'mediapanel',
+            weatherLocations: ['Auckland,NZ', 'Botany Downs,NZ', 'Hong Kong,HK'],
             stocks: [
                 { symbol: 'AAPL', buyPrice: 613 },
                 { symbol: 'AVAV', buyPrice: 240 },
@@ -525,241 +405,102 @@
                 { pair: 'NZD-USD', alert: 0.55, below: true },
                 { pair: 'NZD-HKD', alert: 4.5, below: true }
             ],
-            calendar: {
-                personal: true,
-                birthday: true,
-                family: true,
-                game: true,
-                nz: true,
-                hk: true
-            },
-            newsFeeds: { fixed: true }
-        };
-
-        // Fixed News Sources (v5.0.7)
-        const FIXED_NEWS_LINE1 = [
-            { key: 'inmediahk', name: 'InMediaHK', url: 'https://www.inmediahk.net/rss.xml' },
-            { key: 'rnzchinese', name: 'RNZ Chinese', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
-            { key: 'rnzcountry', name: 'RNZ Country', url: 'https://www.rnz.co.nz/rss/country.xml' },
-            { key: 'bbc', name: 'BBC', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' }
-        ];
-
-        const FIXED_NEWS_LINE2 = [
-            { key: 'metservice_rss', name: 'MetService CAP RSS', url: 'https://alerts.metservice.com/cap/rss', type: 'rss' },
-            { key: 'metservice_atom', name: 'MetService CAP Atom', url: 'https://alerts.metservice.com/cap/atom', type: 'atom' },
-            { key: 'civildefence', name: 'Civil Defence', url: 'https://www.civildefence.govt.nz/home/rss', type: 'rss' },
-            { key: 'awaikato', name: 'Awaikato', url: 'https://media.rss.com/awaikatothing/feed.xml', type: 'rss' }
-        ];
-;
-
-	        // Timers / state
-	        let photoTimer = null;
-        let currentPhotoIndex = 0;
-        let todayPhotos = [];
-
-
-        // Hardcoded holidays (fallback when Google Calendar not used)
-        const holidays2026 = {
-            nz: [
-                { date: '2026-01-26', name: 'Auckland Anniversary' },
-                { date: '2026-02-06', name: 'Waitangi Day' },
-                { date: '2026-04-10', name: 'Good Friday' },
-                { date: '2026-04-13', name: 'Easter Monday' },
-                { date: '2026-04-27', name: 'ANZAC Day (obs)' },
-                { date: '2026-06-01', name: 'Queen\'s Birthday' },
-                { date: '2026-10-26', name: 'Labour Day' },
-                { date: '2026-12-25', name: 'Christmas' },
-                { date: '2026-12-26', name: 'Boxing Day' }
+            stockRefreshTimes: ['12:00', '17:00'],
+            enableYTVideo: false,
+            enableNewsLive: false,
+            ytVideoPlaylist: 'PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC',
+            news1Feeds: [
+                { name: '明報即時', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
+                { name: 'RTHK本地', url: 'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' },
+                { name: '明報地產', url: 'https://news.mingpao.com/rss/ins/s00004.xml' },
+                { name: '明報經濟', url: 'https://news.mingpao.com/rss/ins/s00007.xml' }
             ],
-            hk: [
-                { date: '2026-01-29', name: '農曆新年' },
-                { date: '2026-01-30', name: '農曆新年' },
-                { date: '2026-01-31', name: '農曆新年' },
-                { date: '2026-04-03', name: '清明節' },
-                { date: '2026-04-10', name: 'Good Friday' },
-                { date: '2026-04-13', name: 'Easter Monday' },
-                { date: '2026-05-01', name: '勞動節' },
-                { date: '2026-05-25', name: '佛誕' },
-                { date: '2026-06-25', name: '端午節' },
-                { date: '2026-07-01', name: '香港特區成立紀念日' },
-                { date: '2026-10-01', name: '國慶日' },
-                { date: '2026-10-02', name: '中秋節翌日' },
-                { date: '2026-10-26', name: '重陽節' },
-                { date: '2026-12-25', name: 'Christmas' },
-                { date: '2026-12-26', name: 'Boxing Day' }
+            news2Feeds: [
+                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+                { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
+                { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
+                { name: 'Reuters', url: 'https://www.reutersagency.com/feed/' },
+                { name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' }
+            ],
+            news3Feeds: [
+                { name: 'NZTA', url: 'https://www.nzta.govt.nz/traffic-and-travel-information/auckland-traffic/rss/' }
             ]
         };
 
-        // Demo photos (base64 encoded 1x1 colored squares for demo)
-        const demoPhotos = [
-            { 
-                url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%233b82f6" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="24">2023 Photo</text></svg>',
-                filename: 'family_gathering_2023.jpg',
-                year: 2023
-            },
-            {
-                url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%2310b981" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="24">2022 Photo</text></svg>',
-                filename: 'birthday_celebration_2022.jpg',
-                year: 2022
-            },
-            {
-                url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect fill="%23f59e0b" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="24">2021 Photo</text></svg>',
-                filename: 'vacation_trip_2021.jpg',
-                year: 2021
-            }
-        ];
+        let stockCache = null;
 
-        function getCorsProxy(url) {
-            // Launch build: always use a CORS-friendly proxy for RSS fetching (no browser extension required).
-            return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        // Helper functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
+        function todayKey(d) {
+            return d.toISOString().slice(0, 10);
+        }
+
+        function isNearTime(targetTime, now, windowMinutes) {
+            const [h, m] = targetTime.split(':').map(Number);
+            const target = new Date(now);
+            target.setHours(h, m, 0, 0);
+            const diff = Math.abs(now - target) / 60000;
+            return diff <= windowMinutes;
+        }
+
+        // Settings
         function loadSavedSettings() {
-// News feeds migration (older versions)
-            if (!config.newsFeeds) config.newsFeeds = {};
-            // Old keys -> keep as commented fallback only
-            if ('ltn' in config.newsFeeds || 'scmp' in config.newsFeeds || 'bbc' in config.newsFeeds || 'demo' in config.newsFeeds) {
-                // do nothing; UI no longer exposes these
-            }
-            // New defaults
-            if (!('inmediahk' in config.newsFeeds) && !('rnzchinese' in config.newsFeeds) && !('rnzcountry' in config.newsFeeds) && !('cnaworld' in config.newsFeeds)) {
-                config.newsFeeds.inmediahk = true;
-                config.newsFeeds.rnzchinese = true;
-                config.newsFeeds.rnzcountry = true;
-                            }
-
-            const saved = SafeStore.get('panelConfig');
+            const saved = localStorage.getItem('panelConfig');
             if (saved) {
-                const savedConfig = JSON.parse(saved);
-                Object.assign(config, savedConfig);
-            // If user previously saved demo provider but keys exist, default to auto
-            try {
-                const p = (config.stockApiProvider || '').toLowerCase();
-                const hasKeys = !!(config.twelveDataKey && String(config.twelveDataKey).trim()) || !!(config.finnhubKey && String(config.finnhubKey).trim());
-                if (hasKeys && (p === 'demo' || p === 'demomode' || p === 'demo mode (no api)')) {
-                    config.stockApiProvider = 'auto';
+                try {
+                    const data = JSON.parse(saved);
+                    Object.assign(config, data);
+                } catch (e) {
+                    console.error('Failed to load settings:', e);
                 }
-            } catch {}
-
             }
-            // Migration: older versions stored weatherLocations as strings
-            if (Array.isArray(config.weatherLocations) && config.weatherLocations.length && typeof config.weatherLocations[0] === 'string') {
-                config.weatherLocations = [
-                    { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
-                    { label: 'Botany Downs', lat: -36.9167, lon: 174.9110 },
-                    { label: 'Hong Kong', lat: 22.3193, lon: 114.1694 }
-                ];
+            
+            const stockData = localStorage.getItem('stockCache');
+            if (stockData) {
+                try {
+                    stockCache = JSON.parse(stockData);
+                } catch (e) {
+                    console.error('Failed to load stock cache:', e);
+                }
             }
-
-            // Ensure at least one news feed is enabled
-            if (config.newsFeeds && !config.newsFeeds.demo && !config.newsFeeds.ltn && !config.newsFeeds.scmp && !config.newsFeeds.bbc) {
-                config.newsFeeds.demo = true;
-            }
-
-            updatePhotoLayout();
-        }
-
-        function toggleSettings() {
-            const panel = document.getElementById('settingsPanel');
-            panel.classList.toggle('open');
-            if (panel.classList.contains('open')) {
-                populateSettingsUI();
-            }
-        }
-
-        function populateSettingsUI() {
-            // APIs (公開 Launch 版：Weather 用 Open‑Meteo，唔需要 key)
-            const td = document.getElementById('twelveDataKey'); if (td) td.value = config.twelveDataKey || '';
-            const fh = document.getElementById('finnhubKey'); if (fh) fh.value = config.finnhubKey || '';
-            const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'auto';
-            // Media
-            const ev = document.getElementById('ytEnableVideo'); if (ev) ev.checked = !!config.ytEnableVideo;
-
-
-            // Stock schedule
-            const r1 = document.getElementById('stockRefresh1'); if (r1) r1.value = (config.stockRefreshTimes && config.stockRefreshTimes[0]) ? config.stockRefreshTimes[0] : '07:00';
-            const r2 = document.getElementById('stockRefresh2'); if (r2) r2.value = (config.stockRefreshTimes && config.stockRefreshTimes[1]) ? config.stockRefreshTimes[1] : '11:00';
-
-            // Calendar (方案A)
-            // News feeds (v5)
-            const n1 = document.getElementById('newsInmediaHK'); if (n1) n1.checked = !!config.newsFeeds.inmediahk;
-            const n2 = document.getElementById('newsRNZChinese'); if (n2) n2.checked = !!config.newsFeeds.rnzchinese;
-            const n3 = document.getElementById('newsRNZCountry'); if (n3) n3.checked = !!config.newsFeeds.rnzcountry;
-
-            const url = document.getElementById('calendarWebAppUrl'); if (url) url.value = config.calendarWebAppUrl || '';
-            const tok = document.getElementById('calendarToken'); if (tok) tok.value = config.calendarToken || '';
-
-            // Calendar toggles
-            const cp = document.getElementById('calPersonal'); if (cp) cp.checked = !!config.calendar.personal;
-            const cb = document.getElementById('calBirthday'); if (cb) cb.checked = !!config.calendar.birthday;
-            const cf = document.getElementById('calFamily'); if (cf) cf.checked = !!config.calendar.family;
-            const cg = document.getElementById('calGame'); if (cg) cg.checked = !!config.calendar.game;
-            const cn = document.getElementById('calNZ'); if (cn) cn.checked = !!config.calendar.nz;
-            const ch = document.getElementById('calHK'); if (ch) ch.checked = !!config.calendar.hk;
-
-            // News
         }
 
         function saveSettings() {
-            // APIs
-            const td = document.getElementById('twelveDataKey'); if (td) config.twelveDataKey = td.value;
-            const fh = document.getElementById('finnhubKey'); if (fh) config.finnhubKey = fh.value;
-            const prov = document.getElementById('stockApiProvider'); if (prov) config.stockApiProvider = prov.value;
-            // Media
-            const ev = document.getElementById('ytEnableVideo'); if (ev) config.ytEnableVideo = ev.checked;
-
-
-            // Stock schedule
-            const r1 = document.getElementById('stockRefresh1');
-            const r2 = document.getElementById('stockRefresh2');
-            config.stockRefreshTimes = [
-                (r1 && r1.value) ? r1.value : '07:00',
-                (r2 && r2.value) ? r2.value : '11:00'
-            ];
-
-            // Calendar (方案A)
-            const url = document.getElementById('calendarWebAppUrl');
-            const tok = document.getElementById('calendarToken');
-            config.calendarWebAppUrl = (url && url.value) ? url.value.trim() : '';
-            config.calendarToken = (tok && tok.value) ? tok.value.trim() : '';
-
+            config.weatherApiKey = document.getElementById('weatherApiKey').value;
+            config.twelveDataKey = document.getElementById('twelveDataKey').value;
+            config.finnhubKey = document.getElementById('finnhubKey').value;
+            config.calendarWebAppUrl = document.getElementById('calendarWebAppUrl').value;
+            config.calendarToken = document.getElementById('calendarToken').value;
+            config.enableYTVideo = document.getElementById('enableYTVideo').checked;
+            config.enableNewsLive = document.getElementById('enableNewsLive').checked;
+            config.ytVideoPlaylist = document.getElementById('ytVideoPlaylist').value;
             
-
-            // News feeds (v5)
-            config.newsFeeds = config.newsFeeds || {};
-            const n1 = document.getElementById('newsInmediaHK'); if (n1) config.newsFeeds.inmediahk = !!n1.checked;
-            const n2 = document.getElementById('newsRNZChinese'); if (n2) config.newsFeeds.rnzchinese = !!n2.checked;
-            const n3 = document.getElementById('newsRNZCountry'); if (n3) config.newsFeeds.rnzcountry = !!n3.checked;
-// Calendar toggles
-            const cp = document.getElementById('calPersonal'); if (cp) config.calendar.personal = cp.checked;
-            const cb = document.getElementById('calBirthday'); if (cb) config.calendar.birthday = cb.checked;
-            const cf = document.getElementById('calFamily'); if (cf) config.calendar.family = cf.checked;
-            const cg = document.getElementById('calGame'); if (cg) config.calendar.game = cg.checked;
-            const cn = document.getElementById('calNZ'); if (cn) config.calendar.nz = cn.checked;
-            const ch = document.getElementById('calHK'); if (ch) config.calendar.hk = ch.checked;
-
-            // News
-
-            SafeStore.set('panelConfig', JSON.stringify(config));
+            localStorage.setItem('panelConfig', JSON.stringify(config));
             toggleSettings();
-            fetchAllData();
-            maybeRefreshStocks(true);
+            location.reload();
         }
 
-        function updatePhotoLayout() {
-            // Launch 版：已移除相片區（之後再加）
-            return;
+        function populateSettingsUI() {
+            document.getElementById('weatherApiKey').value = config.weatherApiKey || '';
+            document.getElementById('twelveDataKey').value = config.twelveDataKey || '';
+            document.getElementById('finnhubKey').value = config.finnhubKey || '';
+            document.getElementById('calendarWebAppUrl').value = config.calendarWebAppUrl || '';
+            document.getElementById('calendarToken').value = config.calendarToken || '';
+            document.getElementById('enableYTVideo').checked = config.enableYTVideo || false;
+            document.getElementById('enableNewsLive').checked = config.enableNewsLive || false;
+            document.getElementById('ytVideoPlaylist').value = config.ytVideoPlaylist || '';
         }
 
-        function updatePhotoLayout() {
-            const grid = document.getElementById('mainGrid');
-            if (config.enablePhotos && window.innerWidth >= 1600) {
-                grid.classList.add('with-photos');
-            } else {
-                grid.classList.remove('with-photos');
-            }
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('open');
         }
 
+        // Clock
         function updateDigitalClock() {
             const now = new Date();
             document.getElementById('digitalClock').innerText = now.toLocaleTimeString('en-GB', { hour12: false });
@@ -776,325 +517,264 @@
             document.getElementById('hourHand').style.transform = `rotate(${((h + m / 60) / 12) * 360}deg)`;
         }
 
-        // Fetch holidays from Google Calendar
-        async function fetchGoogleCalendarHolidays() {
-            if (!config.useGoogleCalendar || !config.gcalApiKey) {
-                return null;
-            }
-
-            try {
-                const now = new Date();
-                const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-                const timeMin = now.toISOString();
-                const timeMax = oneWeekLater.toISOString();
-
-                let allEvents = [];
-
-                // Fetch NZ holidays
-                if (config.calendar.nz && config.nzCalendarId) {
-                    const nzUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.nzCalendarId)}/events?key=${config.gcalApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
-                    const nzRes = await fetch(getCorsProxy(nzUrl));
-                    const nzData = await nzRes.json();
-                    if (nzData.items) {
-                        nzData.items.forEach(item => {
-                            allEvents.push({
-                                date: item.start.date || item.start.dateTime.split('T')[0],
-                                name: `🇳🇿 ${item.summary}`,
-                                type: 'holiday'
-                            });
-                        });
-                    }
-                }
-
-                // Fetch HK holidays
-                if (config.calendar.hk && config.hkCalendarId) {
-                    const hkUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.hkCalendarId)}/events?key=${config.gcalApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
-                    const hkRes = await fetch(getCorsProxy(hkUrl));
-                    const hkData = await hkRes.json();
-                    if (hkData.items) {
-                        hkData.items.forEach(item => {
-                            allEvents.push({
-                                date: item.start.date || item.start.dateTime.split('T')[0],
-                                name: `🇭🇰 ${item.summary}`,
-                                type: 'holiday'
-                            });
-                        });
-                    }
-                }
-
-                // Fetch personal calendar (birthdays, events)
-                if (config.personalCalendarId) {
-                    const perUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.personalCalendarId)}/events?key=${config.gcalApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
-                    const perRes = await fetch(getCorsProxy(perUrl));
-                    const perData = await perRes.json();
-                    if (perData.items) {
-                        perData.items.forEach(item => {
-                            let icon = '📅';
-                            if (item.summary.toLowerCase().includes('birthday')) icon = '🎂';
-                            if (item.summary.toLowerCase().includes('game')) icon = '🎮';
-                            
-                            allEvents.push({
-                                date: item.start.date || item.start.dateTime.split('T')[0],
-                                name: `${icon} ${item.summary}`,
-                                type: 'personal'
-                            });
-                        });
-                    }
-                }
-
-                return allEvents;
-            } catch (error) {
-                console.error('Google Calendar error:', error);
-                return null;
-            }
-        }
-
-        async function updateReminders() {
-            const now = new Date();
-            const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            let reminders = [];
-
-            // Try Google Calendar first
-            if (config.useGoogleCalendar) {
-                const gcalEvents = await fetchGoogleCalendarHolidays();
-                if (gcalEvents) {
-                    gcalEvents.forEach(event => {
-                        const eventDate = new Date(event.date);
-                        if (eventDate >= now && eventDate <= oneWeek) {
-                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                            reminders.push({ text: event.name, days: daysUntil, date: event.date });
-                        }
-                    });
-                }
-            }
-
-            // Fallback to hardcoded holidays if Google Calendar not used or failed
-            if (reminders.length === 0 || !config.useGoogleCalendar) {
-                if (config.calendar.nz) {
-                    holidays2026.nz.forEach(h => {
-                        const eventDate = new Date(h.date);
-                        if (eventDate >= now && eventDate <= oneWeek) {
-                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                            reminders.push({ text: `🇳🇿 ${h.name}`, days: daysUntil, date: h.date });
-                        }
-                    });
-                }
-
-                if (config.calendar.hk) {
-                    holidays2026.hk.forEach(h => {
-                        const eventDate = new Date(h.date);
-                        if (eventDate >= now && eventDate <= oneWeek) {
-                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                            reminders.push({ text: `🇭🇰 ${h.name}`, days: daysUntil, date: h.date });
-                        }
-                    });
-                }
-            }
-
-            reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
-
+        // Weather
+        async function fetchWeather() {
+            if (!config.weatherApiKey) return;
+            
             let html = '';
-            if (reminders.length === 0) {
-                html = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
-            } else {
-                reminders.forEach(r => {
-                    const dayText = r.days === 0 ? 'Today' : r.days === 1 ? 'Tomorrow' : `In ${r.days} days`;
-                    html += `<div class="reminder-item">
-                        <div class="flex justify-between">
-                            <span>${r.text}</span>
-                            <span class="text-yellow-400">${dayText}</span>
+            
+            for (const loc of config.weatherLocations) {
+                try {
+                    const curr = await fetch(
+                        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
+                    );
+                    const currData = await curr.json();
+                    
+                    if (currData.cod !== 200) continue;
+                    
+                    const forecast = await fetch(
+                        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
+                    );
+                    const fcData = await forecast.json();
+                    
+                    const uv = await fetch(
+                        `https://api.openweathermap.org/data/2.5/uvi?lat=${currData.coord.lat}&lon=${currData.coord.lon}&appid=${config.weatherApiKey}`
+                    );
+                    const uvData = await uv.json();
+                    
+                    const next24h = fcData.list?.slice(0, 8) || [];
+                    const rainForecast = next24h.map(f => {
+                        const time = new Date(f.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                        const rain = f.rain ? f.rain['3h'] || 0 : 0;
+                        const pop = Math.round((f.pop || 0) * 100);
+                        return `${time}: ${pop}% (${rain.toFixed(1)}mm)`;
+                    }).join(', ');
+                    
+                    const updateTime = new Date(currData.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    
+                    html += `
+                        <div class="mb-3 pb-2 border-b border-slate-700 last:border-0">
+                            <div class="font-semibold">${currData.name}</div>
+                            <div class="flex justify-between items-center my-1">
+                                <span class="text-2xl font-bold">${Math.round(currData.main.temp)}°C</span>
+                                <span class="capitalize">${currData.weather[0].description}</span>
+                            </div>
+                            <div class="text-xs space-y-0.5 text-slate-300">
+                                <div>⏰ ${updateTime}</div>
+                                <div>☀️ UV: ${uvData.value?.toFixed(1) || 'N/A'}</div>
+                                <div>💧 24h: ${rainForecast || 'No rain'}</div>
+                            </div>
                         </div>
-                    </div>`;
-                });
+                    `;
+                } catch (error) {
+                    console.error(`Weather error: ${loc}`, error);
+                }
             }
-
-            document.getElementById('upcomingReminders').innerHTML = html;
+            
+            document.getElementById('weatherContainer').innerHTML = html || '<p class="text-red-400">Weather unavailable</p>';
         }
 
+        // Stock Functions
+        function renderStocks(quotes) {
+            const el = document.getElementById('stocksContent');
+            if (!el) return;
+            
+            const arr = config.stocks.map(s => {
+                const q = quotes && quotes[s.symbol];
+                if (!q) return { symbol: s.symbol, missing: true };
+                return { symbol: s.symbol, price: q.price, pct: q.pct, buy: s.buyPrice };
+            });
+            
+            const html = arr.map(it => {
+                if (it.missing) return `<span class="ticker-item">${escapeHtml(it.symbol)}: ?</span>`;
+                
+                const below = (it.buy != null && it.price != null && it.price < it.buy);
+                const priceStr = it.price == null ? '?' : ('$' + Number(it.price).toFixed(2));
+                const pctStr = it.pct == null ? '' : ((it.pct > 0 ? '+' : '') + it.pct.toFixed(1) + '%');
+                const arrow = it.pct == null ? '' : (it.pct >= 0 ? ' ▲' : ' ▼');
+                const arrowColor = it.pct >= 0 ? 'text-green-400' : 'text-red-400';
+                const warn = below ? ' ⚠️' : '';
+                const buy = it.buy == null ? '' : (' | Buy: $' + Number(it.buy).toFixed(2));
+                
+                return `<span class="ticker-item">${escapeHtml(it.symbol)}: ${priceStr} <span class="${arrowColor}">${arrow}</span> ${escapeHtml(pctStr)}${buy}${warn}</span>`;
+            }).join('');
+            
+            el.innerHTML = html || '<span class="ticker-item">No stocks</span>';
+        }
+
+        async function fetchStocks(provider) {
+            const symbols = config.stocks.map(s => s.symbol).filter(Boolean);
+            const quotes = {};
+            
+            if (provider === 'twelvedata') {
+                const key = (config.twelveDataKey || '').trim();
+                if (!key) throw new Error('NO_TWELVEDATA_KEY');
+                
+                const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(','))}&apikey=${encodeURIComponent(key)}`;
+                const resp = await fetch(url, { cache: 'no-store' });
+                const data = await resp.json();
+                
+                if (!resp.ok) throw new Error('HTTP_' + resp.status);
+                
+                for (const sym of symbols) {
+                    const d = data[sym] || (data.symbol === sym ? data : null);
+                    if (!d || d.status === 'error') continue;
+                    
+                    const price = Number(d.price);
+                    const pct = d.percent_change != null ? Number(d.percent_change) : null;
+                    quotes[sym] = { price: isNaN(price) ? null : price, pct: (pct == null || isNaN(pct)) ? null : pct };
+                }
+                
+                return { quotes, provider };
+            }
+            
+            if (provider === 'finnhub') {
+                const key = (config.finnhubKey || '').trim();
+                if (!key) throw new Error('NO_FINNHUB_KEY');
+                
+                for (const sym of symbols) {
+                    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(key)}`;
+                    const resp = await fetch(url, { cache: 'no-store' });
+                    
+                    if (!resp.ok) throw new Error('HTTP_' + resp.status);
+                    
+                    const d = await resp.json();
+                    const price = (d && d.c != null) ? Number(d.c) : null;
+                    const prev = (d && d.pc != null) ? Number(d.pc) : null;
+                    let pct = null;
+                    if (price != null && prev != null && prev !== 0) pct = ((price - prev) / prev) * 100;
+                    
+                    quotes[sym] = { price: isNaN(price) ? null : price, pct: (pct == null || isNaN(pct)) ? null : pct };
+                    await new Promise(r => setTimeout(r, 250));
+                }
+                
+                return { quotes, provider };
+            }
+            
+            throw new Error('UNKNOWN_PROVIDER');
+        }
+
+        async function refreshStocks() {
+            const el = document.getElementById('stocksContent');
+            if (el) el.innerHTML = '<span class="ticker-item">Loading stocks...</span>';
+            
+            const tries = ['twelvedata', 'finnhub'];
+            let lastErr = null;
+            
+            for (const p of tries) {
+                try {
+                    const res = await fetchStocks(p);
+                    const have = Object.keys(res.quotes || {}).length;
+                    if (!have) throw new Error('NO_DATA');
+                    
+                    const now = new Date();
+                    stockCache = {
+                        date: todayKey(now),
+                        updatedAt: now.toISOString(),
+                        provider: res.provider,
+                        quotes: res.quotes,
+                        slots: stockCache && stockCache.date === todayKey(now) ? (stockCache.slots || {}) : {}
+                    };
+                    
+                    localStorage.setItem('stockCache', JSON.stringify(stockCache));
+                    renderStocks(stockCache.quotes);
+                    return;
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+            
+            if (stockCache && stockCache.quotes) {
+                renderStocks(stockCache.quotes);
+            } else {
+                const el2 = document.getElementById('stocksContent');
+                if (el2) el2.innerHTML = '<span class="ticker-item">Stock data unavailable</span>';
+            }
+            console.warn('Stocks refresh failed', lastErr);
+        }
+
+        function maybeRefreshStocks() {
+            const now = new Date();
+            if (!stockCache) {
+                const saved = localStorage.getItem('stockCache');
+                if (saved) {
+                    try {
+                        stockCache = JSON.parse(saved);
+                    } catch (e) {
+                        stockCache = null;
+                    }
+                }
+            }
+            
+            if (stockCache && stockCache.quotes) renderStocks(stockCache.quotes);
+            
+            const tKey = todayKey(now);
+            if (!stockCache || stockCache.date !== tKey) {
+                stockCache = stockCache || {};
+                stockCache.date = tKey;
+                stockCache.slots = {};
+            }
+            
+            const times = config.stockRefreshTimes || [];
+            const windowMin = 7;
+            
+            for (const t of times) {
+                if (!t) continue;
+                if (isNearTime(t, now, windowMin)) {
+                    if (stockCache.slots && stockCache.slots[t] === tKey) continue;
+                    stockCache.slots = stockCache.slots || {};
+                    stockCache.slots[t] = tKey;
+                    localStorage.setItem('stockCache', JSON.stringify(stockCache));
+                    refreshStocks();
+                    break;
+                }
+            }
+        }
+
+        // Currencies
         async function fetchCurrencies() {
-            const box = document.getElementById('currencyList');
-            try {
-                let html = '';
-                let success = 0;
-                for (const c of (config.currencies || [])) {
+            let html = '';
+            
+            for (const c of config.currencies) {
+                try {
                     const [base, quote] = c.pair.split('-');
-                    const url = `https://open.er-api.com/v6/latest/${base}`;
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
                     const data = await res.json();
-                    const rate = data?.rates?.[quote];
-                    if (Number.isFinite(rate)) {
+                    
+                    if (data.rates && data.rates[quote]) {
+                        const rate = data.rates[quote];
                         const isAlert = c.below ? rate < c.alert : rate > c.alert;
+                        
+                        const alertClass = isAlert ? 'p-2 rounded bg-yellow-900/30 border border-yellow-500' : 'p-2 rounded bg-slate-800/30';
+                        
                         html += `
-                            <div class="${isAlert ? 'stock-alert' : 'bg-slate-800/30'} rounded p-2">
+                            <div class="${alertClass} mb-2">
                                 <div class="flex justify-between items-center">
                                     <span class="font-semibold">${base}/${quote}</span>
-                                    <div class="text-right">
+                                    <div class="text-right flex items-center gap-1">
                                         <div class="font-mono font-bold">${rate.toFixed(4)}</div>
                                         ${isAlert ? '<i class="fas fa-bell text-yellow-400 text-xs"></i>' : ''}
                                     </div>
                                 </div>
                             </div>
                         `;
-                        success++;
                     }
-                }
-                box.innerHTML = success ? html : '<p class="text-yellow-400">⚠️ 匯率暫時不可用</p>';
-            } catch (e) {
-                console.warn('Currencies failed', e);
-                box.innerHTML = '<p class="text-yellow-400">⚠️ 匯率暫時不可用</p>';
-            }
-        }
-
-        async function fetchRss(url, limit = 12) {
-            // NOTE: RSS/Atom fetching uses a proxy by default (GitHub/file:// friendly)
-            const res = await fetch(getCorsProxy(url));
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const text = await res.text();
-            const doc = new DOMParser().parseFromString(text, 'text/xml');
-
-            // RSS <item>
-            const rssItems = Array.from(doc.querySelectorAll('item'));
-            if (rssItems.length) {
-                return rssItems.slice(0, limit).map(it => {
-                    const title = (it.querySelector('title')?.textContent || '').trim();
-                    const link = (it.querySelector('link')?.textContent || '').trim();
-                    const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
-                    return { title, link, pubDate: pubDate ? new Date(pubDate) : null };
-                }).filter(x => x.title);
-            }
-
-            // Atom <entry>
-            const atomEntries = Array.from(doc.querySelectorAll('entry'));
-            return atomEntries.slice(0, limit).map(en => {
-                const title = (en.querySelector('title')?.textContent || '').trim();
-                let link = '';
-                const linkEl = en.querySelector('link');
-                if (linkEl) link = (linkEl.getAttribute('href') || linkEl.textContent || '').trim();
-                const updated = (en.querySelector('updated')?.textContent || en.querySelector('published')?.textContent || '').trim();
-                return { title, link, pubDate: updated ? new Date(updated) : null };
-            }).filter(x => x.title);
-        }
-
-        function _findByLocalName(node, localName) {
-            try {
-                const all = node.getElementsByTagName('*');
-                for (let i = 0; i < all.length; i++) {
-                    const el = all[i];
-                    if ((el.localName || '').toLowerCase() === localName.toLowerCase()) {
-                        const t = (el.textContent || '').trim();
-                        if (t) return t;
-                    }
-                }
-            } catch {}
-            return '';
-        }
-
-        async function fetchMetServiceCap(limit = 8) {
-            const urls = [
-                'https://alerts.metservice.com/cap/rss',
-                'https://alerts.metservice.com/cap/atom'
-            ];
-            let lastErr = null;
-            for (const url of urls) {
-                try {
-                    const res = await fetch(getCorsProxy(url), { cache: 'no-store' });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const xml = await res.text();
-                    const doc = new DOMParser().parseFromString(xml, 'text/xml');
-                    const items = Array.from(doc.querySelectorAll('item'));
-                    const entries = items.length ? items : Array.from(doc.querySelectorAll('entry'));
-                    const out = [];
-                    for (const it of entries.slice(0, limit)) {
-                        const title = (it.querySelector('title')?.textContent || '').trim();
-                        if (!title) continue;
-                        // CAP details
-                        let area = _findByLocalName(it, 'areaDesc');
-                        let sev = _findByLocalName(it, 'severity');
-                        // Fallback: try description text
-                        if (!area) {
-                            const desc = (it.querySelector('description')?.textContent || it.querySelector('summary')?.textContent || '').trim();
-                            const m =
-                            desc.match(/Area(?:\(s\))?:\s*([^\r\n<]+)/i) ||
-                            desc.match(/Areas?:\s*([^\r\n<]+)/i) ||
-                            desc.match(/Location:\s*([^\r\n<]+)/i);
-                            if (m) area = (m[1] || '').trim();
-                        }
-                        let text = title;
-                        if (area) text += ' — ' + area;
-                        if (sev) text += '（' + sev + '）';
-                        out.push(text);
-                    }
-                    // de-dup
-                    const seen = new Set();
-                    const uniq = [];
-                    for (const t of out) {
-                        const k = t.toLowerCase();
-                        if (seen.has(k)) continue;
-                        seen.add(k);
-                        uniq.push(t);
-                    }
-                    if (uniq.length) return uniq.slice(0, limit);
-                } catch (e) {
-                    lastErr = e;
+                } catch (err) {
+                    console.error(`Currency error: ${c.pair}`, err);
                 }
             }
-            if (lastErr) throw lastErr;
-            return [];
+            
+            document.getElementById('currencyList').innerHTML = html || '<p class="text-red-400">Currency data unavailable</p>';
         }
 
-
-        async function fetchNews() {
-            // v5 feeds (replace old LTN/SCMP/BBC; keep them in comments as fallback)
-            // Old (fallback only):
-            // - LTN: https://news.ltn.com.tw/rss/all.xml
-            // - SCMP: https://www.scmp.com/rss/2/feed
-            // - BBC:  https://feeds.bbci.co.uk/news/rss.xml (啟用)
-
-            const feeds = [
-                { name: 'InMediaHK', url: 'https://www.inmediahk.net/rss.xml' },
-                { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
-                { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
-                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' }
-            ];
-
-            try {
-                const all = [];
-                for (const f of feeds) {
-                    try {
-                        const items = await fetchRss(f.url, 10);
-                        items.forEach(it => all.push({ ...it, source: f.name }));
-                    } catch (e) {
-                        console.warn(`News feed failed: ${f.name}`, e);
-                    }
-                }
-
-                if (!all.length) throw new Error('No news items');
-
-                all.sort((a, b) => (b.pubDate?.getTime() || 0) - (a.pubDate?.getTime() || 0));
-                const top = all.slice(0, 20);
-
-                const ticker = top.map(it => {
-                    const label = `<span class="text-slate-400">[${it.source}]</span> `;
-                    const safeTitle = it.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    const body = it.link ? `<a href="${it.link}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>` : safeTitle;
-                    return `<span class="ticker-item">${label}${body}</span>`;
-                }).join('');
-
-                document.getElementById('newsContent').innerHTML = ticker;
-            } catch (error) {
-                console.error('News fetch failed', error);
-                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">⚠️ News unavailable</span>';
-            }
-        }
-
+        // Bible Verse
         function fetchBibleVerse() {
             const verses = [
-                { ref: '約翰福音 3:16', text: '神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不至滅亡，反得永生。' },
-                { ref: '詩篇 23:1', text: '耶和華是我的牧者，我必不致缺乏。' },
-                { ref: '箴言 3:5-6', text: '你要專心仰賴耶和華，不可倚靠自己的聰明，在你一切所行的事上都要認定他，他必指引你的路。' },
-                { ref: '腓立比書 4:13', text: '我靠著那加給我力量的，凡事都能做。' },
-                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力，叫愛神的人得益處，就是按他旨意被召的人。' }
+                { ref: '約翰福音 3:16', text: '神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不至滅亡,反得永生。' },
+                { ref: '詩篇 23:1', text: '耶和華是我的牧者,我必不致缺乏。' },
+                { ref: '箴言 3:5-6', text: '你要專心仰賴耶和華,不可倚靠自己的聰明,在你一切所行的事上都要認定他,他必指引你的路。' },
+                { ref: '腓立比書 4:13', text: '我靠著那加給我力量的,凡事都能做。' },
+                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力,叫愛神的人得益處,就是按他旨意被召的人。' }
             ];
             
             const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -1106,694 +786,302 @@
             `;
         }
 
-        function fetchCalendar() {
-            const now = new Date();
-            const day = now.getDay();
-            let events = [];
+        // Calendar
+        async function fetchCalendar() {
+            const container = document.getElementById('calendarContainer');
             
-            const schedule = {
-                0: [{ title: '主日崇拜', time: '10:00 AM' }],
-                3: [{ title: '查經班', time: '7:30 PM' }]
-            };
-            
-            if (schedule[day] && config.calendar.personal) {
-                schedule[day].forEach(e => events.push({ day: 'Today', ...e }));
+            if (!config.calendarWebAppUrl || !config.calendarToken) {
+                container.innerHTML = '<p class="text-yellow-400 text-xs">Calendar not configured. Set Web App URL and Token in settings.</p>';
+                return;
             }
             
-            let html = '';
-            if (events.length === 0) {
-                html = '<p class="text-slate-400">No events today</p>';
-            } else {
-                events.forEach(e => {
-                    html += `
-                        <div class="calendar-event">
-                            <div class="flex justify-between items-start">
-                                <span class="font-semibold text-blue-300">${e.day}</span>
-                                <span class="text-slate-400">${e.time}</span>
+            try {
+                const url = `${config.calendarWebAppUrl}?token=${config.calendarToken}&days=7`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.ok) {
+                    throw new Error(data.error || 'Unknown error');
+                }
+                
+                let html = '';
+                let eventCount = 0;
+                
+                // Today
+                if (data.today) {
+                    const todayEvents = [
+                        ...(data.today.personal || []),
+                        ...(data.today.family || []),
+                        ...(data.today.nzHolidays || []),
+                        ...(data.today.hkHolidays || [])
+                    ].filter(e => e && !e.error);
+                    
+                    todayEvents.forEach(event => {
+                        const isHoliday = event.calendarId?.includes('holiday');
+                        const eventClass = isHoliday ? 'calendar-event holiday-event' : 'calendar-event';
+                        const timeStr = event.allDay ? 'All day' : (event.start ? new Date(event.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '');
+                        
+                        html += `
+                            <div class="${eventClass}">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-semibold text-blue-300">Today</span>
+                                    <span class="text-slate-400 text-xs">${timeStr}</span>
+                                </div>
+                                <div class="text-sm">${escapeHtml(event.title)}</div>
+                                ${event.location ? `<div class="text-xs text-slate-400 mt-1">📍 ${escapeHtml(event.location)}</div>` : ''}
                             </div>
-                            <div>${e.title}</div>
+                        `;
+                        eventCount++;
+                    });
+                }
+                
+                // Tomorrow
+                if (data.tomorrow) {
+                    const tomorrowEvents = [
+                        ...(data.tomorrow.personal || []),
+                        ...(data.tomorrow.family || []),
+                        ...(data.tomorrow.nzHolidays || []),
+                        ...(data.tomorrow.hkHolidays || [])
+                    ].filter(e => e && !e.error);
+                    
+                    tomorrowEvents.forEach(event => {
+                        const isHoliday = event.calendarId?.includes('holiday');
+                        const eventClass = isHoliday ? 'calendar-event holiday-event' : 'calendar-event';
+                        const timeStr = event.allDay ? 'All day' : (event.start ? new Date(event.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '');
+                        
+                        html += `
+                            <div class="${eventClass}">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-semibold text-blue-300">Tomorrow</span>
+                                    <span class="text-slate-400 text-xs">${timeStr}</span>
+                                </div>
+                                <div class="text-sm">${escapeHtml(event.title)}</div>
+                                ${event.location ? `<div class="text-xs text-slate-400 mt-1">📍 ${escapeHtml(event.location)}</div>` : ''}
+                            </div>
+                        `;
+                        eventCount++;
+                    });
+                }
+                
+                // Next 7 days
+                if (data.next7days && eventCount < 10) {
+                    const futureEvents = [
+                        ...(data.next7days.personal || []),
+                        ...(data.next7days.family || []),
+                        ...(data.next7days.nzHolidays || []),
+                        ...(data.next7days.hkHolidays || [])
+                    ].filter(e => e && !e.error);
+                    
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const dayAfterTomorrow = new Date(tomorrow);
+                    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+                    
+                    futureEvents
+                        .filter(event => {
+                            const eventDate = new Date(event.start || event.end);
+                            eventDate.setHours(0, 0, 0, 0);
+                            return eventDate >= dayAfterTomorrow;
+                        })
+                        .slice(0, 10 - eventCount)
+                        .forEach(event => {
+                            const isHoliday = event.calendarId?.includes('holiday');
+                            const eventClass = isHoliday ? 'calendar-event holiday-event' : 'calendar-event';
+                            const eventDate = new Date(event.start || event.end);
+                            const dateStr = eventDate.toLocaleDateString('zh-HK', { month: 'short', day: 'numeric', weekday: 'short' });
+                            const timeStr = event.allDay ? 'All day' : eventDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                            
+                            html += `
+                                <div class="${eventClass}">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-semibold text-blue-300">${dateStr}</span>
+                                        <span class="text-slate-400 text-xs">${timeStr}</span>
+                                    </div>
+                                    <div class="text-sm">${escapeHtml(event.title)}</div>
+                                    ${event.location ? `<div class="text-xs text-slate-400 mt-1">📍 ${escapeHtml(event.location)}</div>` : ''}
+                                </div>
+                            `;
+                            eventCount++;
+                        });
+                }
+                
+                if (eventCount === 0) {
+                    html = '<p class="text-slate-400 text-xs">No upcoming events</p>';
+                }
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Calendar fetch error:', error);
+                container.innerHTML = `<p class="text-red-400 text-xs">Calendar error: ${escapeHtml(error.message)}</p>`;
+            }
+        }
+
+        // News Functions
+        async function fetchNews(feedList, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let allNews = [];
+            
+            for (const feed of feedList) {
+                try {
+                    const res = await fetch(
+                        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`
+                    );
+                    const data = await res.json();
+                    
+                    if (data.status === 'ok' && data.items) {
+                        data.items.slice(0, 5).forEach(item => {
+                            // NZTA Auckland filter
+                            if (feed.name === 'NZTA' || feed.url.includes('nzta')) {
+                                const title = item.title.toLowerCase();
+                                if (title.includes('auckland') && 
+                                    (title.includes('crash') || title.includes('accident') || 
+                                     title.includes('jam') || title.includes('closure') || 
+                                     title.includes('blocked') || title.includes('incident'))) {
+                                    allNews.push(`[${feed.name}] ${item.title}`);
+                                }
+                            } else {
+                                allNews.push(`[${feed.name}] ${item.title}`);
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error(`RSS error: ${feed.name}`, err);
+                }
+            }
+            
+            if (allNews.length > 0) {
+                let ticker = '';
+                allNews.forEach(n => {
+                    ticker += `<span class="ticker-item">${escapeHtml(n)}</span>`;
+                });
+                container.innerHTML = ticker;
+            } else {
+                container.innerHTML = '<span class="ticker-item">News unavailable</span>';
+            }
+        }
+
+        // Big Screen Media
+        function extractPlaylistId(input) {
+            if (!input) return null;
+            if (input.match(/^[A-Za-z0-9_-]+$/)) return input;
+            const match = input.match(/[?&]list=([A-Za-z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        function initBigScreen() {
+            const grid = document.getElementById('mainGrid');
+            const bigScreenSection = document.getElementById('bigScreenSection');
+            const bigScreenPlayer = document.getElementById('bigScreenPlayer');
+            const bigScreenTitle = document.getElementById('bigScreenTitle');
+            
+            // Check if any big screen option is enabled
+            const anyEnabled = config.enableYTVideo || config.enableNewsLive;
+            
+            if (anyEnabled) {
+                // Show big screen section
+                bigScreenSection.style.display = 'block';
+                grid.classList.remove('no-bigscreen');
+                grid.classList.add('has-bigscreen');
+                
+                // Adjust news rows
+                document.getElementById('news1Card').style.gridRow = '5';
+                document.getElementById('news2Card').style.gridRow = '6';
+                document.getElementById('news3Card').style.gridRow = '7';
+                
+                // Set content based on priority: News Live > YouTube Video
+                if (config.enableNewsLive) {
+                    bigScreenTitle.textContent = 'Now News Live (新聞直播)';
+                    // News.now.com embeds are blocked, so we show a message
+                    bigScreenPlayer.src = '';
+                    bigScreenSection.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-sm font-semibold"><i class="fas fa-tv mr-1"></i>Now News Live (新聞直播)</h3>
+                        </div>
+                        <div class="media-player flex items-center justify-center" style="height: calc(100% - 40px); background: rgba(15, 23, 42, 0.8);">
+                            <div class="text-center p-6">
+                                <i class="fas fa-external-link-alt text-4xl text-blue-400 mb-4"></i>
+                                <p class="text-lg mb-2">Now News 332 Live Stream</p>
+                                <p class="text-sm text-slate-400 mb-4">Direct embed is blocked. Please open in new window:</p>
+                                <a href="https://news.now.com/home/live" target="_blank" 
+                                   class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition">
+                                    Open Now News Live <i class="fas fa-external-link-alt ml-2"></i>
+                                </a>
+                            </div>
                         </div>
                     `;
-                });
-            }
-            
-            document.getElementById('calendarContainer').innerHTML = html;
-        }
-
-        function fetchAllData() {
-            fetchWeather();
-            fetchCurrencies();
-            fetchNews();
-            fetchAlerts();
-            fetchBibleVerse();
-            fetchCalendar();
-            updateReminders();
-            maybeRefreshStocks(true);
-        }
-
-        // -----------------------------
-        // YouTube Players (Music + Video)
-        // -----------------------------
-        let ytMusicPlayer = null;
-        let ytVideoPlayer = null;
-        let ytApiLoading = false;
-
-        function loadYouTubeIframeApiOnce() {
-            if (window.YT && window.YT.Player) return;
-            if (ytApiLoading) return;
-            ytApiLoading = true;
-            const tag = document.createElement('script');
-            tag.src = 'https://www.youtube.com/iframe_api';
-            document.head.appendChild(tag);
-        }
-
-        function createYtPlayer(elId, playlistId) {
-            return new YT.Player(elId, {
-                width: '100%',
-                height: '100%',
-                playerVars: {
-                    playsinline: 1,
-                    rel: 0,
-                    modestbranding: 1,
-                    controls: 1,
-                    listType: 'playlist',
-                    list: playlistId,
-                    loop: 1
-                },
-                events: {
-                    onReady: (e) => {
-                        try { e.target.setVolume(Number(config.ytVolume) || 80); } catch {}
-                        // Cue only (no autoplay) to satisfy kiosk/browser policies.
-                        try { e.target.cuePlaylist({ listType: 'playlist', list: playlistId }); }
-                        catch { try { e.target.cuePlaylist(playlistId); } catch {} }
-                        try { e.target.setShuffle(true); } catch {}
+                } else if (config.enableYTVideo) {
+                    bigScreenTitle.textContent = 'YouTube Video';
+                    const playlistId = extractPlaylistId(config.ytVideoPlaylist);
+                    if (playlistId) {
+                        bigScreenPlayer.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=0`;
                     }
                 }
-            });
-        }
-
-        // YouTube iframe API callback
-        window.onYouTubeIframeAPIReady = function () {
-            try {
-                ytMusicPlayer = createYtPlayer('ytMusicPlayer', config.ytMusicPlaylistId);
-            } catch (e) {
-                console.warn('YT music player init failed', e);
-            }
-            if (!!config.ytEnableVideo && window.innerWidth >= 1600 && window.matchMedia('(orientation: landscape)').matches) {
-                try {
-                    ytVideoPlayer = createYtPlayer('ytVideoPlayer', config.ytVideoPlaylistId);
-                } catch (e) {
-                    console.warn('YT video player init failed', e);
-                }
-            }
-        };
-
-        function safeTogglePlay(player) {
-            if (!player) return;
-            try {
-                const st = player.getPlayerState();
-                if (st === YT.PlayerState.PLAYING) player.pauseVideo();
-                else player.playVideo();
-            } catch {
-                try { player.playVideo(); } catch {}
-            }
-        }
-
-        function safeStop(player, playlistId, labelElId) {
-            if (!player) return;
-            try { player.stopVideo(); } catch {}
-            // Re-cue playlist without autoplay to avoid "stop == replay" behavior
-            if (playlistId) {
-                try { player.cuePlaylist({ listType: 'playlist', list: playlistId }); }
-                catch { try { player.cuePlaylist(playlistId); } catch {} }
-            }
-            if (labelElId) {
-                const el = document.getElementById(labelElId);
-                if (el) el.textContent = '已停止';
-            }
-        }
-
-        function reshuffleAndReload(player, playlistId) {
-            if (!player) return;
-            try { player.cuePlaylist({ listType: 'playlist', list: playlistId }); }
-            catch { try { player.cuePlaylist(playlistId); } catch {} }
-            setTimeout(() => {
-                try { player.setShuffle(true); } catch {}
-                try {
-                    const pl = player.getPlaylist ? player.getPlaylist() : null;
-                    const len = Array.isArray(pl) ? pl.length : 0;
-                    const idx = len ? Math.floor(Math.random() * len) : 0;
-                    player.playVideoAt(idx);
-                } catch {
-                    try { player.playVideo(); } catch {}
-                }
-            }, 250);
-        }
-
-        function initYouTubeUI() {
-            // Music controls
-            document.getElementById('musicPrev').addEventListener('click', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
-            document.getElementById('musicPlay').addEventListener('click', () => safeTogglePlay(ytMusicPlayer));
-            document.getElementById('musicNext').addEventListener('click', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
-            document.getElementById('musicReshuffle').addEventListener('click', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
-
-            // Video controls (only if enabled)
-            const vc = document.getElementById('videoCard');
-            const hideBtn = document.getElementById('videoHideBtn');
-            if (hideBtn) hideBtn.addEventListener('click', () => { vc?.classList.add('hidden'); });
-
-            const enable = !!config.ytEnableVideo && (window.innerWidth >= 1600) && window.matchMedia('(orientation: landscape)').matches;
-            if (enable && vc) vc.classList.remove('hidden');
-
-            const bindIf = (id, fn) => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener('click', fn);
-            };
-            bindIf('videoPrev', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
-            bindIf('videoPlay', () => safeTogglePlay(ytVideoPlayer));
-            bindIf('videoNext', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
-            bindIf('videoReshuffle', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
-
-            // Now playing labels
-            function updateLabel(player, elId) {
-                const el = document.getElementById(elId);
-                if (!el || !player) return;
-                try {
-                    const data = player.getVideoData ? player.getVideoData() : null;
-                    const title = data && data.title ? data.title : '';
-                    if (title) el.textContent = title;
-                } catch {}
-            }
-            setInterval(() => {
-                updateLabel(ytMusicPlayer, 'musicNowPlaying');
-                updateLabel(ytVideoPlayer, 'videoNowPlaying');
-            }, 2000);
-
-            loadYouTubeIframeApiOnce();
-        }
-
-                // -----------------------------
-        // Launch v4 overrides (GitHub-friendly)
-        // - Weather: Open-Meteo (no key), 30-min refresh, +1/+4/+12/+明日 (雨/UV)
-        // - Reminders: demo (birthdays/game) + hardcoded holidays (NZ/HK) now; later can switch to Calendar WebApp (方案A)
-        // - Alerts ticker: NZTA 交通 + HKO 警報（免 CORS proxy）
-        // -----------------------------
-
-        function safeNum(v) {
-            const n = Number(v);
-            return Number.isFinite(n) ? (Math.round(n * 10) / 10) : null;
-        }
-
-        
-        function parseFeedItems(xmlText){
-            try{
-                const xml=new DOMParser().parseFromString(xmlText,'text/xml');
-                const hasItem=xml.querySelector('item');
-                const out=[];
-                if(hasItem){
-                    xml.querySelectorAll('item').forEach(it=>{
-                        const title=it.querySelector('title')?.textContent?.trim();
-                        const link=it.querySelector('link')?.textContent?.trim();
-                        const desc=it.querySelector('description')?.textContent?.trim()||'';
-                        if(title) out.push({title, link, desc});
-                    });
-                    return out;
-                }
-                // Atom
-                xml.querySelectorAll('entry').forEach(en=>{
-                    const title=en.querySelector('title')?.textContent?.trim();
-                    const link=en.querySelector('link')?.getAttribute('href') || en.querySelector('link')?.textContent?.trim();
-                    const desc=en.querySelector('summary')?.textContent?.trim()||en.querySelector('content')?.textContent?.trim()||'';
-                    if(title) out.push({title, link, desc});
-                });
-                return out;
-            }catch(e){
-                return [];
-            }
-        }
-
-function escapeHtml(s) {
-            if (s === null || s === undefined) return '';
-            return String(s)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        function weatherCodeToText(code) {
-            const m = {
-                0: '晴朗',
-                1: '大致晴朗',
-                2: '部分多雲',
-                3: '多雲',
-                45: '霧',
-                48: '霧凇',
-                51: '毛毛雨',
-                53: '毛毛雨',
-                55: '毛毛雨',
-                61: '小雨',
-                63: '中雨',
-                65: '大雨',
-                71: '小雪',
-                73: '中雪',
-                75: '大雪',
-                80: '陣雨',
-                81: '陣雨',
-                82: '強陣雨',
-                95: '雷暴',
-                96: '雷暴冰雹',
-                99: '雷暴冰雹'
-            };
-            return m[code] || ('WeatherCode ' + code);
-        }
-
-        async function fetchWeather() {
-            const now = new Date();
-            const parts = [];
-
-            for (const loc of (config.weatherLocations || [])) {
-                try {
-                    const base = 'https://api.open-meteo.com/v1/forecast';
-                    const url = base +
-                        '?latitude=' + encodeURIComponent(loc.lat) +
-                        '&longitude=' + encodeURIComponent(loc.lon) +
-                        '&current=temperature_2m,weather_code' +
-                        '&hourly=temperature_2m,precipitation,precipitation_probability,uv_index,weather_code' +
-                        '&daily=uv_index_max,precipitation_sum' +
-                        '&forecast_days=2&timezone=auto';
-
-                    const resp = await fetch(url, { cache: 'no-store' });
-                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    const data = await resp.json();
-
-                    const times = (data.hourly.time || []).map(t => new Date(t));
-                    let idx = 0;
-                    for (let i = 0; i < times.length; i++) {
-                        if (times[i] <= now) idx = i;
-                        else break;
-                    }
-
-                    const currentTemp = Math.round(data.current.temperature_2m);
-                    const desc = weatherCodeToText(data.current.weather_code);
-
-                    const uvNow = safeNum((data.hourly.uv_index || [])[idx]);
-                    const uvTomorrowMax = safeNum((data.daily.uv_index_max || [])[1]);
-                    const rainTomorrow = safeNum((data.daily.precipitation_sum || [])[1]);
-
-                    const fmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const pick = (off) => {
-                        const j = Math.min(idx + off, times.length - 1);
-                        const t = times[j] ? fmt(times[j]) : ('+' + off + 'h');
-                        const p = safeNum((data.hourly.precipitation_probability || [])[j]);
-                        const mm = safeNum((data.hourly.precipitation || [])[j]);
-                        const pStr = (p === null) ? '?' : (Math.round(p) + '%');
-                        const mmStr = (mm === null) ? '?' : (mm + 'mm');
-                        return t + ':' + pStr + '/' + mmStr;
-                    };
-
-                    const line1 = 'UV: ' + (uvNow === null ? '?' : uvNow) + (uvTomorrowMax === null ? '' : '（明日最高:' + uvTomorrowMax + '）');
-                    const line2 = '雨: +1h ' + pick(1) + ', +4h ' + pick(4) + ', +12h ' + pick(12) + ', 明日' + (rainTomorrow === null ? '?' : rainTomorrow) + 'mm';
-
-                    const isHK = ((loc.label || '').toLowerCase().indexOf('hong kong') !== -1);
-                    const displayLabel = isHK ? '香港' : (loc.label || '');
-
-                    const headerHtml =
-                        '<div class="flex items-center justify-between">' +
-                            '<div class="text-sm font-semibold">' + escapeHtml(displayLabel) +
-                                ' <span class="text-xs text-slate-400 ml-2">' + escapeHtml(desc) + '</span>' +
-                            '</div>' +
-                            '<div class="text-2xl font-bold">' + currentTemp + '°C</div>' +
-                        '</div>';
-
-                    let detailHtml = '';
-                    if (!isHK) {
-                        detailHtml =
-                            '<div class="text-xs text-slate-300 mt-1">☀️ ' + escapeHtml(line1) + '</div>' +
-                            '<div class="text-xs text-slate-300">💧 ' + escapeHtml(line2) + '</div>';
-                    }
-
-                    parts.push(
-                        '<div class="weather-location">' +
-                            headerHtml +
-                            detailHtml +
-                        '</div>'
-                    );
-                } catch (e) {
-                    console.warn('Weather failed for', loc && loc.label, e);
-                    parts.push(
-                        '<div class="weather-location">' +
-                            '<div class="text-sm font-semibold">' + escapeHtml((loc && loc.label) || 'Weather') + '</div>' +
-                            '<div class="text-xs text-red-300">⚠️ Weather unavailable</div>' +
-                        '</div>'
-                    );
-                }
-            }
-
-            const wc = document.getElementById('weatherContainer');
-            if (wc) wc.innerHTML = parts.join('');
-            const ws = document.getElementById('weatherStatus');
-            if (ws) ws.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>Weather: <span class="text-green-400">Updated</span>';
-        }
-
-        // Alerts ticker（重要快訊：交通／警報／世界要聞）
-        async function fetchAlerts() {
-            const out = [];
-            let hadError = false;
-
-            // Helper: push items with source label
-            const pushItems = (source, items, limit) => {
-                const take = (limit ? items.slice(0, limit) : items);
-                take.forEach(t => { if (t) out.push({ source, text: t }); });
-            };
-
-            // 1) NZTA traffic (Auckland serious only; fallback to newest if none)
-            try {
-                const base = 'https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/0/query';
-                const params = new URLSearchParams({
-                    where: '1=1',
-                    outFields: 'eventType,locationArea,eventDescription,impact,status,eventModified',
-                    orderByFields: 'eventModified DESC',
-                    resultRecordCount: '30',
-                    f: 'json'
-                });
-                const resp = await fetch(getCorsProxy(base + '?' + params.toString()), { cache: 'no-store' });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    const feats = (data && data.features) ? data.features : [];
-
-                    const aucklandKeys = ['auckland','north shore','manukau','papakura','takanini','drury','albany','henderson','penrose','mt wellington','botany','howick','pakuranga'];
-                    const seriousKeys = ['serious crash','crash','accident','incident','blocked','road closed','closure','closed','major delay','long delays','congestion','queue','queues'];
-                    const excludeKeys = ['road work','roadworks','maintenance','resurfacing','chipseal','temporary speed','worksite'];
-
-                    const isAuckland = (s) => {
-                        const t = (s||'').toLowerCase();
-                        return aucklandKeys.some(k => t.includes(k));
-                    };
-                    const isSerious = (s) => {
-                        const t = (s||'').toLowerCase();
-                        if (excludeKeys.some(k => t.includes(k))) return false;
-                        return seriousKeys.some(k => t.includes(k));
-                    };
-
-                    const formatted = feats.map(f => {
-                        const a = (f && f.attributes) ? f.attributes : {};
-                        const type = (a.eventType || '').toString().trim();
-                        const loc = (a.locationArea || '').toString().trim();
-                        const desc = (a.eventDescription || '').toString().trim();
-                        const impact = (a.impact || '').toString().trim();
-                        const text = [type, loc, impact || desc].filter(Boolean).join(' - ');
-                        return { text, raw: (type + ' ' + loc + ' ' + desc + ' ' + impact) };
-                    }).filter(x => x.text);
-
-                    const auckSerious = formatted.filter(x => isAuckland(x.raw) && isSerious(x.raw)).map(x => x.text);
-                    const auckAny = formatted.filter(x => isAuckland(x.raw)).map(x => x.text);
-                    const fallback = formatted.map(x => x.text);
-
-                    const pick = (auckSerious.length ? auckSerious : (auckAny.length ? auckAny : fallback));
-                    pushItems('NZTA', pick, 6);
-                }
-            } catch (e) {
-                console.warn('NZTA alerts failed', e); hadError = true;
-            }
-
-            // 2) MetService CAP alerts (RSS + Atom fallback, include area)
-            try {
-                const texts = await fetchMetServiceCap(8);
-                pushItems('MetService', texts, 6);
-            } catch (e) {
-                console.warn('MetService feed failed', e); hadError = true;
-            }
-
-            // 4) Civil Defence RSS
-            try {
-                const items = await fetchRss('https://www.civildefence.govt.nz/home/rss', 8);
-                const texts = items.map(it => it.title).filter(Boolean);
-                pushItems('CivilDefence', texts, 4);
-            } catch (e) {
-                console.warn('CivilDefence feed failed', e); hadError = true;
-            }
-
-            
-            // 4b) Awaikato (feed provided)
-            try {
-                const items = await fetchRss('https://media.rss.com/awaikatothing/feed.xml', 6);
-                const texts = items.map(it => it.title).filter(Boolean);
-                pushItems('Awaikato', texts, 3);
-            } catch (e) {
-                console.warn('Awaikato feed failed', e); hadError = true;
-            }
-
-            const el = document.getElementById('alertsContent');
-            if (!el) return;
-
-            if (!out.length) {
-                el.innerHTML = hadError
-                    ? '<span class="ticker-item">（重要快訊讀取失敗）</span>'
-                    : '<span class="ticker-item">（暫無重要快訊）</span>';
-                return;
-            }
-
-            const html = out.map(it => {
-                const label = '<span class="text-yellow-300">[' + it.source + ']</span> ';
-                return '<span class="ticker-item">' + label + escapeHtml(it.text) + '</span>';
-            }).join('');
-
-            el.innerHTML = html;
-        }
-
-        // Reminders override (Launch): demo birthdays/game + hardcoded holidays (NZ/HK)
-        async function updateReminders() {
-            const now = new Date();
-            const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const reminders = [];
-
-            // Holidays (hardcoded fallback already present)
-            if (config.calendar && config.calendar.nz && typeof holidays2026 !== 'undefined' && holidays2026.nz) {
-                holidays2026.nz.forEach(h => {
-                    const d = new Date(h.date);
-                    if (d >= now && d <= oneWeek) reminders.push({ text: '🇳🇿 ' + h.name, date: h.date });
-                });
-            }
-            if (config.calendar && config.calendar.hk && typeof holidays2026 !== 'undefined' && holidays2026.hk) {
-                holidays2026.hk.forEach(h => {
-                    const d = new Date(h.date);
-                    if (d >= now && d <= oneWeek) reminders.push({ text: '🇭🇰 ' + h.name, date: h.date });
-                });
-            }
-
-            reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            const box = document.getElementById('upcomingReminders');
-            if (!box) return;
-
-            if (!reminders.length) {
-                box.innerHTML = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
-                return;
-            }
-
-            box.innerHTML = reminders.map(r => {
-                const d = new Date(r.date);
-                const daysUntil = Math.ceil((d - now) / (24 * 60 * 60 * 1000));
-                const dayText = daysUntil === 0 ? '今日' : (daysUntil === 1 ? '明日' : ('還有 ' + daysUntil + ' 日'));
-                return '<div class="reminder-item"><div class="flex justify-between"><span>' + escapeHtml(r.text) + '</span><span class="text-yellow-400">' + dayText + '</span></div></div>';
-            }).join('');
-        }
-
-
-
-        // ------------------------------
-        // Stocks (Finnhub / TwelveData) with auto failover + cache
-        // ------------------------------
-        const STOCK_CACHE_KEY = 'dp_stocks_cache_v5';
-        let stockCache = null;
-
-        function loadStockCache(){
-            try{ const raw=SafeStore.get(STOCK_CACHE_KEY); if(!raw) return null; return JSON.parse(raw);}catch(e){return null;}
-        }
-        function saveStockCache(obj){
-            try{ SafeStore.set(STOCK_CACHE_KEY, JSON.stringify(obj)); }catch(e){}
-        }
-        function todayKey(d){
-            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-        }
-        function isNearTime(hhmm, now, windowMin){
-            try{
-                const [hh,mm]=hhmm.split(':').map(x=>parseInt(x,10));
-                const t=new Date(now); t.setHours(hh,mm,0,0);
-                const diff=Math.abs(now.getTime()-t.getTime())/60000;
-                return diff <= (windowMin||7);
-            }catch(e){ return false; }
-        }
-        function fmtPct(x){
-            if(x===null||x===undefined||isNaN(x)) return '';
-            const v=Number(x);
-            const s=(v>0?'+':'') + v.toFixed(1) + '%';
-            return s;
-        }
-        function renderStocks(quotes, meta){
-            const el=document.getElementById('stocksContent');
-            if(!el) return;
-            const arr=(config.stocks||[]).map(s=>{
-                const q=quotes && quotes[s.symbol];
-                if(!q) return {symbol:s.symbol, missing:true};
-                return {symbol:s.symbol, price:q.price, pct:q.pct, buy:s.buyPrice};
-            });
-            const html=arr.map(it=>{
-                if(it.missing) return '<span class="ticker-item">'+escapeHtml(it.symbol)+': ?</span>';
-                const below = (it.buy!=null && it.price!=null && it.price < it.buy);
-                const dot = '<span class="ticker-dot"></span>';
-                const priceStr = (it.price==null? '?' : ('$'+Number(it.price).toFixed(2)));
-                const pctStr = (it.pct==null? '' : fmtPct(it.pct));
-                const arrow = (it.pct==null? '' : (it.pct>=0 ? ' <span class="text-green-400">▲</span>' : ' <span class="text-red-400">▼</span>'));
-                const warn = below ? ' <span class="text-yellow-300">⚠</span>' : '';
-                const buy = (it.buy==null? '' : (' | Buy: $'+Number(it.buy).toFixed(2)));
-                return '<span class="ticker-item">'+dot+' '+escapeHtml(it.symbol)+': '+priceStr+(pctStr?(' '+arrow+' '+escapeHtml(pctStr)):'')+buy+warn+'</span>';
-            }).join('');
-            el.innerHTML = html || '<span class="ticker-item">（暫無股票）</span>';
-        }
-
-        async function fetchStocks(provider){
-            const symbols=(config.stocks||[]).map(s=>s.symbol).filter(Boolean);
-            const quotes={};
-            const used = provider;
-
-            if(provider==='twelvedata'){
-                const key=(config.twelveDataKey||'').trim();
-                if(!key) throw new Error('NO_TWELVEDATA_KEY');
-                const url='https://api.twelvedata.com/quote?symbol='+encodeURIComponent(symbols.join(','))+'&apikey='+encodeURIComponent(key);
-                const resp=await fetch(url,{cache:'no-store'});
-                const data=await resp.json();
-                if(!resp.ok) throw new Error('HTTP_'+resp.status);
-                // multi-symbol returns object keyed by symbol
-                for(const sym of symbols){
-                    const d=data[sym] || (data.symbol===sym?data:null);
-                    if(!d || d.status==='error') continue;
-                    const price=Number(d.price);
-                    const pct = d.percent_change!=null ? Number(d.percent_change) : (d.change_percent!=null ? Number(d.change_percent) : null);
-                    quotes[sym]={price: isNaN(price)?null:price, pct: (pct==null || (pct!=pct))?null:pct};
-                }
-                return {quotes, provider:used};
-            }
-
-            if(provider==='finnhub'){
-                const key=(config.finnhubKey||'').trim();
-                if(!key) throw new Error('NO_FINNHUB_KEY');
-                for(const sym of symbols){
-                    const url='https://finnhub.io/api/v1/quote?symbol='+encodeURIComponent(sym)+'&token='+encodeURIComponent(key);
-                    const resp=await fetch(url,{cache:'no-store'});
-                    if(!resp.ok) throw new Error('HTTP_'+resp.status);
-                    const d=await resp.json();
-                    const price = (d && d.c!=null) ? Number(d.c) : null;
-                    const prev = (d && d.pc!=null) ? Number(d.pc) : null;
-                    let pct=null;
-                    if(price!=null && prev!=null && prev!==0) pct=((price-prev)/prev)*100;
-                    quotes[sym]={price: isNaN(price)?null:price, pct: (pct==null||isNaN(pct))?null:pct};
-                    await new Promise(r=>setTimeout(r, 250));
-                }
-                return {quotes, provider:used};
-            }
-
-            throw new Error('UNKNOWN_PROVIDER');
-        }
-
-        async function refreshStocks(force){
-            const el=document.getElementById('stocksContent');
-            if(el) el.innerHTML='<span class="ticker-item">Loading stocks...</span>';
-
-            const provider=(config.stockApiProvider||'auto');
-            const tries = (provider==='auto')
-                ? ['twelvedata','finnhub']
-                : [provider, (provider==='twelvedata'?'finnhub':'twelvedata')];
-
-            let lastErr=null;
-            for(const p of tries){
-                try{
-                    const res=await fetchStocks(p);
-                    // keep only those with price
-                    const have = Object.keys(res.quotes||{}).length;
-                    if(!have) throw new Error('NO_DATA');
-                    const now=new Date();
-                    stockCache = {
-                        date: todayKey(now),
-                        updatedAt: now.toISOString(),
-                        provider: res.provider,
-                        quotes: res.quotes,
-                        slots: stockCache && stockCache.date===todayKey(now) ? (stockCache.slots||{}) : {}
-                    };
-                    saveStockCache(stockCache);
-                    renderStocks(stockCache.quotes, stockCache);
-                    return;
-                }catch(e){
-                    lastErr=e;
-                }
-            }
-
-            // fallback to cache
-            if(stockCache && stockCache.quotes){
-                renderStocks(stockCache.quotes, stockCache);
             } else {
-                const el2=document.getElementById('stocksContent');
-                if(el2) el2.innerHTML='<span class="ticker-item">（股票讀取失敗）</span>';
+                // Hide big screen section
+                bigScreenSection.style.display = 'none';
+                grid.classList.remove('has-bigscreen');
+                grid.classList.add('no-bigscreen');
+                
+                // Adjust news rows back
+                document.getElementById('news1Card').style.gridRow = '4';
+                document.getElementById('news2Card').style.gridRow = '5';
+                document.getElementById('news3Card').style.gridRow = '6';
             }
-            console.warn('Stocks refresh failed', lastErr);
         }
 
-        function maybeRefreshStocks(force){
-            const now=new Date();
-            if(!stockCache) stockCache = loadStockCache();
-            if(stockCache && stockCache.quotes) renderStocks(stockCache.quotes, stockCache);
-
-            const tKey=todayKey(now);
-            if(!stockCache || stockCache.date!==tKey){
-                stockCache = stockCache || {};
-                stockCache.date=tKey;
-                stockCache.slots={};
-            }
-            if(force){
-                refreshStocks(true);
-                return;
-            }
-            const times = (config.stockRefreshTimes||[]).slice(0,2);
-            const windowMin=7;
-            for(const t of times){
-                if(!t) continue;
-                if(isNearTime(t, now, windowMin)){
-                    if(stockCache.slots && stockCache.slots[t]===tKey) continue; // already fetched this slot today
-                    stockCache.slots = stockCache.slots || {};
-                    stockCache.slots[t]=tKey;
-                    saveStockCache(stockCache);
-                    refreshStocks(false);
-                    break;
+        function controlBigScreen(action) {
+            const iframe = document.getElementById('bigScreenPlayer');
+            if (!iframe || !iframe.contentWindow) return;
+            
+            try {
+                if (action === 'play') {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                } else if (action === 'pause') {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
                 }
+            } catch (e) {
+                console.error('Big screen control error:', e);
             }
         }
 
-
-
-function init() {
+        // Initialize
+        function init() {
             loadSavedSettings();
             populateSettingsUI();
             updateDigitalClock();
             updateAnalogClock();
-            initYouTubeUI();
-            fetchAllData();
-            // Launch版：相片功能暫時移除
+            fetchBibleVerse();
+            initBigScreen();
+            fetchWeather();
+            fetchCurrencies();
+            fetchCalendar();
+            fetchNews(config.news1Feeds, 'news1Content');
+            fetchNews(config.news2Feeds, 'news2Content');
+            fetchNews(config.news3Feeds, 'news3Content');
+            maybeRefreshStocks();
+            
             setInterval(() => {
                 updateDigitalClock();
                 updateAnalogClock();
             }, 1000);
             
-            setInterval(updateReminders, 3600000);
             setInterval(fetchWeather, 1800000);
             setInterval(fetchCurrencies, 1800000);
-            setInterval(fetchNews, 1800000);
-            setInterval(fetchAlerts, 1800000);
-
-            // Stocks: check schedule every 5 minutes, but only fetch near the configured times (max 2x/day)
-            setInterval(() => maybeRefreshStocks(false), 300000);
-            maybeRefreshStocks(false);
+            setInterval(fetchCalendar, 1800000);
+            setInterval(() => fetchNews(config.news1Feeds, 'news1Content'), 1800000);
+            setInterval(() => fetchNews(config.news2Feeds, 'news2Content'), 1800000);
+            setInterval(() => fetchNews(config.news3Feeds, 'news3Content'), 1800000);
+            setInterval(maybeRefreshStocks, 300000);
         }
 
         if (document.readyState === 'loading') {
@@ -1801,30 +1089,10 @@ function init() {
         } else {
             init();
         }
+
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(e => console.log('Wake Lock:', e));
+        }
     </script>
 </body>
 </html>
-        async function fetchCalendarWebApp(days=7){
-            const url=(config.calendarWebAppUrl||'').trim();
-            if(!url) return { ok:false, events:[], error:'NO_URL' };
-            const token=(config.calendarWebAppToken||'').trim();
-            const params=new URLSearchParams();
-            if(token) params.set('token', token);
-            params.set('days', String(days));
-            // pass calendar IDs
-            for(const [k,v] of Object.entries(config.calendarIds||{})){
-                if(v) params.append('cal', v);
-            }
-            const final=url + (url.includes('?')?'&':'?') + params.toString();
-            try{
-                const res=await fetch(final);
-                if(!res.ok) throw new Error('HTTP_'+res.status);
-                const data=await res.json();
-                const events=data.events||data.items||[];
-                return { ok:true, events };
-            }catch(e){
-                return { ok:false, events:[], error:String(e) };
-            }
-        }
-
-
