@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v5.0.8fix</title>
+    <title>Display Panel - v5.0.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -239,12 +239,11 @@
                     <div>
                         <label class="block text-xs mb-1">Stocks API Provider</label>
                         <select id="stockApiProvider" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
-                            <option value="auto">Auto（推薦：TwelveData→Finnhub→快取）</option>
                             <option value="demo">Demo Mode (No API)</option>
                             <option value="twelvedata">Twelve Data (推薦：可一次取多隻股票)</option>
                             <option value="finnhub">Finnhub (備用：逐隻股票查詢)</option>
                         </select>
-                        <p class="text-[11px] text-slate-400 mt-1">推薦：選 Auto。正常用 Twelve Data（可一次取多隻），失敗自動切 Finnhub；仍維持每日 2 次更新＋快取，避免超出免費額度。</p>
+                        <p class="text-[11px] text-slate-400 mt-1">建議：Finnhub 做主（60/min，適合 12 隻股票），Twelve Data 做備用（Free plan 8/min，需要分段）。預設每日只更新 2 次以控制免費額度。</p>
                     </div>
                     <div>
                         <label class="block text-xs mb-1">Twelve Data API Key</label>
@@ -283,10 +282,27 @@
 
 <!-- News Sources -->
             <div>
-                <h3 class="font-semibold mb-2 text-blue-400">新聞來源</h3>
-                <p class="text-[11px] text-slate-400">新聞來源已固定（不提供選擇）：InMediaHK、RNZ（中文/國內）、BBC。第二行重要快訊：MetService、Civil Defence、Awaikato、NZTA（Auckland）。</p>
+                <h3 class="font-semibold mb-2 text-blue-400">News Sources</h3>
+                <div class="space-y-1">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsDemo" checked class="mr-2">
+                        <span>Demo News (Traditional Chinese)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsLTN" class="mr-2">
+                        <span>自由時報 LTN (Traditional Chinese RSS)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsSCMP" class="mr-2">
+                        <span>SCMP</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="newsBBC" class="mr-2">
+                        <span>BBC</span>
+                    </label>
+                </div>
             </div>
-
+            
             <!-- Calendar Toggles -->
             <div>
                 <h3 class="font-semibold mb-2 text-blue-400">Calendar Display</h3>
@@ -391,7 +407,7 @@
                 <div class="mt-2 flex flex-wrap gap-1">
                     <button class="media-btn" id="musicPrev" title="上一首">⏮</button>
                     <button class="media-btn" id="musicPlay" title="播放/暫停">⏯</button>
-<button class="media-btn" id="musicNext" title="下一首">⏭</button>
+                    <button class="media-btn" id="musicNext" title="下一首">⏭</button>
                     <button class="media-btn" id="musicReshuffle" title="重排+重播/更新">🔀</button>
                 </div>
             </div>
@@ -412,7 +428,8 @@
                 <div class="mt-1 flex flex-wrap gap-1">
                     <button class="media-btn" id="videoPrev">Prev</button>
                     <button class="media-btn" id="videoPlay">Play / Pause</button>
-<button class="media-btn" id="videoNext">Next</button>
+                    <button class="media-btn" id="videoStop">Stop</button>
+                    <button class="media-btn" id="videoNext">Next</button>
                     <button class="media-btn" id="videoReshuffle">Reshuffle / 更新</button>
                 </div>
             </div>
@@ -517,7 +534,12 @@
                 nz: true,
                 hk: true
             },
-            newsFeeds: { inmediahk: true, rnzchinese: true, rnzcountry: true, bbc: true }
+            newsFeeds: {
+                demo: true,
+                ltn: false,
+                scmp: false,
+                bbc: false
+            }
         };
 
 	        // Timers / state
@@ -583,32 +605,10 @@
         }
 
         function loadSavedSettings() {
-// News feeds migration (older versions)
-            if (!config.newsFeeds) config.newsFeeds = {};
-            // Old keys -> keep as commented fallback only
-            if ('ltn' in config.newsFeeds || 'scmp' in config.newsFeeds || 'bbc' in config.newsFeeds || 'demo' in config.newsFeeds) {
-                // do nothing; UI no longer exposes these
-            }
-            // New defaults
-            if (!('inmediahk' in config.newsFeeds) && !('rnzchinese' in config.newsFeeds) && !('rnzcountry' in config.newsFeeds) && !('cnaworld' in config.newsFeeds)) {
-                config.newsFeeds.inmediahk = true;
-                config.newsFeeds.rnzchinese = true;
-                config.newsFeeds.rnzcountry = true;
-                            }
-
             const saved = SafeStore.get('panelConfig');
             if (saved) {
                 const savedConfig = JSON.parse(saved);
                 Object.assign(config, savedConfig);
-            // If user previously saved demo provider but keys exist, default to auto
-            try {
-                const p = (config.stockApiProvider || '').toLowerCase();
-                const hasKeys = !!(config.twelveDataKey && String(config.twelveDataKey).trim()) || !!(config.finnhubKey && String(config.finnhubKey).trim());
-                if (hasKeys && (p === 'demo' || p === 'demomode' || p === 'demo mode (no api)')) {
-                    config.stockApiProvider = 'auto';
-                }
-            } catch {}
-
             }
             // Migration: older versions stored weatherLocations as strings
             if (Array.isArray(config.weatherLocations) && config.weatherLocations.length && typeof config.weatherLocations[0] === 'string') {
@@ -639,7 +639,8 @@
             // APIs (公開 Launch 版：Weather 用 Open‑Meteo，唔需要 key)
             const td = document.getElementById('twelveDataKey'); if (td) td.value = config.twelveDataKey || '';
             const fh = document.getElementById('finnhubKey'); if (fh) fh.value = config.finnhubKey || '';
-            const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'auto';
+            const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'demo';
+            const cors = document.getElementById('useCorsProxy'); if (cors) cors.checked = !!config.useCorsProxy;
             // Media
             const ev = document.getElementById('ytEnableVideo'); if (ev) ev.checked = !!config.ytEnableVideo;
 
@@ -649,11 +650,6 @@
             const r2 = document.getElementById('stockRefresh2'); if (r2) r2.value = (config.stockRefreshTimes && config.stockRefreshTimes[1]) ? config.stockRefreshTimes[1] : '11:00';
 
             // Calendar (方案A)
-            // News feeds (v5)
-            const n1 = document.getElementById('newsInmediaHK'); if (n1) n1.checked = !!config.newsFeeds.inmediahk;
-            const n2 = document.getElementById('newsRNZChinese'); if (n2) n2.checked = !!config.newsFeeds.rnzchinese;
-            const n3 = document.getElementById('newsRNZCountry'); if (n3) n3.checked = !!config.newsFeeds.rnzcountry;
-
             const url = document.getElementById('calendarWebAppUrl'); if (url) url.value = config.calendarWebAppUrl || '';
             const tok = document.getElementById('calendarToken'); if (tok) tok.value = config.calendarToken || '';
 
@@ -666,6 +662,10 @@
             const ch = document.getElementById('calHK'); if (ch) ch.checked = !!config.calendar.hk;
 
             // News
+            const nd = document.getElementById('newsDemo'); if (nd) nd.checked = !!config.newsFeeds.demo;
+            const nl = document.getElementById('newsLTN'); if (nl) nl.checked = !!config.newsFeeds.ltn;
+            const ns = document.getElementById('newsSCMP'); if (ns) ns.checked = !!config.newsFeeds.scmp;
+            const nb = document.getElementById('newsBBC'); if (nb) nb.checked = !!config.newsFeeds.bbc;
         }
 
         function saveSettings() {
@@ -673,6 +673,7 @@
             const td = document.getElementById('twelveDataKey'); if (td) config.twelveDataKey = td.value;
             const fh = document.getElementById('finnhubKey'); if (fh) config.finnhubKey = fh.value;
             const prov = document.getElementById('stockApiProvider'); if (prov) config.stockApiProvider = prov.value;
+            const cors = document.getElementById('useCorsProxy'); if (cors) config.useCorsProxy = cors.checked;
             // Media
             const ev = document.getElementById('ytEnableVideo'); if (ev) config.ytEnableVideo = ev.checked;
 
@@ -691,14 +692,7 @@
             config.calendarWebAppUrl = (url && url.value) ? url.value.trim() : '';
             config.calendarToken = (tok && tok.value) ? tok.value.trim() : '';
 
-            
-
-            // News feeds (v5)
-            config.newsFeeds = config.newsFeeds || {};
-            const n1 = document.getElementById('newsInmediaHK'); if (n1) config.newsFeeds.inmediahk = !!n1.checked;
-            const n2 = document.getElementById('newsRNZChinese'); if (n2) config.newsFeeds.rnzchinese = !!n2.checked;
-            const n3 = document.getElementById('newsRNZCountry'); if (n3) config.newsFeeds.rnzcountry = !!n3.checked;
-// Calendar toggles
+            // Calendar toggles
             const cp = document.getElementById('calPersonal'); if (cp) config.calendar.personal = cp.checked;
             const cb = document.getElementById('calBirthday'); if (cb) config.calendar.birthday = cb.checked;
             const cf = document.getElementById('calFamily'); if (cf) config.calendar.family = cf.checked;
@@ -707,6 +701,10 @@
             const ch = document.getElementById('calHK'); if (ch) config.calendar.hk = ch.checked;
 
             // News
+            const nd = document.getElementById('newsDemo'); if (nd) config.newsFeeds.demo = nd.checked;
+            const nl = document.getElementById('newsLTN'); if (nl) config.newsFeeds.ltn = nl.checked;
+            const ns = document.getElementById('newsSCMP'); if (ns) config.newsFeeds.scmp = ns.checked;
+            const nb = document.getElementById('newsBBC'); if (nb) config.newsFeeds.bbc = nb.checked;
 
             SafeStore.set('panelConfig', JSON.stringify(config));
             toggleSettings();
@@ -915,116 +913,47 @@
         }
 
         async function fetchRss(url, limit = 12) {
-            // NOTE: RSS/Atom fetching uses a proxy by default (GitHub/file:// friendly)
             const res = await fetch(getCorsProxy(url));
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const text = await res.text();
             const doc = new DOMParser().parseFromString(text, 'text/xml');
-
-            // RSS <item>
-            const rssItems = Array.from(doc.querySelectorAll('item'));
-            if (rssItems.length) {
-                return rssItems.slice(0, limit).map(it => {
-                    const title = (it.querySelector('title')?.textContent || '').trim();
-                    const link = (it.querySelector('link')?.textContent || '').trim();
-                    const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
-                    return { title, link, pubDate: pubDate ? new Date(pubDate) : null };
-                }).filter(x => x.title);
-            }
-
-            // Atom <entry>
-            const atomEntries = Array.from(doc.querySelectorAll('entry'));
-            return atomEntries.slice(0, limit).map(en => {
-                const title = (en.querySelector('title')?.textContent || '').trim();
-                let link = '';
-                const linkEl = en.querySelector('link');
-                if (linkEl) link = (linkEl.getAttribute('href') || linkEl.textContent || '').trim();
-                const updated = (en.querySelector('updated')?.textContent || en.querySelector('published')?.textContent || '').trim();
-                return { title, link, pubDate: updated ? new Date(updated) : null };
+            const items = Array.from(doc.querySelectorAll('item')).slice(0, limit);
+            return items.map(it => {
+                const title = (it.querySelector('title')?.textContent || '').trim();
+                const link = (it.querySelector('link')?.textContent || '').trim();
+                const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
+                return {
+                    title,
+                    link,
+                    pubDate: pubDate ? new Date(pubDate) : null
+                };
             }).filter(x => x.title);
         }
 
-        function _findByLocalName(node, localName) {
-            try {
-                const all = node.getElementsByTagName('*');
-                for (let i = 0; i < all.length; i++) {
-                    const el = all[i];
-                    if ((el.localName || '').toLowerCase() === localName.toLowerCase()) {
-                        const t = (el.textContent || '').trim();
-                        if (t) return t;
-                    }
-                }
-            } catch {}
-            return '';
-        }
-
-        async function fetchMetServiceCap(limit = 8) {
-            const urls = [
-                'https://alerts.metservice.com/cap/rss',
-                'https://alerts.metservice.com/cap/atom'
-            ];
-            let lastErr = null;
-            for (const url of urls) {
-                try {
-                    const res = await fetch(getCorsProxy(url), { cache: 'no-store' });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const xml = await res.text();
-                    const doc = new DOMParser().parseFromString(xml, 'text/xml');
-                    const items = Array.from(doc.querySelectorAll('item'));
-                    const entries = items.length ? items : Array.from(doc.querySelectorAll('entry'));
-                    const out = [];
-                    for (const it of entries.slice(0, limit)) {
-                        const title = (it.querySelector('title')?.textContent || '').trim();
-                        if (!title) continue;
-                        // CAP details
-                        let area = _findByLocalName(it, 'areaDesc');
-                        let sev = _findByLocalName(it, 'severity');
-                        // Fallback: try description text
-                        if (!area) {
-                            const desc = (it.querySelector('description')?.textContent || it.querySelector('summary')?.textContent || '').trim();
-                            const m =
-                            desc.match(/Area(?:\(s\))?:\s*([^\r\n<]+)/i) ||
-                            desc.match(/Areas?:\s*([^\r\n<]+)/i) ||
-                            desc.match(/Location:\s*([^\r\n<]+)/i);
-                            if (m) area = (m[1] || '').trim();
-                        }
-                        let text = title;
-                        if (area) text += ' — ' + area;
-                        if (sev) text += '（' + sev + '）';
-                        out.push(text);
-                    }
-                    // de-dup
-                    const seen = new Set();
-                    const uniq = [];
-                    for (const t of out) {
-                        const k = t.toLowerCase();
-                        if (seen.has(k)) continue;
-                        seen.add(k);
-                        uniq.push(t);
-                    }
-                    if (uniq.length) return uniq.slice(0, limit);
-                } catch (e) {
-                    lastErr = e;
-                }
-            }
-            if (lastErr) throw lastErr;
-            return [];
-        }
-
-
         async function fetchNews() {
-            // v5 feeds (replace old LTN/SCMP/BBC; keep them in comments as fallback)
-            // Old (fallback only):
-            // - LTN: https://news.ltn.com.tw/rss/all.xml
-            // - SCMP: https://www.scmp.com/rss/2/feed
-            // - BBC:  https://feeds.bbci.co.uk/news/rss.xml (啟用)
+            // Demo mode remains the fastest / most reliable option for offline testing
+            if (config.newsFeeds.demo) {
+                const demo = [
+                    '[示範] 農曆新年即將來臨，預計將有大量人流前往各大景點',
+                    '[示範] 新西蘭宣布新的氣候政策，目標2030年減排50%',
+                    '[示範] 香港股市今日上漲2.3%，恒生指數創新高',
+                    '[示範] 本地科技公司獲得1億美元融資，計劃擴展業務',
+                    '[示範] 天氣預報：本週末將有大雨，市民請注意防範'
+                ];
+                document.getElementById('newsContent').innerHTML = demo.map(n => `<span class="ticker-item">${n}</span>`).join('');
+                return;
+            }
 
-            const feeds = [
-                { name: 'InMediaHK', url: 'https://www.inmediahk.net/rss.xml' },
-                { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
-                { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
-                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' }
-            ];
+            const feeds = [];
+            if (config.newsFeeds.ltn) feeds.push({ name: 'LTN', url: 'https://news.ltn.com.tw/rss/all.xml' });
+            if (config.newsFeeds.scmp) feeds.push({ name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' });
+            if (config.newsFeeds.bbc) feeds.push({ name: 'BBC', url: 'http://feeds.bbci.co.uk/news/rss.xml' });
+
+            if (feeds.length === 0) {
+                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">No news sources enabled</span>';
+                return;
+            }
+
 
             try {
                 const all = [];
@@ -1074,134 +1003,15 @@
             `;
         }
 
-        
-        async function fetchCalendar() {
-            const scheduleEl = document.getElementById('scheduleContent');
-            if (!scheduleEl) return;
-
-            // If no WebApp URL, show safe fallback
-            if (!config.calendarWebAppUrl || !config.calendarWebAppUrl.includes('script.google.com')) {
-                scheduleEl.innerHTML = '<div class="text-slate-400">No events today</div>';
-                return;
-            }
-
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Pacific/Auckland';
-            const token = (config.calendarToken || '').trim();
-            const url = config.calendarWebAppUrl + (config.calendarWebAppUrl.includes('?') ? '&' : '?') +
-                'tz=' + encodeURIComponent(tz) + (token ? ('&token=' + encodeURIComponent(token)) : '');
-
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 12000);
-
-            try {
-                const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-                if (!data || !data.ok) throw new Error('BAD_DATA');
-
-                // cache last good
-                try {
-                    localStorage.setItem('calendarCache', JSON.stringify({ at: Date.now(), data }));
-                } catch (e) {}
-
-                renderSchedule(data.schedule?.today || [], data.schedule?.tomorrow || []);
-                renderReminders(data.reminders || {});
-            } catch (err) {
-                console.warn('Calendar fetch failed', err);
-
-                // try cache
-                try {
-                    const cached = JSON.parse(localStorage.getItem('calendarCache') || 'null');
-                    if (cached && cached.data && cached.data.ok) {
-                        renderSchedule(cached.data.schedule?.today || [], cached.data.schedule?.tomorrow || []);
-                        renderReminders(cached.data.reminders || {});
-                        scheduleEl.insertAdjacentHTML('afterbegin', '<div class="text-slate-500" style="margin-bottom:8px;">（使用快取）</div>');
-                        return;
-                    }
-                } catch (e) {}
-
-                scheduleEl.innerHTML = '<div class="text-red-400">（日曆讀取失敗）</div>';
-            } finally {
-                clearTimeout(t);
-            }
-        }
-
-        function renderSchedule(today, tomorrow) {
-            const scheduleEl = document.getElementById('scheduleContent');
-            if (!scheduleEl) return;
-
-            const rows = [];
-            const pushDay = (tag, list) => {
-                if (!list || !list.length) return;
-                list.slice(0, 6).forEach(ev => {
-                    const time = ev.allDay ? '全日' : (ev.timeLabel || '');
-                    const dayLabel = tag === 'today' ? '今日' : '明日';
-                    rows.push(`<div class="schedule-item ${tag==='today'?'active':''}">
-                        <div class="schedule-time">${dayLabel} ${escapeHtml(time)}</div>
-                        <div class="schedule-title">${escapeHtml(ev.title || '')}</div>
-                    </div>`);
-                });
-            };
-
-            pushDay('today', today);
-            pushDay('tomorrow', tomorrow);
-
-            if (!rows.length) {
-                scheduleEl.innerHTML = '<div class="text-slate-400">No events today</div>';
-                return;
-            }
-            scheduleEl.innerHTML = rows.join('');
-        }
-
-
-        function renderReminders(rem) {
-            const box = document.getElementById('upcomingReminders');
-            if (!box) return;
-
-            const order = [
-                ['nzHolidays', '🇳🇿'],
-                ['hkHolidays', '🇭🇰'],
-                ['birthdays', '🎂'],
-                ['game', '🎮'],
-                ['family', '👪'],
-                ['personal', '📅'],
-            ];
-
-            const flat = [];
-            order.forEach(([key, icon]) => {
-                const arr = (rem && Array.isArray(rem[key])) ? rem[key] : [];
-                arr.forEach(it => {
-                    if (!it) return;
-                    const title = it.title || it.name || it.summary || '';
-                    const date = it.date || '';
-                    const daysAway = typeof it.daysAway === 'number' ? it.daysAway : null;
-                    flat.push({ title, date, daysAway, icon });
-                });
-            });
-
-            // sort by soonest
-            flat.sort((a,b) => {
-                if (a.daysAway is not None and b.daysAway is not None) return a.daysAway - b.daysAway;
-                if (a.date and b.date) return a.date.localeCompare(b.date);
-                return 0;
-            });
-
+        function fetchCalendar() {
             const now = new Date();
-            const rows = flat.slice(0, 6).map(r => {
-                let days = r.daysAway;
-                if (days === null && r.date) {
-                    try {
-                        const d = new Date(r.date + 'T00:00:00');
-                        days = Math.round((d - now) / (24*60*60*1000));
-                    } catch (e) {}
-                }
-                const dayText = (days === 0) ? '今日' : (days === 1 ? '明日' : (typeof days === 'number' ? ('還有 ' + days + ' 日') : ''));
-                return `<div class="reminder-item"><div class="flex justify-between"><span>${escapeHtml((r.icon? (r.icon+' ') : '') + r.title)}</span><span class="text-yellow-400">${escapeHtml(dayText)}</span></div></div>`;
-            });
-
-            box.innerHTML = rows.length ? rows.join('') : '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
-        }
-;
+            const day = now.getDay();
+            let events = [];
+            
+            const schedule = {
+                0: [{ title: '主日崇拜', time: '10:00 AM' }],
+                3: [{ title: '查經班', time: '7:30 PM' }]
+            };
             
             if (schedule[day] && config.calendar.personal) {
                 schedule[day].forEach(e => events.push({ day: 'Today', ...e }));
@@ -1306,18 +1116,10 @@
             }
         }
 
-        function safeStop(player, playlistId, labelElId) {
+        function safeStop(player) {
             if (!player) return;
             try { player.stopVideo(); } catch {}
-            // Re-cue playlist without autoplay to avoid "stop == replay" behavior
-            if (playlistId) {
-                try { player.cuePlaylist({ listType: 'playlist', list: playlistId }); }
-                catch { try { player.cuePlaylist(playlistId); } catch {} }
-            }
-            if (labelElId) {
-                const el = document.getElementById(labelElId);
-                if (el) el.textContent = '已停止';
-            }
+            try { player.seekTo(0, true); } catch {}
         }
 
         function reshuffleAndReload(player, playlistId) {
@@ -1338,11 +1140,15 @@
         }
 
         function initYouTubeUI() {
-            // Music controls
-            document.getElementById('musicPrev').addEventListener('click', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
-            document.getElementById('musicPlay').addEventListener('click', () => safeTogglePlay(ytMusicPlayer));
-            document.getElementById('musicNext').addEventListener('click', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
-            document.getElementById('musicReshuffle').addEventListener('click', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
+            // Music controls (Stop removed; guard all bindings to avoid freezing when elements are absent)
+            const bindBtn = (id, fn) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', fn);
+            };
+            bindBtn('musicPrev', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
+            bindBtn('musicPlay', () => safeTogglePlay(ytMusicPlayer));
+            bindBtn('musicNext', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
+            bindBtn('musicReshuffle', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
 
             // Video controls (only if enabled)
             const vc = document.getElementById('videoCard');
@@ -1358,6 +1164,7 @@
             };
             bindIf('videoPrev', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
             bindIf('videoPlay', () => safeTogglePlay(ytVideoPlayer));
+            bindIf('videoStop', () => safeStop(ytVideoPlayer));
             bindIf('videoNext', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
             bindIf('videoReshuffle', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
 
@@ -1516,92 +1323,54 @@
             if (ws) ws.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>Weather: <span class="text-green-400">Updated</span>';
         }
 
-        // Alerts ticker（重要快訊：交通／警報／世界要聞）
+        // Alerts ticker（重要快訊：天氣／交通／警報）
         async function fetchAlerts() {
             const out = [];
             let hadError = false;
 
-            // Helper: push items with source label
-            const pushItems = (source, items, limit) => {
-                const take = (limit ? items.slice(0, limit) : items);
-                take.forEach(t => { if (t) out.push({ source, text: t }); });
-            };
-
-            // 1) NZTA traffic (Auckland serious only; fallback to newest if none)
+            // NZTA traffic (Road Events) via ArcGIS FeatureServer (JSON) — usually CORS-friendly
             try {
                 const base = 'https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/0/query';
                 const params = new URLSearchParams({
                     where: '1=1',
                     outFields: 'eventType,locationArea,eventDescription,impact,status,eventModified',
                     orderByFields: 'eventModified DESC',
-                    resultRecordCount: '30',
+                    resultRecordCount: '6',
                     f: 'json'
                 });
-                const resp = await fetch(getCorsProxy(base + '?' + params.toString()), { cache: 'no-store' });
+                const resp = await fetch(base + '?' + params.toString(), { cache: 'no-store' });
                 if (resp.ok) {
                     const data = await resp.json();
                     const feats = (data && data.features) ? data.features : [];
-
-                    const aucklandKeys = ['auckland','north shore','manukau','papakura','takanini','drury','albany','henderson','penrose','mt wellington','botany','howick','pakuranga'];
-                    const seriousKeys = ['serious crash','crash','accident','incident','blocked','road closed','closure','closed','major delay','long delays','congestion','queue','queues'];
-                    const excludeKeys = ['road work','roadworks','maintenance','resurfacing','chipseal','temporary speed','worksite'];
-
-                    const isAuckland = (s) => {
-                        const t = (s||'').toLowerCase();
-                        return aucklandKeys.some(k => t.includes(k));
-                    };
-                    const isSerious = (s) => {
-                        const t = (s||'').toLowerCase();
-                        if (excludeKeys.some(k => t.includes(k))) return false;
-                        return seriousKeys.some(k => t.includes(k));
-                    };
-
-                    const formatted = feats.map(f => {
+                    for (const f of feats) {
                         const a = (f && f.attributes) ? f.attributes : {};
                         const type = (a.eventType || '').toString().trim();
                         const loc = (a.locationArea || '').toString().trim();
                         const desc = (a.eventDescription || '').toString().trim();
                         const impact = (a.impact || '').toString().trim();
                         const text = [type, loc, impact || desc].filter(Boolean).join(' - ');
-                        return { text, raw: (type + ' ' + loc + ' ' + desc + ' ' + impact) };
-                    }).filter(x => x.text);
-
-                    const auckSerious = formatted.filter(x => isAuckland(x.raw) && isSerious(x.raw)).map(x => x.text);
-                    const auckAny = formatted.filter(x => isAuckland(x.raw)).map(x => x.text);
-                    const fallback = formatted.map(x => x.text);
-
-                    const pick = (auckSerious.length ? auckSerious : (auckAny.length ? auckAny : fallback));
-                    pushItems('NZTA', pick, 6);
+                        if (text) out.push({ source: 'NZTA', text });
+                    }
                 }
             } catch (e) {
                 console.warn('NZTA alerts failed', e); hadError = true;
             }
 
-            // 2) MetService CAP alerts (RSS + Atom fallback, include area)
+            // HKO warnings (tc)
             try {
-                const texts = await fetchMetServiceCap(8);
-                pushItems('MetService', texts, 6);
+                const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc';
+                const resp = await fetch(url, { cache: 'no-store' });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.details && Array.isArray(data.details) && data.details.length) {
+                        data.details.forEach(d => {
+                            const name = d.warningStatement || d.warningName || d.type || '香港天氣警告';
+                            out.push({ source: 'HKO', text: name });
+                        });
+                    }
+                }
             } catch (e) {
-                console.warn('MetService feed failed', e); hadError = true;
-            }
-
-            // 4) Civil Defence RSS
-            try {
-                const items = await fetchRss('https://www.civildefence.govt.nz/home/rss', 8);
-                const texts = items.map(it => it.title).filter(Boolean);
-                pushItems('CivilDefence', texts, 4);
-            } catch (e) {
-                console.warn('CivilDefence feed failed', e); hadError = true;
-            }
-
-            
-            // 4b) Awaikato (feed provided)
-            try {
-                const items = await fetchRss('https://media.rss.com/awaikatothing/feed.xml', 6);
-                const texts = items.map(it => it.title).filter(Boolean);
-                pushItems('Awaikato', texts, 3);
-            } catch (e) {
-                console.warn('Awaikato feed failed', e); hadError = true;
+                console.warn('HKO warnsum failed', e); hadError = true;
             }
 
             const el = document.getElementById('alertsContent');
@@ -1622,51 +1391,19 @@
             el.innerHTML = html;
         }
 
-        
-        // Reminders: prefer WebApp cache, fallback to hardcoded holidays (NZ/HK)
+        // Reminders override (Launch): demo birthdays/game + hardcoded holidays (NZ/HK)
         async function updateReminders() {
-            // If calendar webapp already fetched, it will renderReminders() directly.
-            // Here we only provide fallback so the UI never stays empty.
-            const box = document.getElementById('upcomingReminders');
-            if (!box) return;
-
-            // Try cached WebApp data first
-            try {
-                const cached = JSON.parse(localStorage.getItem('calendarCache') || 'null');
-                if (cached && cached.data && cached.data.ok && cached.data.reminders) {
-                    renderReminders(cached.data.reminders);
-                    return;
-                }
-            } catch (e) {}
-
             const now = new Date();
             const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             const reminders = [];
 
+            // Holidays (hardcoded fallback already present)
             if (config.calendar && config.calendar.nz && typeof holidays2026 !== 'undefined' && holidays2026.nz) {
                 holidays2026.nz.forEach(h => {
                     const d = new Date(h.date);
-                    if (d >= now && d <= oneWeek) reminders.push({ title: h.name, date: h.date, daysAway: Math.ceil((d-now)/(24*60*60*1000)), icon: '🇳🇿' });
+                    if (d >= now && d <= oneWeek) reminders.push({ text: '🇳🇿 ' + h.name, date: h.date });
                 });
             }
-            if (config.calendar && config.calendar.hk && typeof holidays2026 !== 'undefined' && holidays2026.hk) {
-                holidays2026.hk.forEach(h => {
-                    const d = new Date(h.date);
-                    if (d >= now && d <= oneWeek) reminders.push({ title: h.name, date: h.date, daysAway: Math.ceil((d-now)/(24*60*60*1000)), icon: '🇭🇰' });
-                });
-            }
-
-            if (!reminders.length) {
-                box.innerHTML = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
-                return;
-            }
-
-            reminders.sort((a,b) => (a.daysAway||0) - (b.daysAway||0));
-            box.innerHTML = reminders.slice(0,6).map(r => {
-                const dayText = r.daysAway === 0 ? '今日' : (r.daysAway === 1 ? '明日' : ('還有 ' + r.daysAway + ' 日'));
-                return '<div class="reminder-item"><div class="flex justify-between"><span>' + escapeHtml((r.icon? (r.icon + ' ') : '') + r.title) + '</span><span class="text-yellow-400">' + escapeHtml(dayText) + '</span></div></div>';
-            }).join('');
-        }
             if (config.calendar && config.calendar.hk && typeof holidays2026 !== 'undefined' && holidays2026.hk) {
                 holidays2026.hk.forEach(h => {
                     const d = new Date(h.date);
@@ -1892,6 +1629,317 @@ function init() {
         } else {
             init();
         }
-    </script>
+    
+
+        // =============================
+        // v5.0.9 OVERRIDES (GitHub/file:// friendly)
+        // =============================
+
+        const V509 = { version: '5.0.9' };
+
+        // Always use a CORS-friendly fetch without exposing 'proxy' wording in UI.
+        function getCorsProxy(url){
+            return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+        }
+
+        function _xmlText(el, names){
+            for(const n of names){
+                const node = el.getElementsByTagName(n)[0];
+                if(node && node.textContent) return node.textContent.trim();
+            }
+            // Namespaced fallbacks (CAP)
+            for(const n of names){
+                const node = Array.from(el.getElementsByTagName('*')).find(x => (x.localName||'')===n);
+                if(node && node.textContent) return node.textContent.trim();
+            }
+            return '';
+        }
+
+        async function fetchFeedItems(url, sourceLabel, limit=10){
+            const proxied = getCorsProxy(url);
+            const res = await fetchWithTimeout(proxied, 12000);
+            if(!res.ok) throw new Error('HTTP_'+res.status);
+            const text = await res.text();
+            const xml = new DOMParser().parseFromString(text, 'text/xml');
+
+            // RSS
+            let items = Array.from(xml.getElementsByTagName('item'));
+            if(items.length){
+                return items.slice(0, limit).map(it => {
+                    const title = _xmlText(it, ['title']);
+                    const link  = _xmlText(it, ['link']);
+                    return { title, link, source: sourceLabel };
+                }).filter(x=>x.title);
+            }
+
+            // Atom
+            items = Array.from(xml.getElementsByTagName('entry'));
+            if(items.length){
+                return items.slice(0, limit).map(en => {
+                    const title = _xmlText(en, ['title']);
+                    let link = '';
+                    const linkEl = en.getElementsByTagName('link')[0];
+                    if(linkEl){ link = linkEl.getAttribute('href') || linkEl.textContent || ''; }
+                    return { title, link, source: sourceLabel };
+                }).filter(x=>x.title);
+            }
+
+            return [];
+        }
+
+        // v5 news sources
+        const NEWS_LINE1 = [
+            { label:'InMediaHK', url:'https://www.inmediahk.net/rss.xml' },
+            { label:'明報', url:'https://news.mingpao.com/rss/ins/s00005.xml' },
+            { label:'明報', url:'https://news.mingpao.com/rss/ins/s00004.xml' },
+            { label:'明報', url:'https://news.mingpao.com/rss/ins/s00007.xml' },
+            { label:'RTHK', url:'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' },
+        ];
+
+        const NEWS_LINE2 = [
+            // Severe / civil defence
+            { label:'MetService', url:'https://alerts.metservice.com/cap/rss' },
+            { label:'Civil Defence', url:'https://www.civildefence.govt.nz/home/rss' },
+            { label:'Awaikato', url:'https://media.rss.com/awaikatothing/feed.xml' },
+            // World / NZ
+            { label:'BBC', url:'https://feeds.bbci.co.uk/news/world/rss.xml' },
+            { label:'RNZ', url:'https://www.rnz.co.nz/rss/chinese.xml' },
+            { label:'RNZ', url:'https://www.rnz.co.nz/rss/country.xml' },
+        ];
+
+        // Override: fetchNews (line 1)
+        async function fetchNews(){
+            const ticker = document.getElementById('newsTicker');
+            const content = document.getElementById('newsTickerContent');
+            if(!ticker || !content) return;
+            content.innerHTML = '<span class="ticker-item">Loading...</span>';
+
+            let all = [];
+            let errCount = 0;
+            for(const f of NEWS_LINE1){
+                try{
+                    const items = await fetchFeedItems(f.url, f.label, 6);
+                    all.push(...items);
+                }catch(e){
+                    errCount++;
+                }
+            }
+
+            // Dedup + trim
+            const seen = new Set();
+            all = all.filter(it=>{
+                const k=(it.source+'|'+it.title).slice(0,200);
+                if(seen.has(k)) return false;
+                seen.add(k);
+                return true;
+            }).slice(0, 24);
+
+            if(!all.length){
+                content.innerHTML = `<span class="ticker-item">${errCount? '（新聞讀取失敗）' : '（暫無新聞）'}</span>`;
+                return;
+            }
+
+            content.innerHTML = all.map(it => {
+                const t = escapeHtml(it.title);
+                return `<span class="ticker-item"><span class="badge">[${escapeHtml(it.source)}]</span> ${t}</span>`;
+            }).join('<span class="ticker-sep">•</span>');
+
+            // Reset animation for new content
+            restartTickerAnimation('newsTickerContent');
+        }
+
+        // NZTA Auckland incidents (filter out road works)
+        async function fetchNZTAAucklandIncidents(limit=8){
+            try{
+                const url = `https://services.arcgis.com/XTtANUDT8Va4DLwI/ArcGIS/rest/services/NZTA_Travel_Alerts/FeatureServer/0/query?where=1%3D1&outFields=*&f=json&orderByFields=lastUpdated%20DESC&resultRecordCount=50`;
+                const res = await fetchWithTimeout(url, 12000);
+                if(!res.ok) throw new Error('HTTP_'+res.status);
+                const data = await res.json();
+                const feats = (data.features || []).map(f => f.attributes || {});
+
+                const isAkl = (a)=>{
+                    const area = (a.locationArea||'') + ' ' + (a.roadName||'') + ' ' + (a.title||'');
+                    return /Auckland/i.test(area);
+                };
+                const isRoadWork = (a)=>{
+                    const s = ((a.title||'')+' '+(a.description||'')+' '+(a.eventType||'')+' '+(a.eventSubType||'')).toLowerCase();
+                    return /(road work|roadworks|resurf|maintenance|planned|scheduled|pavement|chipseal|worksite)/.test(s);
+                };
+                const isImportant = (a)=>{
+                    const s = ((a.title||'')+' '+(a.description||'')+' '+(a.eventType||'')+' '+(a.eventSubType||'')).toLowerCase();
+                    return /(crash|accident|incident|serious|fatal|congestion|queue|delay|hazard|blocked|closure|obstruction)/.test(s);
+                };
+
+                const picked = feats
+                    .filter(a => isAkl(a) && !isRoadWork(a) && isImportant(a))
+                    .slice(0, limit)
+                    .map(a => {
+                        const title = (a.title || a.roadName || 'NZTA Alert').replace(/\s+/g,' ').trim();
+                        return { title, source:'NZTA', link:'' };
+                    });
+
+                return picked;
+            }catch(e){
+                return [];
+            }
+        }
+
+        // Extract CAP location if present
+        function enrichMetServiceTitle(rawTitle, xmlItem){
+            const area = _xmlText(xmlItem, ['areaDesc','cap:areaDesc']);
+            if(area && !rawTitle.includes(area)) return rawTitle + ' — ' + area;
+            return rawTitle;
+        }
+
+        // Override: fetchAlerts (line 2)
+        async function fetchAlerts(){
+            const content = document.getElementById('alertsTickerContent');
+            if(!content) return;
+            content.innerHTML = '<span class="ticker-item">Loading...</span>';
+
+            let all = [];
+            let errCount = 0;
+
+            // NZTA first
+            const nzta = await fetchNZTAAucklandIncidents(10);
+            all.push(...nzta.map(x=>({title:x.title, source:x.source, link:x.link})));
+
+            // Other feeds
+            for(const f of NEWS_LINE2){
+                try{
+                    const proxied = getCorsProxy(f.url);
+                    const res = await fetchWithTimeout(proxied, 12000);
+                    if(!res.ok) throw new Error('HTTP_'+res.status);
+                    const text = await res.text();
+                    const xml = new DOMParser().parseFromString(text, 'text/xml');
+
+                    // CAP special handling
+                    if(/metservice/i.test(f.url)){
+                        const items = Array.from(xml.getElementsByTagName('item')).slice(0, 6);
+                        for(const it of items){
+                            const t = _xmlText(it, ['title']);
+                            if(!t) continue;
+                            all.push({ title: enrichMetServiceTitle(t, it), source: f.label, link: _xmlText(it,['link']) });
+                        }
+                        continue;
+                    }
+
+                    let items = Array.from(xml.getElementsByTagName('item'));
+                    if(items.length){
+                        for(const it of items.slice(0, 5)){
+                            const t = _xmlText(it, ['title']);
+                            if(!t) continue;
+                            all.push({ title: t, source: f.label, link: _xmlText(it,['link']) });
+                        }
+                        continue;
+                    }
+                    items = Array.from(xml.getElementsByTagName('entry'));
+                    if(items.length){
+                        for(const en of items.slice(0, 5)){
+                            const t = _xmlText(en, ['title']);
+                            if(!t) continue;
+                            const linkEl = en.getElementsByTagName('link')[0];
+                            const link = linkEl ? (linkEl.getAttribute('href') || linkEl.textContent || '') : '';
+                            all.push({ title: t, source: f.label, link });
+                        }
+                        continue;
+                    }
+
+                }catch(e){
+                    errCount++;
+                }
+            }
+
+            // Keep it short
+            all = all.slice(0, 28);
+            if(!all.length){
+                content.innerHTML = `<span class="ticker-item">${errCount? '（重要快訊讀取失敗）' : '（暫無重要快訊）'}</span>`;
+                restartTickerAnimation('alertsTickerContent');
+                return;
+            }
+
+            content.innerHTML = all.map(it => {
+                const t = escapeHtml(it.title);
+                return `<span class="ticker-item"><span class="badge">[${escapeHtml(it.source)}]</span> ${t}</span>`;
+            }).join('<span class="ticker-sep">•</span>');
+
+            restartTickerAnimation('alertsTickerContent');
+        }
+
+        // Calendar Web App integration
+        let _lastCalendarPayload = null;
+
+        async function fetchCalendar(){
+            const schedEl = document.getElementById('scheduleList');
+            const remindEl = document.getElementById('reminderList');
+
+            const url = (config.calendarWebAppUrl || '').trim();
+            if(!url){
+                if(schedEl) schedEl.innerHTML = '<div class="text-slate-400">未設定日曆 Web App</div>';
+                if(remindEl) remindEl.innerHTML = '<div class="text-slate-400">未設定日曆 Web App</div>';
+                return;
+            }
+
+            try{
+                let endpoint = url;
+                const token = (config.calendarWebAppToken || '').trim();
+                const sep = endpoint.includes('?') ? '&' : '?';
+                endpoint = endpoint + sep + '_=' + Date.now();
+                if(token){ endpoint = endpoint + '&token=' + encodeURIComponent(token); }
+
+                const res = await fetchWithTimeout(endpoint, 15000);
+                if(!res.ok) throw new Error('HTTP_'+res.status);
+                const data = await res.json();
+                if(!data || data.ok !== true) throw new Error('BAD_JSON');
+
+                _lastCalendarPayload = data;
+                renderCalendarFromPayload(data);
+            }catch(e){
+                if(schedEl) schedEl.innerHTML = '<div class="text-slate-400">（日曆讀取失敗）</div>';
+                if(remindEl) remindEl.innerHTML = '<div class="text-slate-400">（日曆讀取失敗）</div>';
+            }
+        }
+
+        function renderCalendarFromPayload(p){
+            const schedEl = document.getElementById('scheduleList');
+            const remindEl = document.getElementById('reminderList');
+
+            // Schedule: today + tomorrow (as requested)
+            const today = (p.schedule && p.schedule.today) || [];
+            const tomorrow = (p.schedule && p.schedule.tomorrow) || [];
+            const merged = [...today.map(x=>({...x,_day:'今天'})), ...tomorrow.map(x=>({...x,_day:'明天'}))];
+
+            if(schedEl){
+                if(!merged.length){
+                    schedEl.innerHTML = '<div class="text-slate-400">No events today</div>';
+                }else{
+                    schedEl.innerHTML = merged.slice(0, 8).map(ev=>{
+                        const time = escapeHtml(ev.timeLabel || (ev.allDay?'全日':'—'));
+                        const title = escapeHtml(ev.title || '');
+                        return `<div class="schedule-item"><span class="badge">${ev._day}</span> <span class="time">${time}</span> ${title}</div>`;
+                    }).join('');
+                }
+            }
+
+            // Reminders: next 7 days (under time)
+            const rem = (p.reminders && p.reminders.personal) || [];
+            if(remindEl){
+                if(!rem.length){
+                    remindEl.innerHTML = '<div class="text-slate-400">未來 7 日無事件</div>';
+                }else{
+                    remindEl.innerHTML = rem.slice(0, 3).map(r=>{
+                        const title = escapeHtml(r.title||'');
+                        const days = typeof r.daysAway==='number' ? r.daysAway : '';
+                        const label = (days===0)?'今天':('還有 '+days+' 日');
+                        return `<div class="reminder-item"><span class="icon">${escapeHtml(r.icon||'📅')}</span> <span class="title">${title}</span><span class="days">${label}</span></div>`;
+                    }).join('');
+                }
+            }
+        }
+
+        // Make sure calendar updates are used by the periodic refresh loop
+        window.__v509_loaded = true;
+
+</script>
 </body>
 </html>
