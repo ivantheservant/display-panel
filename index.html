@@ -1074,55 +1074,138 @@
             `;
         }
 
-        function fetchCalendar() {
-            const now = new Date();
-            const day = now.getDay();
-            let events = [];
-            
-            const schedule = {
-                0: [{ title: '主日崇拜', time: '10:00 AM' }],
-                3: [{ title: '查經班', time: '7:30 PM' }]
-            };
-            
-            if (schedule[day] && config.calendar.personal) {
-                schedule[day].forEach(e => events.push({ day: 'Today', ...e }));
-            }
-            
-            let html = '';
-            if (events.length === 0) {
-                html = '<p class="text-slate-400">No events today</p>';
-            } else {
-                events.forEach(e => {
-                    html += `
-                        <div class="calendar-event">
-                            <div class="flex justify-between items-start">
-                                <span class="font-semibold text-blue-300">${e.day}</span>
-                                <span class="text-slate-400">${e.time}</span>
-                            </div>
-                            <div>${e.title}</div>
-                        </div>
-                    `;
-                });
-            }
-            
-            document.getElementById('calendarContainer').innerHTML = html;
-        }
+        
+// -----------------------------
+// Calendar WebApp (方案 A)
+// - 為咗支援「直接 double-click HTML / GitHub Pages」而唔裝 CORS extension
+//   Panel 端會用 corsproxy.io 去讀你嘅 Apps Script WebApp JSON。
+// - WebApp 回傳：schedule (today/tomorrow) + reminders (next 7 days)
+// -----------------------------
+let __calendarWebAppState = { ts: 0, data: null, error: null };
 
-        function fetchAllData() {
-            fetchWeather();
-            fetchCurrencies();
-            fetchNews();
-            fetchAlerts();
-            fetchBibleVerse();
-            fetchCalendar();
-            updateReminders();
-            maybeRefreshStocks(true);
-        }
+async function fetchCalendarWebAppData(force = false) {
+    const url = (config.calendarWebAppUrl || '').trim();
+    if (!url) {
+        __calendarWebAppState = { ts: Date.now(), data: null, error: 'NO_URL' };
+        return null;
+    }
+    const now = Date.now();
+    if (!force && __calendarWebAppState.data && (now - __calendarWebAppState.ts) < 5 * 60 * 1000) {
+        return __calendarWebAppState.data;
+    }
+    try {
+        const token = (config.calendarToken || '').trim();
+        const params = new URLSearchParams();
+        params.set('v', '1');
+        params.set('days', '7');
+        params.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Pacific/Auckland');
+        if (token) params.set('token', token);
+        const full = url + (url.includes('?') ? '&' : '?') + params.toString();
+        const fetchUrl = config.useCorsProxy ? getCorsProxy(full) : full;
+        const resp = await fetch(fetchUrl, { cache: 'no-store' });
+        const txt = await resp.text();
+        const data = JSON.parse(txt);
+        if (!data || data.ok === false) throw new Error((data && data.error) ? data.error : 'BAD_RESPONSE');
+        __calendarWebAppState = { ts: now, data, error: null };
+        return data;
+    } catch (err) {
+        __calendarWebAppState = { ts: now, data: null, error: String(err && err.message ? err.message : err) };
+        return null;
+    }
+}
 
-        // -----------------------------
-        // YouTube Players (Music + Video)
-        // -----------------------------
-        let ytMusicPlayer = null;
+function renderRemindersFromWebApp(data) {
+    const listEl = document.getElementById('remindersList');
+    if (!listEl) return;
+
+    const groups = (data && data.reminders) ? data.reminders : null;
+    const items = [];
+    if (groups) {
+        const pushGroup = (arr) => {
+            if (!Array.isArray(arr)) return;
+            for (const it of arr) items.push(it);
+        };
+        pushGroup(groups.birthdays);
+        pushGroup(groups.family);
+        pushGroup(groups.game);
+        pushGroup(groups.personal);
+        pushGroup(groups.nzHolidays);
+        pushGroup(groups.hkHolidays);
+    }
+
+    // sort by daysAway if present
+    items.sort((a, b) => (Number(a.daysAway) || 999) - (Number(b.daysAway) || 999));
+
+    if (!items.length) {
+        listEl.innerHTML = '<div class="muted">未來 7 日無事件</div>';
+        return;
+    }
+
+    const maxShow = 4;
+    const rows = items.slice(0, maxShow).map(it => {
+        const title = (it.title || '').trim() || '(無標題)';
+        const days = (it.daysAway === 0) ? '今日' : (it.daysAway === 1 ? '聽日' : ('還有 ' + it.daysAway + ' 日'));
+        const icon = it.icon || '📅';
+        return `
+        <div class="reminder-row">
+            <div class="reminder-left"><span class="reminder-icon">${icon}</span><span class="reminder-title">${escapeHtml(title)}</span></div>
+            <div class="reminder-right">${days}</div>
+        </div>`;
+    }).join('');
+
+    listEl.innerHTML = rows;
+}
+
+function renderScheduleFromWebApp(data) {
+    const cont = document.getElementById('calendarContainer');
+    if (!cont) return;
+
+    const sched = (data && data.schedule) ? data.schedule : null;
+    const today = (sched && Array.isArray(sched.today)) ? sched.today : [];
+    const tomorrow = (sched && Array.isArray(sched.tomorrow)) ? sched.tomorrow : [];
+
+    const fmt = (ev) => {
+        const title = escapeHtml((ev.title || '').trim() || '(無標題)');
+        const time = escapeHtml(ev.timeLabel || '');
+        return `<div class="schedule-item"><div class="schedule-title">${title}</div><div class="schedule-time">${time}</div></div>`;
+    };
+
+    if (!today.length && !tomorrow.length) {
+        cont.innerHTML = '<div class="muted">No events today</div>';
+        return;
+    }
+
+    const blocks = [];
+    if (today.length) {
+        blocks.push(`<div class="schedule-section"><div class="schedule-section-title">Today</div>${today.slice(0, 4).map(fmt).join('')}</div>`);
+    }
+    if (tomorrow.length) {
+        blocks.push(`<div class="schedule-section"><div class="schedule-section-title">Tomorrow</div>${tomorrow.slice(0, 4).map(fmt).join('')}</div>`);
+    }
+    cont.innerHTML = blocks.join('');
+}
+
+function fetchCalendar() {
+    // schedule 由 WebApp 提供；如果未設定 URL，維持現狀。
+    const cont = document.getElementById('calendarContainer');
+    if (cont) cont.innerHTML = '<div class="muted">Loading...</div>';
+
+    fetchCalendarWebAppData(false).then(data => {
+        if (data) {
+            renderScheduleFromWebApp(data);
+        } else {
+            if (cont) {
+                if ((__calendarWebAppState.error || '') === 'NO_URL') {
+                    cont.innerHTML = '<div class="muted">未設定日曆 WebApp</div>';
+                } else {
+                    cont.innerHTML = '<div class="muted">（日曆讀取失敗）</div>';
+                }
+            }
+        }
+    });
+}
+
+let ytMusicPlayer = null;
         let ytVideoPlayer = null;
         let ytApiLoading = false;
 
