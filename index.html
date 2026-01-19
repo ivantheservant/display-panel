@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v5.0.9</title>
+    <title>Display Panel - v5.0.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -45,7 +45,7 @@
         
         /* With big screen - 7 rows (adds row for media) */
         .grid-container.has-bigscreen {
-            grid-template-rows: auto auto auto minmax(200px, 1fr) auto auto auto;
+            grid-template-rows: auto auto minmax(200px, 1fr) auto auto auto;
         }
         
         /* Clock */
@@ -76,7 +76,7 @@
             z-index: 10;
         }
         
-        /* Tickers */
+        /* Tickers - 25% SLOWER */
         .ticker {
             width: 100%;
             overflow: hidden;
@@ -89,10 +89,9 @@
             white-space: nowrap;
             padding-left: 100%;
         }
-        .news-ticker-1 { animation: scroll-left 120s linear infinite; }
-        .news-ticker-2 { animation: scroll-left 90s linear infinite; }
-        .news-ticker-3 { animation: scroll-left 75s linear infinite; }
-        .stock-ticker { animation: scroll-left 35s linear infinite; }
+        .news-ticker-1 { animation: scroll-left 150s linear infinite; }  /* was 120s */
+        .news-ticker-2 { animation: scroll-left 112.5s linear infinite; } /* was 90s */
+        .stock-ticker { animation: scroll-left 43.75s linear infinite; } /* was 35s */
         @keyframes scroll-left {
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
@@ -318,18 +317,8 @@
             </div>
         </div>
 
-        <!-- Row 3: My Stocks - ALWAYS visible -->
-        <div class="glass card" style="grid-column: 1 / 7; grid-row: 3;">
-            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-chart-line mr-1"></i>My Stocks (買入價)</h3>
-            <div class="ticker">
-                <div class="ticker-content stock-ticker" id="stocksContent">
-                    <span class="ticker-item">Loading stocks...</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Row 4: Big Screen Media - Hidden by default, shown when enabled -->
-        <div id="bigScreenSection" class="glass card" style="grid-column: 1 / 7; grid-row: 4; display: none;">
+        <!-- Row 3: Big Screen Media (when enabled) or News Line 1 (when disabled) -->
+        <div id="bigScreenSection" class="glass card" style="grid-column: 1 / 7; grid-row: 3; display: none;">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-sm font-semibold">
                     <i class="fas fa-video mr-1"></i>
@@ -347,8 +336,8 @@
             </div>
         </div>
 
-        <!-- Row 5: News Line 1 - Chinese -->
-        <div class="glass card" id="news1Card" style="grid-column: 1 / 7; grid-row: 5;">
+        <!-- Row 3 or 4: News Line 1 - Chinese -->
+        <div class="glass card" id="news1Card" style="grid-column: 1 / 7; grid-row: 3;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-newspaper mr-1"></i>中文新聞</h3>
             <div class="ticker">
                 <div class="ticker-content news-ticker-1" id="news1Content">
@@ -357,8 +346,8 @@
             </div>
         </div>
 
-        <!-- Row 6: News Line 2 - International -->
-        <div class="glass card" id="news2Card" style="grid-column: 1 / 7; grid-row: 6;">
+        <!-- Row 4 or 5: News Line 2 - International (includes Traffic & Alerts) -->
+        <div class="glass card" id="news2Card" style="grid-column: 1 / 7; grid-row: 4;">
             <h3 class="text-sm font-semibold mb-2"><i class="fas fa-globe mr-1"></i>International News</h3>
             <div class="ticker">
                 <div class="ticker-content news-ticker-2" id="news2Content">
@@ -367,12 +356,12 @@
             </div>
         </div>
 
-        <!-- Row 7: News Line 3 - NZTA Traffic (only when big screen disabled) -->
-        <div class="glass card" id="news3Card" style="grid-column: 1 / 7; grid-row: 7;">
-            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-traffic-light mr-1"></i>Traffic & Alerts</h3>
+        <!-- Row 5 or 6: My Stocks - MOVED HERE (after news) -->
+        <div class="glass card" id="stocksCard" style="grid-column: 1 / 7; grid-row: 5;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-chart-line mr-1"></i>My Stocks (買入價)</h3>
             <div class="ticker">
-                <div class="ticker-content news-ticker-3" id="news3Content">
-                    <span class="ticker-item">Loading alerts...</span>
+                <div class="ticker-content stock-ticker" id="stocksContent">
+                    <span class="ticker-item">Loading stocks...</span>
                 </div>
             </div>
         </div>
@@ -382,9 +371,9 @@
         // Configuration
         const config = {
             weatherApiKey: '4d4ff0180678e887714547a90289db00',
-            twelveDataKey: '',
-            finnhubKey: '',
-            calendarWebAppUrl: 'https://script.google.com/macros/s/AKfycbzmf7RncKyS0plliw8_qdlssixC1kl2bGvj-hau8Nuj7DnIW-naUirBzrToFwPi7Ka0ZQ/exec',
+            twelveDataKey: 'de0c20b471e5490ea5dfc70d935c6ea1',
+            finnhubKey: 'd5m4gt9r01qidp4jtb4gd5m4gt9r01qidp4jtb50',
+            calendarWebAppUrl: 'https://script.google.com/macros/s/AKfycbyrwhwFmo_miZdjDnyqpQTYzDeSx1xbwEZFb28_9E3oG1qcqnSnHudfTxDNu8PZ0JCQ7g/exec',
             calendarToken: 'mediapanel',
             weatherLocations: ['Auckland,NZ', 'Botany Downs,NZ', 'Hong Kong,HK'],
             stocks: [
@@ -416,13 +405,13 @@
                 { name: '明報經濟', url: 'https://news.mingpao.com/rss/ins/s00007.xml' }
             ],
             news2Feeds: [
+                // International news
                 { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
                 { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
                 { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
                 { name: 'Reuters', url: 'https://www.reutersagency.com/feed/' },
-                { name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' }
-            ],
-            news3Feeds: [
+                { name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' },
+                // Traffic & Alerts (merged here)
                 { name: 'NZTA', url: 'https://www.nzta.govt.nz/traffic-and-travel-information/auckland-traffic/rss/' }
             ]
         };
@@ -983,6 +972,9 @@
             const bigScreenSection = document.getElementById('bigScreenSection');
             const bigScreenPlayer = document.getElementById('bigScreenPlayer');
             const bigScreenTitle = document.getElementById('bigScreenTitle');
+            const news1Card = document.getElementById('news1Card');
+            const news2Card = document.getElementById('news2Card');
+            const stocksCard = document.getElementById('stocksCard');
             
             // Check if any big screen option is enabled
             const anyEnabled = config.enableYTVideo || config.enableNewsLive;
@@ -993,15 +985,15 @@
                 grid.classList.remove('no-bigscreen');
                 grid.classList.add('has-bigscreen');
                 
-                // Adjust news rows
-                document.getElementById('news1Card').style.gridRow = '5';
-                document.getElementById('news2Card').style.gridRow = '6';
-                document.getElementById('news3Card').style.gridRow = '7';
+                // Adjust rows: bigScreen=3, news1=4, news2=5, stocks=6
+                bigScreenSection.style.gridRow = '3';
+                news1Card.style.gridRow = '4';
+                news2Card.style.gridRow = '5';
+                stocksCard.style.gridRow = '6';
                 
                 // Set content based on priority: News Live > YouTube Video
                 if (config.enableNewsLive) {
                     bigScreenTitle.textContent = 'Now News Live (新聞直播)';
-                    // News.now.com embeds are blocked, so we show a message
                     bigScreenPlayer.src = '';
                     bigScreenSection.innerHTML = `
                         <div class="flex justify-between items-center mb-2">
@@ -1032,10 +1024,10 @@
                 grid.classList.remove('has-bigscreen');
                 grid.classList.add('no-bigscreen');
                 
-                // Adjust news rows back
-                document.getElementById('news1Card').style.gridRow = '4';
-                document.getElementById('news2Card').style.gridRow = '5';
-                document.getElementById('news3Card').style.gridRow = '6';
+                // Adjust rows back: news1=3, news2=4, stocks=5
+                news1Card.style.gridRow = '3';
+                news2Card.style.gridRow = '4';
+                stocksCard.style.gridRow = '5';
             }
         }
 
@@ -1067,7 +1059,6 @@
             fetchCalendar();
             fetchNews(config.news1Feeds, 'news1Content');
             fetchNews(config.news2Feeds, 'news2Content');
-            fetchNews(config.news3Feeds, 'news3Content');
             maybeRefreshStocks();
             
             setInterval(() => {
@@ -1080,7 +1071,6 @@
             setInterval(fetchCalendar, 1800000);
             setInterval(() => fetchNews(config.news1Feeds, 'news1Content'), 1800000);
             setInterval(() => fetchNews(config.news2Feeds, 'news2Content'), 1800000);
-            setInterval(() => fetchNews(config.news3Feeds, 'news3Content'), 1800000);
             setInterval(maybeRefreshStocks, 300000);
         }
 
