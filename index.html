@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - Final Enhanced</title>
+    <title>Display Panel - v5.0.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -282,25 +282,26 @@
 
 <!-- News Sources -->
             <div>
-                <h3 class="font-semibold mb-2 text-blue-400">News Sources</h3>
+                <h3 class="font-semibold mb-2 text-blue-400">新聞來源</h3>
                 <div class="space-y-1">
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsDemo" checked class="mr-2">
-                        <span>Demo News (Traditional Chinese)</span>
+                        <input type="checkbox" id="newsInmediaHK" checked class="mr-2">
+                        <span>獨立媒體（香港）</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsLTN" class="mr-2">
-                        <span>自由時報 LTN (Traditional Chinese RSS)</span>
+                        <input type="checkbox" id="newsRNZChinese" checked class="mr-2">
+                        <span>RNZ 中文</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsSCMP" class="mr-2">
-                        <span>SCMP</span>
+                        <input type="checkbox" id="newsRNZCountry" checked class="mr-2">
+                        <span>RNZ 國內</span>
                     </label>
                     <label class="flex items-center">
-                        <input type="checkbox" id="newsBBC" class="mr-2">
-                        <span>BBC</span>
+                        <input type="checkbox" id="newsCNAWorld" checked class="mr-2">
+                        <span>中央社｜國際</span>
                     </label>
                 </div>
+                <p class="text-[11px] text-slate-400 mt-2">已把舊來源（LTN/SCMP/BBC）移到程式註解作備用。</p>
             </div>
             
             <!-- Calendar Toggles -->
@@ -535,12 +536,7 @@
                 nz: true,
                 hk: true
             },
-            newsFeeds: {
-                demo: true,
-                ltn: false,
-                scmp: false,
-                bbc: false
-            }
+            newsFeeds: { inmediahk: true, rnzchinese: true, rnzcountry: true, cnaworld: true }
         };
 
 	        // Timers / state
@@ -606,10 +602,33 @@
         }
 
         function loadSavedSettings() {
+// News feeds migration (older versions)
+            if (!config.newsFeeds) config.newsFeeds = {};
+            // Old keys -> keep as commented fallback only
+            if ('ltn' in config.newsFeeds || 'scmp' in config.newsFeeds || 'bbc' in config.newsFeeds || 'demo' in config.newsFeeds) {
+                // do nothing; UI no longer exposes these
+            }
+            // New defaults
+            if (!('inmediahk' in config.newsFeeds) && !('rnzchinese' in config.newsFeeds) && !('rnzcountry' in config.newsFeeds) && !('cnaworld' in config.newsFeeds)) {
+                config.newsFeeds.inmediahk = true;
+                config.newsFeeds.rnzchinese = true;
+                config.newsFeeds.rnzcountry = true;
+                config.newsFeeds.cnaworld = true;
+            }
+
             const saved = SafeStore.get('panelConfig');
             if (saved) {
                 const savedConfig = JSON.parse(saved);
                 Object.assign(config, savedConfig);
+            // If user previously saved demo provider but keys exist, default to auto
+            try {
+                const p = (config.stockApiProvider || '').toLowerCase();
+                const hasKeys = !!(config.twelveDataKey && String(config.twelveDataKey).trim()) || !!(config.finnhubKey && String(config.finnhubKey).trim());
+                if (hasKeys && (p === 'demo' || p === 'demomode' || p === 'demo mode (no api)')) {
+                    config.stockApiProvider = 'auto';
+                }
+            } catch {}
+
             }
             // Migration: older versions stored weatherLocations as strings
             if (Array.isArray(config.weatherLocations) && config.weatherLocations.length && typeof config.weatherLocations[0] === 'string') {
@@ -640,8 +659,7 @@
             // APIs (公開 Launch 版：Weather 用 Open‑Meteo，唔需要 key)
             const td = document.getElementById('twelveDataKey'); if (td) td.value = config.twelveDataKey || '';
             const fh = document.getElementById('finnhubKey'); if (fh) fh.value = config.finnhubKey || '';
-            const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'demo';
-            const cors = document.getElementById('useCorsProxy'); if (cors) cors.checked = !!config.useCorsProxy;
+            const prov = document.getElementById('stockApiProvider'); if (prov) prov.value = config.stockApiProvider || 'auto';
             // Media
             const ev = document.getElementById('ytEnableVideo'); if (ev) ev.checked = !!config.ytEnableVideo;
 
@@ -651,6 +669,12 @@
             const r2 = document.getElementById('stockRefresh2'); if (r2) r2.value = (config.stockRefreshTimes && config.stockRefreshTimes[1]) ? config.stockRefreshTimes[1] : '11:00';
 
             // Calendar (方案A)
+            // News feeds (v5)
+            const n1 = document.getElementById('newsInmediaHK'); if (n1) n1.checked = !!config.newsFeeds.inmediahk;
+            const n2 = document.getElementById('newsRNZChinese'); if (n2) n2.checked = !!config.newsFeeds.rnzchinese;
+            const n3 = document.getElementById('newsRNZCountry'); if (n3) n3.checked = !!config.newsFeeds.rnzcountry;
+            const n4 = document.getElementById('newsCNAWorld'); if (n4) n4.checked = !!config.newsFeeds.cnaworld;
+
             const url = document.getElementById('calendarWebAppUrl'); if (url) url.value = config.calendarWebAppUrl || '';
             const tok = document.getElementById('calendarToken'); if (tok) tok.value = config.calendarToken || '';
 
@@ -663,10 +687,6 @@
             const ch = document.getElementById('calHK'); if (ch) ch.checked = !!config.calendar.hk;
 
             // News
-            const nd = document.getElementById('newsDemo'); if (nd) nd.checked = !!config.newsFeeds.demo;
-            const nl = document.getElementById('newsLTN'); if (nl) nl.checked = !!config.newsFeeds.ltn;
-            const ns = document.getElementById('newsSCMP'); if (ns) ns.checked = !!config.newsFeeds.scmp;
-            const nb = document.getElementById('newsBBC'); if (nb) nb.checked = !!config.newsFeeds.bbc;
         }
 
         function saveSettings() {
@@ -674,7 +694,6 @@
             const td = document.getElementById('twelveDataKey'); if (td) config.twelveDataKey = td.value;
             const fh = document.getElementById('finnhubKey'); if (fh) config.finnhubKey = fh.value;
             const prov = document.getElementById('stockApiProvider'); if (prov) config.stockApiProvider = prov.value;
-            const cors = document.getElementById('useCorsProxy'); if (cors) config.useCorsProxy = cors.checked;
             // Media
             const ev = document.getElementById('ytEnableVideo'); if (ev) config.ytEnableVideo = ev.checked;
 
@@ -693,7 +712,15 @@
             config.calendarWebAppUrl = (url && url.value) ? url.value.trim() : '';
             config.calendarToken = (tok && tok.value) ? tok.value.trim() : '';
 
-            // Calendar toggles
+            
+
+            // News feeds (v5)
+            config.newsFeeds = config.newsFeeds || {};
+            const n1 = document.getElementById('newsInmediaHK'); if (n1) config.newsFeeds.inmediahk = !!n1.checked;
+            const n2 = document.getElementById('newsRNZChinese'); if (n2) config.newsFeeds.rnzchinese = !!n2.checked;
+            const n3 = document.getElementById('newsRNZCountry'); if (n3) config.newsFeeds.rnzcountry = !!n3.checked;
+            const n4 = document.getElementById('newsCNAWorld'); if (n4) config.newsFeeds.cnaworld = !!n4.checked;
+// Calendar toggles
             const cp = document.getElementById('calPersonal'); if (cp) config.calendar.personal = cp.checked;
             const cb = document.getElementById('calBirthday'); if (cb) config.calendar.birthday = cb.checked;
             const cf = document.getElementById('calFamily'); if (cf) config.calendar.family = cf.checked;
@@ -702,10 +729,6 @@
             const ch = document.getElementById('calHK'); if (ch) config.calendar.hk = ch.checked;
 
             // News
-            const nd = document.getElementById('newsDemo'); if (nd) config.newsFeeds.demo = nd.checked;
-            const nl = document.getElementById('newsLTN'); if (nl) config.newsFeeds.ltn = nl.checked;
-            const ns = document.getElementById('newsSCMP'); if (ns) config.newsFeeds.scmp = ns.checked;
-            const nb = document.getElementById('newsBBC'); if (nb) config.newsFeeds.bbc = nb.checked;
 
             SafeStore.set('panelConfig', JSON.stringify(config));
             toggleSettings();
@@ -914,47 +937,52 @@
         }
 
         async function fetchRss(url, limit = 12) {
+            // NOTE: RSS/Atom fetching uses a proxy by default (GitHub/file:// friendly)
             const res = await fetch(getCorsProxy(url));
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const text = await res.text();
             const doc = new DOMParser().parseFromString(text, 'text/xml');
-            const items = Array.from(doc.querySelectorAll('item')).slice(0, limit);
-            return items.map(it => {
-                const title = (it.querySelector('title')?.textContent || '').trim();
-                const link = (it.querySelector('link')?.textContent || '').trim();
-                const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
-                return {
-                    title,
-                    link,
-                    pubDate: pubDate ? new Date(pubDate) : null
-                };
+
+            // RSS <item>
+            const rssItems = Array.from(doc.querySelectorAll('item'));
+            if (rssItems.length) {
+                return rssItems.slice(0, limit).map(it => {
+                    const title = (it.querySelector('title')?.textContent || '').trim();
+                    const link = (it.querySelector('link')?.textContent || '').trim();
+                    const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
+                    return { title, link, pubDate: pubDate ? new Date(pubDate) : null };
+                }).filter(x => x.title);
+            }
+
+            // Atom <entry>
+            const atomEntries = Array.from(doc.querySelectorAll('entry'));
+            return atomEntries.slice(0, limit).map(en => {
+                const title = (en.querySelector('title')?.textContent || '').trim();
+                let link = '';
+                const linkEl = en.querySelector('link');
+                if (linkEl) link = (linkEl.getAttribute('href') || linkEl.textContent || '').trim();
+                const updated = (en.querySelector('updated')?.textContent || en.querySelector('published')?.textContent || '').trim();
+                return { title, link, pubDate: updated ? new Date(updated) : null };
             }).filter(x => x.title);
         }
 
         async function fetchNews() {
-            // Demo mode remains the fastest / most reliable option for offline testing
-            if (config.newsFeeds.demo) {
-                const demo = [
-                    '[示範] 農曆新年即將來臨，預計將有大量人流前往各大景點',
-                    '[示範] 新西蘭宣布新的氣候政策，目標2030年減排50%',
-                    '[示範] 香港股市今日上漲2.3%，恒生指數創新高',
-                    '[示範] 本地科技公司獲得1億美元融資，計劃擴展業務',
-                    '[示範] 天氣預報：本週末將有大雨，市民請注意防範'
-                ];
-                document.getElementById('newsContent').innerHTML = demo.map(n => `<span class="ticker-item">${n}</span>`).join('');
-                return;
-            }
+            // v5 feeds (replace old LTN/SCMP/BBC; keep them in comments as fallback)
+            // Old (fallback only):
+            // - LTN: https://news.ltn.com.tw/rss/all.xml
+            // - SCMP: https://www.scmp.com/rss/2/feed
+            // - BBC:  http://feeds.bbci.co.uk/news/rss.xml
 
             const feeds = [];
-            if (config.newsFeeds.ltn) feeds.push({ name: 'LTN', url: 'https://news.ltn.com.tw/rss/all.xml' });
-            if (config.newsFeeds.scmp) feeds.push({ name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' });
-            if (config.newsFeeds.bbc) feeds.push({ name: 'BBC', url: 'http://feeds.bbci.co.uk/news/rss.xml' });
+            if (config.newsFeeds.inmediahk) feeds.push({ name: '獨立媒體', url: 'https://www.inmediahk.net/rss.xml' });
+            if (config.newsFeeds.rnzchinese) feeds.push({ name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' });
+            if (config.newsFeeds.rnzcountry) feeds.push({ name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' });
+            if (config.newsFeeds.cnaworld) feeds.push({ name: 'CNA國際', url: 'https://feeds.feedburner.com/rsscna/intworld' });
 
             if (feeds.length === 0) {
-                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">No news sources enabled</span>';
+                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">（未啟用新聞來源）</span>';
                 return;
             }
-
 
             try {
                 const all = [];
@@ -1117,10 +1145,18 @@
             }
         }
 
-        function safeStop(player) {
+        function safeStop(player, playlistId, labelElId) {
             if (!player) return;
             try { player.stopVideo(); } catch {}
-            try { player.seekTo(0, true); } catch {}
+            // Re-cue playlist without autoplay to avoid "stop == replay" behavior
+            if (playlistId) {
+                try { player.cuePlaylist({ listType: 'playlist', list: playlistId }); }
+                catch { try { player.cuePlaylist(playlistId); } catch {} }
+            }
+            if (labelElId) {
+                const el = document.getElementById(labelElId);
+                if (el) el.textContent = '已停止';
+            }
         }
 
         function reshuffleAndReload(player, playlistId) {
@@ -1144,7 +1180,7 @@
             // Music controls
             document.getElementById('musicPrev').addEventListener('click', () => { try { ytMusicPlayer?.previousVideo(); } catch {} });
             document.getElementById('musicPlay').addEventListener('click', () => safeTogglePlay(ytMusicPlayer));
-            document.getElementById('musicStop').addEventListener('click', () => safeStop(ytMusicPlayer));
+            document.getElementById('musicStop').addEventListener('click', () => safeStop(ytMusicPlayer, config.ytMusicPlaylistId, 'musicNowPlaying'));
             document.getElementById('musicNext').addEventListener('click', () => { try { ytMusicPlayer?.nextVideo(); } catch {} });
             document.getElementById('musicReshuffle').addEventListener('click', () => reshuffleAndReload(ytMusicPlayer, config.ytMusicPlaylistId));
 
@@ -1162,7 +1198,7 @@
             };
             bindIf('videoPrev', () => { try { ytVideoPlayer?.previousVideo(); } catch {} });
             bindIf('videoPlay', () => safeTogglePlay(ytVideoPlayer));
-            bindIf('videoStop', () => safeStop(ytVideoPlayer));
+            bindIf('videoStop', () => safeStop(ytVideoPlayer, config.ytVideoPlaylistId, 'videoNowPlaying'));
             bindIf('videoNext', () => { try { ytVideoPlayer?.nextVideo(); } catch {} });
             bindIf('videoReshuffle', () => reshuffleAndReload(ytVideoPlayer, config.ytVideoPlaylistId));
 
@@ -1321,54 +1357,123 @@
             if (ws) ws.innerHTML = '<i class="fas fa-cloud-sun mr-1"></i>Weather: <span class="text-green-400">Updated</span>';
         }
 
-        // Alerts ticker（重要快訊：天氣／交通／警報）
+        // Alerts ticker（重要快訊：交通／警報／世界要聞）
         async function fetchAlerts() {
             const out = [];
             let hadError = false;
 
-            // NZTA traffic (Road Events) via ArcGIS FeatureServer (JSON) — usually CORS-friendly
+            // Helper: push items with source label
+            const pushItems = (source, items, limit) => {
+                const take = (limit ? items.slice(0, limit) : items);
+                take.forEach(t => { if (t) out.push({ source, text: t }); });
+            };
+
+            // 1) NZTA traffic (Auckland serious only; fallback to newest if none)
             try {
                 const base = 'https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/NZTA_Highway_Information/FeatureServer/0/query';
                 const params = new URLSearchParams({
                     where: '1=1',
                     outFields: 'eventType,locationArea,eventDescription,impact,status,eventModified',
                     orderByFields: 'eventModified DESC',
-                    resultRecordCount: '6',
+                    resultRecordCount: '30',
                     f: 'json'
                 });
-                const resp = await fetch(base + '?' + params.toString(), { cache: 'no-store' });
+                const resp = await fetch(getCorsProxy(base + '?' + params.toString()), { cache: 'no-store' });
                 if (resp.ok) {
                     const data = await resp.json();
                     const feats = (data && data.features) ? data.features : [];
-                    for (const f of feats) {
+
+                    const aucklandKeys = ['auckland','north shore','manukau','papakura','takanini','drury','albany','henderson','penrose','mt wellington','botany','howick','pakuranga'];
+                    const seriousKeys = ['serious crash','crash','accident','incident','blocked','road closed','closure','closed','major delay','long delays','congestion','queue','queues'];
+                    const excludeKeys = ['road work','roadworks','maintenance','resurfacing','chipseal','temporary speed','worksite'];
+
+                    const isAuckland = (s) => {
+                        const t = (s||'').toLowerCase();
+                        return aucklandKeys.some(k => t.includes(k));
+                    };
+                    const isSerious = (s) => {
+                        const t = (s||'').toLowerCase();
+                        if (excludeKeys.some(k => t.includes(k))) return false;
+                        return seriousKeys.some(k => t.includes(k));
+                    };
+
+                    const formatted = feats.map(f => {
                         const a = (f && f.attributes) ? f.attributes : {};
                         const type = (a.eventType || '').toString().trim();
                         const loc = (a.locationArea || '').toString().trim();
                         const desc = (a.eventDescription || '').toString().trim();
                         const impact = (a.impact || '').toString().trim();
                         const text = [type, loc, impact || desc].filter(Boolean).join(' - ');
-                        if (text) out.push({ source: 'NZTA', text });
-                    }
+                        return { text, raw: (type + ' ' + loc + ' ' + desc + ' ' + impact) };
+                    }).filter(x => x.text);
+
+                    const auckSerious = formatted.filter(x => isAuckland(x.raw) && isSerious(x.raw)).map(x => x.text);
+                    const auckAny = formatted.filter(x => isAuckland(x.raw)).map(x => x.text);
+                    const fallback = formatted.map(x => x.text);
+
+                    const pick = (auckSerious.length ? auckSerious : (auckAny.length ? auckAny : fallback));
+                    pushItems('NZTA', pick, 6);
                 }
             } catch (e) {
                 console.warn('NZTA alerts failed', e); hadError = true;
             }
 
-            // HKO warnings (tc)
+            // 2) HKO warnings (tc)
             try {
                 const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc';
                 const resp = await fetch(url, { cache: 'no-store' });
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data && data.details && Array.isArray(data.details) && data.details.length) {
-                        data.details.forEach(d => {
-                            const name = d.warningStatement || d.warningName || d.type || '香港天氣警告';
-                            out.push({ source: 'HKO', text: name });
-                        });
+                        const texts = data.details.map(d => (d.warningStatement || d.warningName || d.type || '')).filter(Boolean);
+                        pushItems('HKO', texts, 6);
                     }
                 }
             } catch (e) {
                 console.warn('HKO warnsum failed', e); hadError = true;
+            }
+
+            // 3) MetService CAP alerts (RSS + Atom fallback)
+            try {
+                const items = await fetchRss('https://alerts.metservice.com/cap/rss', 8);
+                const texts = items.map(it => it.title).filter(Boolean);
+                pushItems('MetService', texts, 6);
+            } catch (e1) {
+                try {
+                    const items = await fetchRss('https://alerts.metservice.com/cap/atom', 8);
+                    const texts = items.map(it => it.title).filter(Boolean);
+                    pushItems('MetService', texts, 6);
+                } catch (e2) {
+                    console.warn('MetService feed failed', e2); hadError = true;
+                }
+            }
+
+            // 4) Civil Defence RSS
+            try {
+                const items = await fetchRss('https://www.civildefence.govt.nz/home/rss', 8);
+                const texts = items.map(it => it.title).filter(Boolean);
+                pushItems('CivilDefence', texts, 4);
+            } catch (e) {
+                console.warn('CivilDefence feed failed', e); hadError = true;
+            }
+
+            
+            // 4b) Awaikato (feed provided)
+            try {
+                const items = await fetchRss('https://media.rss.com/awaikatothing/feed.xml', 6);
+                const texts = items.map(it => it.title).filter(Boolean);
+                pushItems('Awaikato', texts, 3);
+            } catch (e) {
+                console.warn('Awaikato feed failed', e); hadError = true;
+            }
+
+// 5) World headlines (CNA international)
+            try {
+                const items = await fetchRss('https://feeds.feedburner.com/rsscna/intworld', 8);
+                const texts = items.map(it => it.title).filter(Boolean);
+                pushItems('世界', texts, 4);
+            } catch (e) {
+                console.warn('World feed failed', e); hadError = true;
             }
 
             const el = document.getElementById('alertsContent');
