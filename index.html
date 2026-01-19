@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v5.0.5</title>
+    <title>Display Panel - v5.0.7-fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -818,268 +818,63 @@
         }
 
         async function updateReminders() {
-            const now = new Date();
-            const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            let reminders = [];
-
-            // Try Google Calendar first
-            if (config.useGoogleCalendar) {
-                const gcalEvents = await fetchGoogleCalendarHolidays();
-                if (gcalEvents) {
-                    gcalEvents.forEach(event => {
-                        const eventDate = new Date(event.date);
-                        if (eventDate >= now && eventDate <= oneWeek) {
-                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                            reminders.push({ text: event.name, days: daysUntil, date: event.date });
-                        }
-                    });
-                }
-            }
-
-            // Fallback to hardcoded holidays if Google Calendar not used or failed
-            if (reminders.length === 0 || !config.useGoogleCalendar) {
-                if (config.calendar.nz) {
-                    holidays2026.nz.forEach(h => {
-                        const eventDate = new Date(h.date);
-                        if (eventDate >= now && eventDate <= oneWeek) {
-                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                            reminders.push({ text: `🇳🇿 ${h.name}`, days: daysUntil, date: h.date });
-                        }
-                    });
-                }
-
-                if (config.calendar.hk) {
-                    holidays2026.hk.forEach(h => {
-                        const eventDate = new Date(h.date);
-                        if (eventDate >= now && eventDate <= oneWeek) {
-                            const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
-                            reminders.push({ text: `🇭🇰 ${h.name}`, days: daysUntil, date: h.date });
-                        }
-                    });
-                }
-            }
-
-            reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            let html = '';
-            if (reminders.length === 0) {
-                html = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
-            } else {
-                reminders.forEach(r => {
-                    const dayText = r.days === 0 ? 'Today' : r.days === 1 ? 'Tomorrow' : `In ${r.days} days`;
-                    html += `<div class="reminder-item">
-                        <div class="flex justify-between">
-                            <span>${r.text}</span>
-                            <span class="text-yellow-400">${dayText}</span>
-                        </div>
-                    </div>`;
-                });
-            }
-
-            document.getElementById('upcomingReminders').innerHTML = html;
+    // Prefer Calendar WebApp (方案A) if configured
+    const webUrl = (config.calendarWebAppUrl || '').trim();
+    if (webUrl) {
+        const data = await fetchCalendarWebAppData(false);
+        if (data && data.reminders) {
+            renderRemindersFromWebApp(data);
+            return;
         }
+        // fall through to hardcoded holidays if webapp fails
+    }
 
-        async function fetchCurrencies() {
-            const box = document.getElementById('currencyList');
-            try {
-                let html = '';
-                let success = 0;
-                for (const c of (config.currencies || [])) {
-                    const [base, quote] = c.pair.split('-');
-                    const url = `https://open.er-api.com/v6/latest/${base}`;
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    const rate = data?.rates?.[quote];
-                    if (Number.isFinite(rate)) {
-                        const isAlert = c.below ? rate < c.alert : rate > c.alert;
-                        html += `
-                            <div class="${isAlert ? 'stock-alert' : 'bg-slate-800/30'} rounded p-2">
-                                <div class="flex justify-between items-center">
-                                    <span class="font-semibold">${base}/${quote}</span>
-                                    <div class="text-right">
-                                        <div class="font-mono font-bold">${rate.toFixed(4)}</div>
-                                        ${isAlert ? '<i class="fas fa-bell text-yellow-400 text-xs"></i>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        success++;
-                    }
-                }
-                box.innerHTML = success ? html : '<p class="text-yellow-400">⚠️ 匯率暫時不可用</p>';
-            } catch (e) {
-                console.warn('Currencies failed', e);
-                box.innerHTML = '<p class="text-yellow-400">⚠️ 匯率暫時不可用</p>';
+    const now = new Date();
+    const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    let reminders = [];
+
+    // Fallback to hardcoded holidays
+    if (config.calendar.nz) {
+        holidays2026.nz.forEach(h => {
+            const eventDate = new Date(h.date);
+            if (eventDate >= now && eventDate <= oneWeek) {
+                const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                reminders.push({ text: `🇳🇿 ${h.name}`, days: daysUntil, date: h.date });
             }
-        }
+        });
+    }
 
-        async function fetchRss(url, limit = 12) {
-            // NOTE: RSS/Atom fetching uses a proxy by default (GitHub/file:// friendly)
-            const res = await fetch(getCorsProxy(url));
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const text = await res.text();
-            const doc = new DOMParser().parseFromString(text, 'text/xml');
-
-            // RSS <item>
-            const rssItems = Array.from(doc.querySelectorAll('item'));
-            if (rssItems.length) {
-                return rssItems.slice(0, limit).map(it => {
-                    const title = (it.querySelector('title')?.textContent || '').trim();
-                    const link = (it.querySelector('link')?.textContent || '').trim();
-                    const pubDate = (it.querySelector('pubDate')?.textContent || '').trim();
-                    return { title, link, pubDate: pubDate ? new Date(pubDate) : null };
-                }).filter(x => x.title);
+    if (config.calendar.hk) {
+        holidays2026.hk.forEach(h => {
+            const eventDate = new Date(h.date);
+            if (eventDate >= now && eventDate <= oneWeek) {
+                const daysUntil = Math.ceil((eventDate - now) / (24 * 60 * 60 * 1000));
+                reminders.push({ text: `🇭🇰 ${h.name}`, days: daysUntil, date: h.date });
             }
+        });
+    }
 
-            // Atom <entry>
-            const atomEntries = Array.from(doc.querySelectorAll('entry'));
-            return atomEntries.slice(0, limit).map(en => {
-                const title = (en.querySelector('title')?.textContent || '').trim();
-                let link = '';
-                const linkEl = en.querySelector('link');
-                if (linkEl) link = (linkEl.getAttribute('href') || linkEl.textContent || '').trim();
-                const updated = (en.querySelector('updated')?.textContent || en.querySelector('published')?.textContent || '').trim();
-                return { title, link, pubDate: updated ? new Date(updated) : null };
-            }).filter(x => x.title);
-        }
+    reminders.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        function _findByLocalName(node, localName) {
-            try {
-                const all = node.getElementsByTagName('*');
-                for (let i = 0; i < all.length; i++) {
-                    const el = all[i];
-                    if ((el.localName || '').toLowerCase() === localName.toLowerCase()) {
-                        const t = (el.textContent || '').trim();
-                        if (t) return t;
-                    }
-                }
-            } catch {}
-            return '';
-        }
+    let html = '';
+    if (reminders.length === 0) {
+        html = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
+    } else {
+        reminders.forEach(r => {
+            const dayText = r.days === 0 ? 'Today' : r.days === 1 ? 'Tomorrow' : `In ${r.days} days`;
+            html += `<div class="reminder-item"><div class="flex justify-between"><span>${escapeHtml(r.text)}</span><span class="text-yellow-400">${dayText}</span></div></div>`;
+        });
+    }
 
-        async function fetchMetServiceCap(limit = 8) {
-            const urls = [
-                'https://alerts.metservice.com/cap/rss',
-                'https://alerts.metservice.com/cap/atom'
-            ];
-            let lastErr = null;
-            for (const url of urls) {
-                try {
-                    const res = await fetch(getCorsProxy(url), { cache: 'no-store' });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const xml = await res.text();
-                    const doc = new DOMParser().parseFromString(xml, 'text/xml');
-                    const items = Array.from(doc.querySelectorAll('item'));
-                    const entries = items.length ? items : Array.from(doc.querySelectorAll('entry'));
-                    const out = [];
-                    for (const it of entries.slice(0, limit)) {
-                        const title = (it.querySelector('title')?.textContent || '').trim();
-                        if (!title) continue;
-                        // CAP details
-                        let area = _findByLocalName(it, 'areaDesc');
-                        let sev = _findByLocalName(it, 'severity');
-                        // Fallback: try description text
-                        if (!area) {
-                            const desc = (it.querySelector('description')?.textContent || it.querySelector('summary')?.textContent || '').trim();
-                            const m =
-                            desc.match(/Area(?:\(s\))?:\s*([^\r\n<]+)/i) ||
-                            desc.match(/Areas?:\s*([^\r\n<]+)/i) ||
-                            desc.match(/Location:\s*([^\r\n<]+)/i);
-                            if (m) area = (m[1] || '').trim();
-                        }
-                        let text = title;
-                        if (area) text += ' — ' + area;
-                        if (sev) text += '（' + sev + '）';
-                        out.push(text);
-                    }
-                    // de-dup
-                    const seen = new Set();
-                    const uniq = [];
-                    for (const t of out) {
-                        const k = t.toLowerCase();
-                        if (seen.has(k)) continue;
-                        seen.add(k);
-                        uniq.push(t);
-                    }
-                    if (uniq.length) return uniq.slice(0, limit);
-                } catch (e) {
-                    lastErr = e;
-                }
-            }
-            if (lastErr) throw lastErr;
-            return [];
-        }
+    document.getElementById('upcomingReminders').innerHTML = html;
+}
 
 
-        async function fetchNews() {
-            // v5 feeds (replace old LTN/SCMP/BBC; keep them in comments as fallback)
-            // Old (fallback only):
-            // - LTN: https://news.ltn.com.tw/rss/all.xml
-            // - SCMP: https://www.scmp.com/rss/2/feed
-            // - BBC:  https://feeds.bbci.co.uk/news/rss.xml (啟用)
 
-            const feeds = [
-                { name: 'InMediaHK', url: 'https://www.inmediahk.net/rss.xml' },
-                { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
-                { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
-                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' }
-            ];
-
-            try {
-                const all = [];
-                for (const f of feeds) {
-                    try {
-                        const items = await fetchRss(f.url, 10);
-                        items.forEach(it => all.push({ ...it, source: f.name }));
-                    } catch (e) {
-                        console.warn(`News feed failed: ${f.name}`, e);
-                    }
-                }
-
-                if (!all.length) throw new Error('No news items');
-
-                all.sort((a, b) => (b.pubDate?.getTime() || 0) - (a.pubDate?.getTime() || 0));
-                const top = all.slice(0, 20);
-
-                const ticker = top.map(it => {
-                    const label = `<span class="text-slate-400">[${it.source}]</span> `;
-                    const safeTitle = it.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    const body = it.link ? `<a href="${it.link}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>` : safeTitle;
-                    return `<span class="ticker-item">${label}${body}</span>`;
-                }).join('');
-
-                document.getElementById('newsContent').innerHTML = ticker;
-            } catch (error) {
-                console.error('News fetch failed', error);
-                document.getElementById('newsContent').innerHTML = '<span class="ticker-item">⚠️ News unavailable</span>';
-            }
-        }
-
-        function fetchBibleVerse() {
-            const verses = [
-                { ref: '約翰福音 3:16', text: '神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不至滅亡，反得永生。' },
-                { ref: '詩篇 23:1', text: '耶和華是我的牧者，我必不致缺乏。' },
-                { ref: '箴言 3:5-6', text: '你要專心仰賴耶和華，不可倚靠自己的聰明，在你一切所行的事上都要認定他，他必指引你的路。' },
-                { ref: '腓立比書 4:13', text: '我靠著那加給我力量的，凡事都能做。' },
-                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力，叫愛神的人得益處，就是按他旨意被召的人。' }
-            ];
-            
-            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-            const verse = verses[dayOfYear % verses.length];
-            
-            document.getElementById('bibleVerse').innerHTML = `
-                <div class="text-slate-300 leading-relaxed">${verse.text}</div>
-                <div class="text-xs text-blue-300 font-semibold text-right mt-2">— ${verse.ref}</div>
-            `;
-        }
-
-        
 // -----------------------------
-// Calendar WebApp (方案 A)
-// - 為咗支援「直接 double-click HTML / GitHub Pages」而唔裝 CORS extension
-//   Panel 端會用 corsproxy.io 去讀你嘅 Apps Script WebApp JSON。
-// - WebApp 回傳：schedule (today/tomorrow) + reminders (next 7 days)
+// Calendar WebApp (方案A)
+// - Panel 端會用 corsproxy.io 讀 Apps Script WebApp（支援 GitHub Pages / file://）
+// - WebApp 期望回傳 JSON：{ ok:true, schedule:{today:[], tomorrow:[]}, reminders:{...} }
 // -----------------------------
 let __calendarWebAppState = { ts: 0, data: null, error: null };
 
@@ -1101,11 +896,13 @@ async function fetchCalendarWebAppData(force = false) {
         params.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Pacific/Auckland');
         if (token) params.set('token', token);
         const full = url + (url.includes('?') ? '&' : '?') + params.toString();
-        const fetchUrl = config.useCorsProxy ? getCorsProxy(full) : full;
-        const resp = await fetch(fetchUrl, { cache: 'no-store' });
+        const resp = await fetch(getCorsProxy(full), { cache: 'no-store' });
         const txt = await resp.text();
-        const data = JSON.parse(txt);
-        if (!data || data.ok === false) throw new Error((data && data.error) ? data.error : 'BAD_RESPONSE');
+        let data;
+        try { data = JSON.parse(txt); } catch { throw new Error('BAD_JSON'); }
+        if (!data || data.ok === false) {
+            throw new Error((data && data.error) ? data.error : 'BAD_RESPONSE');
+        }
         __calendarWebAppState = { ts: now, data, error: null };
         return data;
     } catch (err) {
@@ -1115,46 +912,45 @@ async function fetchCalendarWebAppData(force = false) {
 }
 
 function renderRemindersFromWebApp(data) {
-    const listEl = document.getElementById('remindersList');
+    const listEl = document.getElementById('upcomingReminders');
     if (!listEl) return;
 
     const groups = (data && data.reminders) ? data.reminders : null;
     const items = [];
+    const push = (arr, iconFallback) => {
+        if (!Array.isArray(arr)) return;
+        for (const it of arr) {
+            items.push({
+                title: (it.title || '').trim(),
+                daysAway: Number.isFinite(Number(it.daysAway)) ? Number(it.daysAway) : null,
+                icon: (it.icon || iconFallback || '📅')
+            });
+        }
+    };
     if (groups) {
-        const pushGroup = (arr) => {
-            if (!Array.isArray(arr)) return;
-            for (const it of arr) items.push(it);
-        };
-        pushGroup(groups.birthdays);
-        pushGroup(groups.family);
-        pushGroup(groups.game);
-        pushGroup(groups.personal);
-        pushGroup(groups.nzHolidays);
-        pushGroup(groups.hkHolidays);
+        push(groups.nzHolidays, '🇳🇿');
+        push(groups.hkHolidays, '🇭🇰');
+        push(groups.birthdays, '🎂');
+        push(groups.game, '🎮');
+        push(groups.family, '👪');
+        push(groups.personal, '📅');
     }
-
-    // sort by daysAway if present
-    items.sort((a, b) => (Number(a.daysAway) || 999) - (Number(b.daysAway) || 999));
+    items.sort((a,b)=> (a.daysAway??999)-(b.daysAway??999));
 
     if (!items.length) {
-        listEl.innerHTML = '<div class="muted">未來 7 日無事件</div>';
+        listEl.innerHTML = '<div class="text-slate-400 text-center mt-4">未來 7 日無事件</div>';
         return;
     }
 
-    const maxShow = 4;
-    const rows = items.slice(0, maxShow).map(it => {
-        const title = (it.title || '').trim() || '(無標題)';
-        const days = (it.daysAway === 0) ? '今日' : (it.daysAway === 1 ? '聽日' : ('還有 ' + it.daysAway + ' 日'));
-        const icon = it.icon || '📅';
-        return `
-        <div class="reminder-row">
-            <div class="reminder-left"><span class="reminder-icon">${icon}</span><span class="reminder-title">${escapeHtml(title)}</span></div>
-            <div class="reminder-right">${days}</div>
-        </div>`;
-    }).join('');
-
-    listEl.innerHTML = rows;
+    let html='';
+    for (const it of items.slice(0,6)) {
+        const d=it.daysAway;
+        const dayText = (d===0) ? 'Today' : (d===1 ? 'Tomorrow' : `In ${d} days`);
+        html += `<div class="reminder-item"><div class="flex justify-between"><span>${escapeHtml(it.icon+' '+it.title)}</span><span class="text-yellow-400">${dayText}</span></div></div>`;
+    }
+    listEl.innerHTML = html;
 }
+
 
 function renderScheduleFromWebApp(data) {
     const cont = document.getElementById('calendarContainer');
@@ -1793,6 +1589,17 @@ let ytMusicPlayer = null;
             }
         }
 
+
+
+function fetchAllData() {
+    try { fetchBibleVerse(); } catch (e) { console.warn('Bible verse failed', e); }
+    try { fetchWeather(); } catch (e) { console.warn('Weather failed', e); }
+    try { fetchCurrencies(); } catch (e) { console.warn('Currencies failed', e); }
+    try { fetchNews(); } catch (e) { console.warn('News failed', e); }
+    try { fetchAlerts(); } catch (e) { console.warn('Alerts failed', e); }
+    try { fetchCalendar(); } catch (e) { console.warn('Calendar failed', e); }
+    try { updateReminders(); } catch (e) { console.warn('Reminders failed', e); }
+}
 
 
 function init() {
