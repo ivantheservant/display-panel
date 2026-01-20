@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Panel - v5.0.10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            color: #f8fafc; 
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; 
+            overflow: hidden;
+            margin: 0; padding: 0;
+        }
+        .glass { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .card { 
+            border-radius: 1rem; 
+            padding: 1rem; 
+            height: 100%; 
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Dynamic Grid - Adjusts based on big screen settings */
+        .grid-container {
+            display: grid;
+            gap: 0.75rem;
+            height: 100vh;
+            padding: 0.75rem;
+            grid-template-columns: repeat(6, 1fr);
+            transition: all 0.3s ease;
+        }
+        
+        /* Default layout (no big screen) - 6 rows */
+        .grid-container.no-bigscreen {
+            grid-template-rows: auto auto auto auto auto auto;
+        }
+        
+        /* With big screen - 7 rows (adds row for media) */
+        .grid-container.has-bigscreen {
+            grid-template-rows: auto auto minmax(200px, 1fr) auto auto auto;
+        }
+        
+        /* Clock */
+        .clock-face {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #1e293b, #0f172a);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            position: relative;
+        }
+        .clock-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 6px;
+        }
+        .hour-hand { width: 3px; height: 30px; background: #f1f5f9; margin-left: -1.5px; }
+        .minute-hand { width: 2px; height: 40px; background: #cbd5e1; margin-left: -1px; }
+        .second-hand { width: 1px; height: 42px; background: #ef4444; margin-left: -0.5px; }
+        .clock-center {
+            position: absolute;
+            width: 6px; height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        /* Tickers - 25% SLOWER */
+        .ticker {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.75rem 0;
+            border-radius: 0.5rem;
+        }
+        .ticker-content {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+        }
+        .news-ticker-1 { animation: scroll-left 150s linear infinite; }  /* was 120s */
+        .news-ticker-2 { animation: scroll-left 112.5s linear infinite; } /* was 90s */
+        .stock-ticker { animation: scroll-left 43.75s linear infinite; } /* was 35s */
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        .ticker-item {
+            display: inline-block;
+            margin-right: 3rem;
+            padding: 0 0.5rem;
+            font-size: 0.95rem;
+        }
+        .ticker-item::before {
+            content: '●';
+            color: #3b82f6;
+            margin-right: 0.75rem;
+        }
+        
+        /* Media Players */
+        .media-player {
+            width: 100%;
+            height: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: #000;
+        }
+        .media-btn {
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.5rem;
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .media-btn:hover { background: rgba(51, 65, 85, 0.9); }
+        
+        /* Settings */
+        .settings-panel {
+            position: fixed;
+            top: 0; right: -650px;
+            width: 650px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .settings-panel.open { right: 0; }
+        
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30, 41, 59, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 10px; }
+        
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Calendar & Bible */
+        .bible-verse {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+            border-left: 3px solid #3b82f6;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .calendar-event {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 2px solid #3b82f6;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .holiday-event {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 2px solid #eab308;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Settings Button -->
+    <button onclick="toggleSettings()" class="fixed top-3 right-3 z-50 p-2 glass rounded-full hover:bg-blue-600 transition-all">
+        <i class="fas fa-cog text-lg"></i>
+    </button>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel custom-scrollbar">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Settings</h2>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4 text-sm">
+            <!-- API Keys -->
+            <div>
+                <h3 class="font-semibold mb-2 text-blue-400">API Keys</h3>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-xs mb-1">Weather (OpenWeatherMap)</label>
+                        <input type="text" id="weatherApiKey" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Stocks (TwelveData)</label>
+                        <input type="text" id="twelveDataKey" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Stocks (Finnhub - Backup)</label>
+                        <input type="text" id="finnhubKey" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calendar Settings -->
+            <div>
+                <h3 class="font-semibold mb-2 text-blue-400">Google Calendar</h3>
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-xs mb-1">Web App URL</label>
+                        <input type="text" id="calendarWebAppUrl" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
+                            placeholder="https://script.google.com/macros/s/...">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-1">Token</label>
+                        <input type="text" id="calendarToken" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
+                            placeholder="mediapanel">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Big Screen Media Settings -->
+            <div>
+                <h3 class="font-semibold mb-2 text-blue-400">Big Screen Media (Independent Options)</h3>
+                <div class="space-y-3">
+                    <div class="border border-slate-700 rounded p-3 bg-slate-800/30">
+                        <label class="flex items-center mb-2">
+                            <input type="checkbox" id="enableYTVideo" class="mr-2">
+                            <span class="font-semibold">Enable YouTube Video Player</span>
+                        </label>
+                        <input type="text" id="ytVideoPlaylist" 
+                            class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs mt-2"
+                            placeholder="Playlist ID or URL (e.g., PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC)">
+                    </div>
+                    
+                    <div class="border border-slate-700 rounded p-3 bg-slate-800/30">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="enableNewsLive" class="mr-2">
+                            <span class="font-semibold">Enable Now News Live Stream</span>
+                        </label>
+                        <p class="text-xs text-slate-400 mt-1">Shows Now 332 news live broadcast</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="saveSettings()" class="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold">
+                Save & Apply
+            </button>
+        </div>
+    </div>
+
+    <div class="grid-container no-bigscreen" id="mainGrid">
+        <!-- Row 1: Clock & Date, Weather, Bible -->
+        <div class="glass card" style="grid-column: 1 / 3; grid-row: 1;">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex-1">
+                    <div id="digitalClock" class="text-5xl font-bold">00:00:00</div>
+                    <div id="dateStr" class="text-sm text-slate-400 mt-1">Loading...</div>
+                    <div id="specialDays" class="text-xs text-yellow-400 mt-1"></div>
+                </div>
+                <div class="clock-face">
+                    <div class="clock-hand hour-hand" id="hourHand"></div>
+                    <div class="clock-hand minute-hand" id="minuteHand"></div>
+                    <div class="clock-hand second-hand" id="secondHand"></div>
+                    <div class="clock-center"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass card" style="grid-column: 3 / 5; grid-row: 1;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-cloud-sun mr-1"></i>Weather</h3>
+            <div id="weatherContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs">
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <div class="glass card" style="grid-column: 5 / 7; grid-row: 1;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-book-bible mr-1"></i>今日金句</h3>
+            <div id="bibleVerse" class="bible-verse flex-1 overflow-y-auto custom-scrollbar">
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <!-- Row 2: Schedule & Currencies -->
+        <div class="glass card" style="grid-column: 1 / 4; grid-row: 2;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-calendar-alt mr-1"></i>Schedule</h3>
+            <div id="calendarContainer" class="flex-1 overflow-y-auto custom-scrollbar text-xs space-y-1">
+                <p class="text-slate-400">Loading calendar...</p>
+            </div>
+        </div>
+
+        <div class="glass card" style="grid-column: 4 / 7; grid-row: 2;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-exchange-alt mr-1"></i>Currencies</h3>
+            <div id="currencyList" class="flex-1 text-xs">
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <!-- Row 3: Big Screen Media (when enabled) or News Line 1 (when disabled) -->
+        <div id="bigScreenSection" class="glass card" style="grid-column: 1 / 7; grid-row: 3; display: none;">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-semibold">
+                    <i class="fas fa-video mr-1"></i>
+                    <span id="bigScreenTitle">Video / Live Stream</span>
+                </h3>
+                <div class="flex gap-2">
+                    <button class="media-btn" onclick="controlBigScreen('play')"><i class="fas fa-play"></i></button>
+                    <button class="media-btn" onclick="controlBigScreen('pause')"><i class="fas fa-pause"></i></button>
+                </div>
+            </div>
+            <div class="media-player" style="height: calc(100% - 40px);">
+                <iframe id="bigScreenPlayer" class="w-full h-full" frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <!-- Row 3 or 4: News Line 1 - Chinese -->
+        <div class="glass card" id="news1Card" style="grid-column: 1 / 7; grid-row: 3;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-newspaper mr-1"></i>中文新聞</h3>
+            <div class="ticker">
+                <div class="ticker-content news-ticker-1" id="news1Content">
+                    <span class="ticker-item">Loading news...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4 or 5: News Line 2 - International (includes Traffic & Alerts) -->
+        <div class="glass card" id="news2Card" style="grid-column: 1 / 7; grid-row: 4;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-globe mr-1"></i>International News</h3>
+            <div class="ticker">
+                <div class="ticker-content news-ticker-2" id="news2Content">
+                    <span class="ticker-item">Loading news...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 5 or 6: My Stocks - MOVED HERE (after news) -->
+        <div class="glass card" id="stocksCard" style="grid-column: 1 / 7; grid-row: 5;">
+            <h3 class="text-sm font-semibold mb-2"><i class="fas fa-chart-line mr-1"></i>My Stocks (買入價)</h3>
+            <div class="ticker">
+                <div class="ticker-content stock-ticker" id="stocksContent">
+                    <span class="ticker-item">Loading stocks...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            weatherApiKey: '4d4ff0180678e887714547a90289db00',
+            twelveDataKey: 'de0c20b471e5490ea5dfc70d935c6ea1',
+            finnhubKey: 'd5m4gt9r01qidp4jtb4gd5m4gt9r01qidp4jtb50',
+            calendarWebAppUrl: 'https://script.google.com/macros/s/AKfycbyrwhwFmo_miZdjDnyqpQTYzDeSx1xbwEZFb28_9E3oG1qcqnSnHudfTxDNu8PZ0JCQ7g/exec',
+            calendarToken: 'mediapanel',
+            weatherLocations: ['Auckland,NZ', 'Botany Downs,NZ', 'Hong Kong,HK'],
+            stocks: [
+                { symbol: 'AAPL', buyPrice: 613 },
+                { symbol: 'AVAV', buyPrice: 240 },
+                { symbol: 'DXYZ', buyPrice: 57.38 },
+                { symbol: 'GOOG', buyPrice: 337 },
+                { symbol: 'ISRG', buyPrice: 479 },
+                { symbol: 'RBLX', buyPrice: 117.53 },
+                { symbol: 'RNMBY', buyPrice: 408.32 },
+                { symbol: 'TEM', buyPrice: 70.55 },
+                { symbol: 'TSLA', buyPrice: 390.42 },
+                { symbol: 'TSM', buyPrice: 234.81 },
+                { symbol: 'PLTR', buyPrice: 126.32 },
+                { symbol: 'NVDA', buyPrice: 143.63 }
+            ],
+            currencies: [
+                { pair: 'NZD-USD', alert: 0.55, below: true },
+                { pair: 'NZD-HKD', alert: 4.5, below: true }
+            ],
+            stockRefreshTimes: ['12:00', '17:00'],
+            enableYTVideo: false,
+            enableNewsLive: false,
+            ytVideoPlaylist: 'PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC',
+            news1Feeds: [
+                { name: '明報即時', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
+                { name: 'RTHK本地', url: 'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' },
+                { name: '明報地產', url: 'https://news.mingpao.com/rss/ins/s00004.xml' },
+                { name: '明報經濟', url: 'https://news.mingpao.com/rss/ins/s00007.xml' }
+            ],
+            news2Feeds: [
+                // International news
+                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+                { name: 'RNZ中文', url: 'https://www.rnz.co.nz/rss/chinese.xml' },
+                { name: 'RNZ國內', url: 'https://www.rnz.co.nz/rss/country.xml' },
+                { name: 'Reuters', url: 'https://www.reutersagency.com/feed/' },
+                { name: 'SCMP', url: 'https://www.scmp.com/rss/2/feed' },
+                // Traffic & Alerts (merged here)
+                { name: 'NZTA', url: 'https://www.nzta.govt.nz/traffic-and-travel-information/auckland-traffic/rss/' }
+            ]
+        };
+
+        let stockCache = null;
+
+        // Helper functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function todayKey(d) {
+            return d.toISOString().slice(0, 10);
+        }
+
+        function isNearTime(targetTime, now, windowMinutes) {
+            const [h, m] = targetTime.split(':').map(Number);
+            const target = new Date(now);
+            target.setHours(h, m, 0, 0);
+            const diff = Math.abs(now - target) / 60000;
+            return diff <= windowMinutes;
+        }
+
+        // Settings
+        function loadSavedSettings() {
+            const saved = localStorage.getItem('panelConfig');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    Object.assign(config, data);
+                } catch (e) {
+                    console.error('Failed to load settings:', e);
+                }
+            }
+            
+            const stockData = localStorage.getItem('stockCache');
+            if (stockData) {
+                try {
+                    stockCache = JSON.parse(stockData);
+                } catch (e) {
+                    console.error('Failed to load stock cache:', e);
+                }
+            }
+        }
+
+        function saveSettings() {
+            config.weatherApiKey = document.getElementById('weatherApiKey').value;
+            config.twelveDataKey = document.getElementById('twelveDataKey').value;
+            config.finnhubKey = document.getElementById('finnhubKey').value;
+            config.calendarWebAppUrl = document.getElementById('calendarWebAppUrl').value;
+            config.calendarToken = document.getElementById('calendarToken').value;
+            config.enableYTVideo = document.getElementById('enableYTVideo').checked;
+            config.enableNewsLive = document.getElementById('enableNewsLive').checked;
+            config.ytVideoPlaylist = document.getElementById('ytVideoPlaylist').value;
+            
+            localStorage.setItem('panelConfig', JSON.stringify(config));
+            toggleSettings();
+            location.reload();
+        }
+
+        function populateSettingsUI() {
+            document.getElementById('weatherApiKey').value = config.weatherApiKey || '';
+            document.getElementById('twelveDataKey').value = config.twelveDataKey || '';
+            document.getElementById('finnhubKey').value = config.finnhubKey || '';
+            document.getElementById('calendarWebAppUrl').value = config.calendarWebAppUrl || '';
+            document.getElementById('calendarToken').value = config.calendarToken || '';
+            document.getElementById('enableYTVideo').checked = config.enableYTVideo || false;
+            document.getElementById('enableNewsLive').checked = config.enableNewsLive || false;
+            document.getElementById('ytVideoPlaylist').value = config.ytVideoPlaylist || '';
+        }
+
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('open');
+        }
+
+        // Clock
+        function updateDigitalClock() {
+            const now = new Date();
+            document.getElementById('digitalClock').innerText = now.toLocaleTimeString('en-GB', { hour12: false });
+            document.getElementById('dateStr').innerText = now.toLocaleDateString('zh-HK', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+        }
+
+        function updateAnalogClock() {
+            const now = new Date();
+            const s = now.getSeconds(), m = now.getMinutes(), h = now.getHours() % 12;
+            document.getElementById('secondHand').style.transform = `rotate(${(s / 60) * 360}deg)`;
+            document.getElementById('minuteHand').style.transform = `rotate(${((m + s / 60) / 60) * 360}deg)`;
+            document.getElementById('hourHand').style.transform = `rotate(${((h + m / 60) / 12) * 360}deg)`;
+        }
+
+        // Weather
+        async function fetchWeather() {
+            if (!config.weatherApiKey) return;
+            
+            let html = '';
+            
+            for (const loc of config.weatherLocations) {
+                try {
+                    const curr = await fetch(
+                        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
+                    );
+                    const currData = await curr.json();
+                    
+                    if (currData.cod !== 200) continue;
+                    
+                    const forecast = await fetch(
+                        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(loc)}&appid=${config.weatherApiKey}&units=metric`
+                    );
+                    const fcData = await forecast.json();
+                    
+                    const uv = await fetch(
+                        `https://api.openweathermap.org/data/2.5/uvi?lat=${currData.coord.lat}&lon=${currData.coord.lon}&appid=${config.weatherApiKey}`
+                    );
+                    const uvData = await uv.json();
+                    
+                    const next24h = fcData.list?.slice(0, 8) || [];
+                    const rainForecast = next24h.map(f => {
+                        const time = new Date(f.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                        const rain = f.rain ? f.rain['3h'] || 0 : 0;
+                        const pop = Math.round((f.pop || 0) * 100);
+                        return `${time}: ${pop}% (${rain.toFixed(1)}mm)`;
+                    }).join(', ');
+                    
+                    const updateTime = new Date(currData.dt * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    
+                    html += `
+                        <div class="mb-3 pb-2 border-b border-slate-700 last:border-0">
+                            <div class="font-semibold">${currData.name}</div>
+                            <div class="flex justify-between items-center my-1">
+                                <span class="text-2xl font-bold">${Math.round(currData.main.temp)}°C</span>
+                                <span class="capitalize">${currData.weather[0].description}</span>
+                            </div>
+                            <div class="text-xs space-y-0.5 text-slate-300">
+                                <div>⏰ ${updateTime}</div>
+                                <div>☀️ UV: ${uvData.value?.toFixed(1) || 'N/A'}</div>
+                                <div>💧 24h: ${rainForecast || 'No rain'}</div>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error(`Weather error: ${loc}`, error);
+                }
+            }
+            
+            document.getElementById('weatherContainer').innerHTML = html || '<p class="text-red-400">Weather unavailable</p>';
+        }
+
+        // Stock Functions
+        function renderStocks(quotes) {
+            const el = document.getElementById('stocksContent');
+            if (!el) return;
+            
+            const arr = config.stocks.map(s => {
+                const q = quotes && quotes[s.symbol];
+                if (!q) return { symbol: s.symbol, missing: true };
+                return { symbol: s.symbol, price: q.price, pct: q.pct, buy: s.buyPrice };
+            });
+            
+            const html = arr.map(it => {
+                if (it.missing) return `<span class="ticker-item">${escapeHtml(it.symbol)}: ?</span>`;
+                
+                const below = (it.buy != null && it.price != null && it.price < it.buy);
+                const priceStr = it.price == null ? '?' : ('$' + Number(it.price).toFixed(2));
+                const pctStr = it.pct == null ? '' : ((it.pct > 0 ? '+' : '') + it.pct.toFixed(1) + '%');
+                const arrow = it.pct == null ? '' : (it.pct >= 0 ? ' ▲' : ' ▼');
+                const arrowColor = it.pct >= 0 ? 'text-green-400' : 'text-red-400';
+                const warn = below ? ' ⚠️' : '';
+                const buy = it.buy == null ? '' : (' | Buy: $' + Number(it.buy).toFixed(2));
+                
+                return `<span class="ticker-item">${escapeHtml(it.symbol)}: ${priceStr} <span class="${arrowColor}">${arrow}</span> ${escapeHtml(pctStr)}${buy}${warn}</span>`;
+            }).join('');
+            
+            el.innerHTML = html || '<span class="ticker-item">No stocks</span>';
+        }
+
+        async function fetchStocks(provider) {
+            const symbols = config.stocks.map(s => s.symbol).filter(Boolean);
+            const quotes = {};
+            
+            if (provider === 'twelvedata') {
+                const key = (config.twelveDataKey || '').trim();
+                if (!key) throw new Error('NO_TWELVEDATA_KEY');
+                
+                const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(','))}&apikey=${encodeURIComponent(key)}`;
+                const resp = await fetch(url, { cache: 'no-store' });
+                const data = await resp.json();
+                
+                if (!resp.ok) throw new Error('HTTP_' + resp.status);
+                
+                for (const sym of symbols) {
+                    const d = data[sym] || (data.symbol === sym ? data : null);
+                    if (!d || d.status === 'error') continue;
+                    
+                    const price = Number(d.price);
+                    const pct = d.percent_change != null ? Number(d.percent_change) : null;
+                    quotes[sym] = { price: isNaN(price) ? null : price, pct: (pct == null || isNaN(pct)) ? null : pct };
+                }
+                
+                return { quotes, provider };
+            }
+            
+            if (provider === 'finnhub') {
+                const key = (config.finnhubKey || '').trim();
+                if (!key) throw new Error('NO_FINNHUB_KEY');
+                
+                for (const sym of symbols) {
+                    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${encodeURIComponent(key)}`;
+                    const resp = await fetch(url, { cache: 'no-store' });
+                    
+                    if (!resp.ok) throw new Error('HTTP_' + resp.status);
+                    
+                    const d = await resp.json();
+                    const price = (d && d.c != null) ? Number(d.c) : null;
+                    const prev = (d && d.pc != null) ? Number(d.pc) : null;
+                    let pct = null;
+                    if (price != null && prev != null && prev !== 0) pct = ((price - prev) / prev) * 100;
+                    
+                    quotes[sym] = { price: isNaN(price) ? null : price, pct: (pct == null || isNaN(pct)) ? null : pct };
+                    await new Promise(r => setTimeout(r, 250));
+                }
+                
+                return { quotes, provider };
+            }
+            
+            throw new Error('UNKNOWN_PROVIDER');
+        }
+
+        async function refreshStocks() {
+            const el = document.getElementById('stocksContent');
+            if (el) el.innerHTML = '<span class="ticker-item">Loading stocks...</span>';
+            
+            const tries = ['twelvedata', 'finnhub'];
+            let lastErr = null;
+            
+            for (const p of tries) {
+                try {
+                    const res = await fetchStocks(p);
+                    const have = Object.keys(res.quotes || {}).length;
+                    if (!have) throw new Error('NO_DATA');
+                    
+                    const now = new Date();
+                    stockCache = {
+                        date: todayKey(now),
+                        updatedAt: now.toISOString(),
+                        provider: res.provider,
+                        quotes: res.quotes,
+                        slots: stockCache && stockCache.date === todayKey(now) ? (stockCache.slots || {}) : {}
+                    };
+                    
+                    localStorage.setItem('stockCache', JSON.stringify(stockCache));
+                    renderStocks(stockCache.quotes);
+                    return;
+                } catch (e) {
+                    lastErr = e;
+                }
+            }
+            
+            if (stockCache && stockCache.quotes) {
+                renderStocks(stockCache.quotes);
+            } else {
+                const el2 = document.getElementById('stocksContent');
+                if (el2) el2.innerHTML = '<span class="ticker-item">Stock data unavailable</span>';
+            }
+            console.warn('Stocks refresh failed', lastErr);
+        }
+
+        function maybeRefreshStocks() {
+            const now = new Date();
+            if (!stockCache) {
+                const saved = localStorage.getItem('stockCache');
+                if (saved) {
+                    try {
+                        stockCache = JSON.parse(saved);
+                    } catch (e) {
+                        stockCache = null;
+                    }
+                }
+            }
+            
+            if (stockCache && stockCache.quotes) renderStocks(stockCache.quotes);
+            
+            const tKey = todayKey(now);
+            if (!stockCache || stockCache.date !== tKey) {
+                stockCache = stockCache || {};
+                stockCache.date = tKey;
+                stockCache.slots = {};
+            }
+            
+            const times = config.stockRefreshTimes || [];
+            const windowMin = 7;
+            
+            for (const t of times) {
+                if (!t) continue;
+                if (isNearTime(t, now, windowMin)) {
+                    if (stockCache.slots && stockCache.slots[t] === tKey) continue;
+                    stockCache.slots = stockCache.slots || {};
+                    stockCache.slots[t] = tKey;
+                    localStorage.setItem('stockCache', JSON.stringify(stockCache));
+                    refreshStocks();
+                    break;
+                }
+            }
+        }
+
+        // Currencies
+        async function fetchCurrencies() {
+            let html = '';
+            
+            for (const c of config.currencies) {
+                try {
+                    const [base, quote] = c.pair.split('-');
+                    const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+                    const data = await res.json();
+                    
+                    if (data.rates && data.rates[quote]) {
+                        const rate = data.rates[quote];
+                        const isAlert = c.below ? rate < c.alert : rate > c.alert;
+                        
+                        const alertClass = isAlert ? 'p-2 rounded bg-yellow-900/30 border border-yellow-500' : 'p-2 rounded bg-slate-800/30';
+                        
+                        html += `
+                            <div class="${alertClass} mb-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">${base}/${quote}</span>
+                                    <div class="text-right flex items-center gap-1">
+                                        <div class="font-mono font-bold">${rate.toFixed(4)}</div>
+                                        ${isAlert ? '<i class="fas fa-bell text-yellow-400 text-xs"></i>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (err) {
+                    console.error(`Currency error: ${c.pair}`, err);
+                }
+            }
+            
+            document.getElementById('currencyList').innerHTML = html || '<p class="text-red-400">Currency data unavailable</p>';
+        }
+
+        // Bible Verse
+        function fetchBibleVerse() {
+            const verses = [
+                { ref: '約翰福音 3:16', text: '神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不至滅亡,反得永生。' },
+                { ref: '詩篇 23:1', text: '耶和華是我的牧者,我必不致缺乏。' },
+                { ref: '箴言 3:5-6', text: '你要專心仰賴耶和華,不可倚靠自己的聰明,在你一切所行的事上都要認定他,他必指引你的路。' },
+                { ref: '腓立比書 4:13', text: '我靠著那加給我力量的,凡事都能做。' },
+                { ref: '羅馬書 8:28', text: '我們曉得萬事都互相效力,叫愛神的人得益處,就是按他旨意被召的人。' }
+            ];
+            
+            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+            const verse = verses[dayOfYear % verses.length];
+            
+            document.getElementById('bibleVerse').innerHTML = `
+                <div class="text-slate-300 leading-relaxed">${verse.text}</div>
+                <div class="text-xs text-blue-300 font-semibold text-right mt-2">— ${verse.ref}</div>
+            `;
+        }
+
+        // Calendar
+        async function fetchCalendar() {
+            const container = document.getElementById('calendarContainer');
+            
+            if (!config.calendarWebAppUrl || !config.calendarToken) {
+                container.innerHTML = '<p class="text-yellow-400 text-xs">Calendar not configured. Set Web App URL and Token in settings.</p>';
+                return;
+            }
+            
+            try {
+                const url = `${config.calendarWebAppUrl}?token=${config.calendarToken}&days=7`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.ok) {
+                    throw new Error(data.error || 'Unknown error');
+                }
+                
+                let html = '';
+                let eventCount = 0;
+                
+                // Today
+                if (data.today) {
+                    const todayEvents = [
+                        ...(data.today.personal || []),
+                        ...(data.today.family || []),
+                        ...(data.today.nzHolidays || []),
+                        ...(data.today.hkHolidays || [])
+                    ].filter(e => e && !e.error);
+                    
+                    todayEvents.forEach(event => {
+                        const isHoliday = event.calendarId?.includes('holiday');
+                        const eventClass = isHoliday ? 'calendar-event holiday-event' : 'calendar-event';
+                        const timeStr = event.allDay ? 'All day' : (event.start ? new Date(event.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '');
+                        
+                        html += `
+                            <div class="${eventClass}">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-semibold text-blue-300">Today</span>
+                                    <span class="text-slate-400 text-xs">${timeStr}</span>
+                                </div>
+                                <div class="text-sm">${escapeHtml(event.title)}</div>
+                                ${event.location ? `<div class="text-xs text-slate-400 mt-1">📍 ${escapeHtml(event.location)}</div>` : ''}
+                            </div>
+                        `;
+                        eventCount++;
+                    });
+                }
+                
+                // Tomorrow
+                if (data.tomorrow) {
+                    const tomorrowEvents = [
+                        ...(data.tomorrow.personal || []),
+                        ...(data.tomorrow.family || []),
+                        ...(data.tomorrow.nzHolidays || []),
+                        ...(data.tomorrow.hkHolidays || [])
+                    ].filter(e => e && !e.error);
+                    
+                    tomorrowEvents.forEach(event => {
+                        const isHoliday = event.calendarId?.includes('holiday');
+                        const eventClass = isHoliday ? 'calendar-event holiday-event' : 'calendar-event';
+                        const timeStr = event.allDay ? 'All day' : (event.start ? new Date(event.start).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '');
+                        
+                        html += `
+                            <div class="${eventClass}">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-semibold text-blue-300">Tomorrow</span>
+                                    <span class="text-slate-400 text-xs">${timeStr}</span>
+                                </div>
+                                <div class="text-sm">${escapeHtml(event.title)}</div>
+                                ${event.location ? `<div class="text-xs text-slate-400 mt-1">📍 ${escapeHtml(event.location)}</div>` : ''}
+                            </div>
+                        `;
+                        eventCount++;
+                    });
+                }
+                
+                // Next 7 days
+                if (data.next7days && eventCount < 10) {
+                    const futureEvents = [
+                        ...(data.next7days.personal || []),
+                        ...(data.next7days.family || []),
+                        ...(data.next7days.nzHolidays || []),
+                        ...(data.next7days.hkHolidays || [])
+                    ].filter(e => e && !e.error);
+                    
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const dayAfterTomorrow = new Date(tomorrow);
+                    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+                    
+                    futureEvents
+                        .filter(event => {
+                            const eventDate = new Date(event.start || event.end);
+                            eventDate.setHours(0, 0, 0, 0);
+                            return eventDate >= dayAfterTomorrow;
+                        })
+                        .slice(0, 10 - eventCount)
+                        .forEach(event => {
+                            const isHoliday = event.calendarId?.includes('holiday');
+                            const eventClass = isHoliday ? 'calendar-event holiday-event' : 'calendar-event';
+                            const eventDate = new Date(event.start || event.end);
+                            const dateStr = eventDate.toLocaleDateString('zh-HK', { month: 'short', day: 'numeric', weekday: 'short' });
+                            const timeStr = event.allDay ? 'All day' : eventDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                            
+                            html += `
+                                <div class="${eventClass}">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-semibold text-blue-300">${dateStr}</span>
+                                        <span class="text-slate-400 text-xs">${timeStr}</span>
+                                    </div>
+                                    <div class="text-sm">${escapeHtml(event.title)}</div>
+                                    ${event.location ? `<div class="text-xs text-slate-400 mt-1">📍 ${escapeHtml(event.location)}</div>` : ''}
+                                </div>
+                            `;
+                            eventCount++;
+                        });
+                }
+                
+                if (eventCount === 0) {
+                    html = '<p class="text-slate-400 text-xs">No upcoming events</p>';
+                }
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Calendar fetch error:', error);
+                container.innerHTML = `<p class="text-red-400 text-xs">Calendar error: ${escapeHtml(error.message)}</p>`;
+            }
+        }
+
+        // News Functions
+        async function fetchNews(feedList, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let allNews = [];
+            
+            for (const feed of feedList) {
+                try {
+                    const res = await fetch(
+                        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`
+                    );
+                    const data = await res.json();
+                    
+                    if (data.status === 'ok' && data.items) {
+                        data.items.slice(0, 5).forEach(item => {
+                            // NZTA Auckland filter
+                            if (feed.name === 'NZTA' || feed.url.includes('nzta')) {
+                                const title = item.title.toLowerCase();
+                                if (title.includes('auckland') && 
+                                    (title.includes('crash') || title.includes('accident') || 
+                                     title.includes('jam') || title.includes('closure') || 
+                                     title.includes('blocked') || title.includes('incident'))) {
+                                    allNews.push(`[${feed.name}] ${item.title}`);
+                                }
+                            } else {
+                                allNews.push(`[${feed.name}] ${item.title}`);
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error(`RSS error: ${feed.name}`, err);
+                }
+            }
+            
+            if (allNews.length > 0) {
+                let ticker = '';
+                allNews.forEach(n => {
+                    ticker += `<span class="ticker-item">${escapeHtml(n)}</span>`;
+                });
+                container.innerHTML = ticker;
+            } else {
+                container.innerHTML = '<span class="ticker-item">News unavailable</span>';
+            }
+        }
+
+        // Big Screen Media
+        function extractPlaylistId(input) {
+            if (!input) return null;
+            if (input.match(/^[A-Za-z0-9_-]+$/)) return input;
+            const match = input.match(/[?&]list=([A-Za-z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+
+        function initBigScreen() {
+            const grid = document.getElementById('mainGrid');
+            const bigScreenSection = document.getElementById('bigScreenSection');
+            const bigScreenPlayer = document.getElementById('bigScreenPlayer');
+            const bigScreenTitle = document.getElementById('bigScreenTitle');
+            const news1Card = document.getElementById('news1Card');
+            const news2Card = document.getElementById('news2Card');
+            const stocksCard = document.getElementById('stocksCard');
+            
+            // Check if any big screen option is enabled
+            const anyEnabled = config.enableYTVideo || config.enableNewsLive;
+            
+            if (anyEnabled) {
+                // Show big screen section
+                bigScreenSection.style.display = 'block';
+                grid.classList.remove('no-bigscreen');
+                grid.classList.add('has-bigscreen');
+                
+                // Adjust rows: bigScreen=3, news1=4, news2=5, stocks=6
+                bigScreenSection.style.gridRow = '3';
+                news1Card.style.gridRow = '4';
+                news2Card.style.gridRow = '5';
+                stocksCard.style.gridRow = '6';
+                
+                // Set content based on priority: News Live > YouTube Video
+                if (config.enableNewsLive) {
+                    bigScreenTitle.textContent = 'Now News Live (新聞直播)';
+                    bigScreenPlayer.src = '';
+                    bigScreenSection.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-sm font-semibold"><i class="fas fa-tv mr-1"></i>Now News Live (新聞直播)</h3>
+                        </div>
+                        <div class="media-player flex items-center justify-center" style="height: calc(100% - 40px); background: rgba(15, 23, 42, 0.8);">
+                            <div class="text-center p-6">
+                                <i class="fas fa-external-link-alt text-4xl text-blue-400 mb-4"></i>
+                                <p class="text-lg mb-2">Now News 332 Live Stream</p>
+                                <p class="text-sm text-slate-400 mb-4">Direct embed is blocked. Please open in new window:</p>
+                                <a href="https://news.now.com/home/live" target="_blank" 
+                                   class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition">
+                                    Open Now News Live <i class="fas fa-external-link-alt ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                } else if (config.enableYTVideo) {
+                    bigScreenTitle.textContent = 'YouTube Video';
+                    const playlistId = extractPlaylistId(config.ytVideoPlaylist);
+                    if (playlistId) {
+                        bigScreenPlayer.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=0`;
+                    }
+                }
+            } else {
+                // Hide big screen section
+                bigScreenSection.style.display = 'none';
+                grid.classList.remove('has-bigscreen');
+                grid.classList.add('no-bigscreen');
+                
+                // Adjust rows back: news1=3, news2=4, stocks=5
+                news1Card.style.gridRow = '3';
+                news2Card.style.gridRow = '4';
+                stocksCard.style.gridRow = '5';
+            }
+        }
+
+        function controlBigScreen(action) {
+            const iframe = document.getElementById('bigScreenPlayer');
+            if (!iframe || !iframe.contentWindow) return;
+            
+            try {
+                if (action === 'play') {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                } else if (action === 'pause') {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                }
+            } catch (e) {
+                console.error('Big screen control error:', e);
+            }
+        }
+
+        // Initialize
+        function init() {
+            loadSavedSettings();
+            populateSettingsUI();
+            updateDigitalClock();
+            updateAnalogClock();
+            fetchBibleVerse();
+            initBigScreen();
+            fetchWeather();
+            fetchCurrencies();
+            fetchCalendar();
+            fetchNews(config.news1Feeds, 'news1Content');
+            fetchNews(config.news2Feeds, 'news2Content');
+            maybeRefreshStocks();
+            
+            setInterval(() => {
+                updateDigitalClock();
+                updateAnalogClock();
+            }, 1000);
+            
+            setInterval(fetchWeather, 1800000);
+            setInterval(fetchCurrencies, 1800000);
+            setInterval(fetchCalendar, 1800000);
+            setInterval(() => fetchNews(config.news1Feeds, 'news1Content'), 1800000);
+            setInterval(() => fetchNews(config.news2Feeds, 'news2Content'), 1800000);
+            setInterval(maybeRefreshStocks, 300000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(e => console.log('Wake Lock:', e));
+        }
+    </script>
+</body>
+</html>
