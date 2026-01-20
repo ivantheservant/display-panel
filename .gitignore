@@ -1,0 +1,18 @@
+# API Keys - NEVER commit these!
+config.local.js
+*.key
+secrets/
+
+# Specific key patterns
+*4d4ff0180678e887714547a90289db00*
+*de0c20b471e5490ea5dfc70d935c6ea1*
+*d5m4gt9r01qidp4jtb4g*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
