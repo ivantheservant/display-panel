@@ -27,17 +27,6 @@
         
         /* ============================================
            V6 BIG SCREEN LAYOUT
-           +--------------------------------+---------+
-           |                                | Clock   |
-           |      YOUTUBE VIDEO             +---------+
-           |      (Maximum Space)           | Weather |
-           |                                +---------+
-           |                                |Currency |
-           +--------------------------------+---------+
-           | News Line 1 (Chinese)                    |
-           +------------------------------------------+
-           | News Line 2 (International)              |
-           +------------------------------------------+
            ============================================ */
         
         .main-container {
@@ -49,7 +38,6 @@
             grid-template-rows: 1fr 2.2rem 2.2rem;
         }
         
-        /* Video area - maximum space */
         .video-area {
             grid-column: 1;
             grid-row: 1;
@@ -65,7 +53,6 @@
             border: none;
         }
         
-        /* Right sidebar */
         .sidebar {
             grid-column: 2;
             grid-row: 1;
@@ -82,23 +69,19 @@
             flex-shrink: 0;
         }
         
-        /* Weather takes remaining space */
         .weather-card {
             flex: 1;
             overflow-y: auto;
             min-height: 0;
         }
         
-        /* News tickers - minimal height */
         .news-row {
             grid-column: 1 / -1;
             border-radius: 0.4rem;
             overflow: hidden;
         }
         
-        /* ============================================
-           COMPACT CLOCK
-           ============================================ */
+        /* Clock */
         .compact-clock {
             text-align: center;
             padding: 0.5rem;
@@ -115,38 +98,18 @@
             margin-top: 0.2rem;
         }
         
-        /* ============================================
-           COMPACT WEATHER
-           ============================================ */
+        /* Weather */
         .weather-item {
             padding: 0.4rem 0;
             border-bottom: 1px solid rgba(148, 163, 184, 0.12);
         }
-        .weather-item:last-child {
-            border-bottom: none;
-        }
-        .weather-item .location {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #cbd5e1;
-        }
-        .weather-item .temp {
-            font-size: 1.4rem;
-            font-weight: bold;
-        }
-        .weather-item .desc {
-            font-size: 0.65rem;
-            color: #94a3b8;
-        }
-        .weather-item .details {
-            font-size: 0.6rem;
-            color: #64748b;
-            margin-top: 0.15rem;
-        }
+        .weather-item:last-child { border-bottom: none; }
+        .weather-item .location { font-size: 0.75rem; font-weight: 600; color: #cbd5e1; }
+        .weather-item .temp { font-size: 1.4rem; font-weight: bold; }
+        .weather-item .desc { font-size: 0.65rem; color: #94a3b8; }
+        .weather-item .details { font-size: 0.6rem; color: #64748b; margin-top: 0.15rem; }
         
-        /* ============================================
-           COMPACT CURRENCY
-           ============================================ */
+        /* Currency */
         .currency-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -162,19 +125,10 @@
             background: rgba(234, 179, 8, 0.2);
             border: 1px solid rgba(234, 179, 8, 0.5);
         }
-        .currency-item .pair {
-            font-size: 0.6rem;
-            color: #94a3b8;
-        }
-        .currency-item .rate {
-            font-size: 1rem;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-        }
+        .currency-item .pair { font-size: 0.6rem; color: #94a3b8; }
+        .currency-item .rate { font-size: 1rem; font-weight: bold; font-family: 'Courier New', monospace; }
         
-        /* ============================================
-           NEWS TICKERS - Minimal line height
-           ============================================ */
+        /* News Tickers */
         .ticker {
             width: 100%;
             height: 100%;
@@ -204,9 +158,7 @@
             padding-left: 100%;
             animation: scroll-left 120s linear infinite;
         }
-        .news-ticker-2 .ticker-content {
-            animation-duration: 100s;
-        }
+        .news-ticker-2 .ticker-content { animation-duration: 100s; }
         @keyframes scroll-left {
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
@@ -222,9 +174,7 @@
             margin-right: 0.4rem;
         }
         
-        /* ============================================
-           SETTINGS
-           ============================================ */
+        /* Settings */
         .settings-btn {
             position: fixed;
             top: 0.5rem;
@@ -238,16 +188,13 @@
             transition: all 0.2s;
             opacity: 0.4;
         }
-        .settings-btn:hover {
-            opacity: 1;
-            background: rgba(59, 130, 246, 0.5);
-        }
+        .settings-btn:hover { opacity: 1; background: rgba(59, 130, 246, 0.5); }
         
         .settings-panel {
             position: fixed;
             top: 0;
-            right: -380px;
-            width: 380px;
+            right: -400px;
+            width: 400px;
             height: 100vh;
             background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(20px);
@@ -257,8 +204,45 @@
             overflow-y: auto;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .settings-panel.open {
-            right: 0;
+        .settings-panel.open { right: 0; }
+        
+        .settings-section {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .settings-section:last-child { border-bottom: none; }
+        .settings-section h3 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+        .settings-section label {
+            display: block;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        .settings-section input[type="text"],
+        .settings-section textarea {
+            width: 100%;
+            padding: 0.4rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.3rem;
+            color: #f8fafc;
+            font-size: 0.7rem;
+        }
+        .settings-section textarea {
+            min-height: 60px;
+            font-family: monospace;
+        }
+        .settings-section .hint {
+            font-size: 0.6rem;
+            color: #64748b;
+            margin-top: 0.2rem;
         }
         
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
@@ -267,8 +251,7 @@
         
         .loading {
             display: inline-block;
-            width: 12px;
-            height: 12px;
+            width: 12px; height: 12px;
             border: 2px solid rgba(255,255,255,.3);
             border-radius: 50%;
             border-top-color: #fff;
@@ -276,7 +259,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* No video placeholder */
         .no-video {
             display: flex;
             flex-direction: column;
@@ -285,23 +267,14 @@
             height: 100%;
             color: #64748b;
         }
-        .no-video i {
-            font-size: 3.5rem;
-            margin-bottom: 0.75rem;
-            opacity: 0.5;
-        }
-        .no-video .title {
-            font-size: 1.1rem;
-        }
-        .no-video .subtitle {
-            font-size: 0.85rem;
-            margin-top: 0.3rem;
-        }
+        .no-video i { font-size: 3.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+        .no-video .title { font-size: 1.1rem; }
+        .no-video .subtitle { font-size: 0.85rem; margin-top: 0.3rem; }
     </style>
 </head>
 <body>
 
-    <!-- Settings Button (subtle, top right of video) -->
+    <!-- Settings Button -->
     <button onclick="toggleSettings()" class="settings-btn">
         <i class="fas fa-cog text-white text-sm"></i>
     </button>
@@ -313,48 +286,58 @@
             <button onclick="toggleSettings()" class="text-slate-400 hover:text-white text-xl">&times;</button>
         </div>
         
-        <div class="space-y-4 text-sm">
-            <div class="p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg">
-                <div class="font-semibold text-blue-300 mb-1">V6 Beta - Big Screen Mode</div>
-                <div class="text-xs text-slate-400">Large video + compact sidebar layout</div>
-            </div>
-            
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">YouTube Playlist</label>
-                <input type="text" id="ytPlaylist" 
-                    class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
-                    placeholder="Playlist ID or full URL">
-            </div>
-            
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Calendar URL (optional)</label>
-                <input type="text" id="calendarWebAppUrl" 
-                    class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
-                    placeholder="https://script.google.com/...">
-            </div>
-            
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Calendar Token</label>
-                <input type="text" id="calendarToken" 
-                    class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-xs"
-                    placeholder="mediapanel">
-            </div>
-            
-            <button onclick="saveSettings()" class="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold text-sm">
-                Save & Reload
-            </button>
-            
-            <div class="text-xs text-slate-500 pt-2 border-t border-slate-700">
-                <p>📺 Optimized for large TV displays</p>
-                <p class="mt-1">💾 Settings saved in browser only</p>
-            </div>
+        <div class="p-2 bg-blue-900/30 border border-blue-500/30 rounded-lg mb-4">
+            <div class="font-semibold text-blue-300 text-sm">V6 Beta - Big Screen Mode</div>
+            <div class="text-xs text-slate-400">Large video + compact sidebar</div>
         </div>
+        
+        <!-- YouTube Settings -->
+        <div class="settings-section">
+            <h3>📺 YouTube Playlist</h3>
+            <label>Playlist ID or URL</label>
+            <input type="text" id="ytPlaylist" placeholder="PLK1NiZBn99vQ79x...">
+            <div class="hint">Playlist will auto-shuffle on load</div>
+        </div>
+        
+        <!-- News Feed Settings -->
+        <div class="settings-section">
+            <h3>📰 Chinese News Feeds (Line 1)</h3>
+            <label>RSS Feeds (one per line: name|url)</label>
+            <textarea id="news1Feeds" placeholder="明報|https://news.mingpao.com/rss/ins/s00005.xml
+RTHK|https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml"></textarea>
+            <div class="hint">Format: Name|URL (one feed per line)</div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>🌍 International News Feeds (Line 2)</h3>
+            <label>RSS Feeds (one per line: name|url)</label>
+            <textarea id="news2Feeds" placeholder="BBC|https://feeds.bbci.co.uk/news/rss.xml
+RNZ|https://www.rnz.co.nz/rss/chinese.xml"></textarea>
+            <div class="hint">Format: Name|URL (one feed per line)</div>
+        </div>
+        
+        <!-- Calendar Settings (Optional) -->
+        <div class="settings-section">
+            <h3>📅 Calendar (Optional)</h3>
+            <label>Google Apps Script URL</label>
+            <input type="text" id="calendarWebAppUrl" placeholder="https://script.google.com/...">
+            <label>Token</label>
+            <input type="text" id="calendarToken" placeholder="mediapanel">
+        </div>
+        
+        <button onclick="saveSettings()" class="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold text-sm">
+            Save & Reload
+        </button>
+        
+        <button onclick="resetToDefaults()" class="w-full p-2 mt-2 bg-slate-700 hover:bg-slate-600 rounded text-sm">
+            Reset to Defaults
+        </button>
     </div>
 
     <!-- Main Layout -->
     <div class="main-container">
         
-        <!-- Large Video Area (Left) -->
+        <!-- Large Video Area -->
         <div class="video-area glass" id="videoArea">
             <div class="no-video" id="noVideoPlaceholder">
                 <i class="fas fa-play-circle"></i>
@@ -363,22 +346,19 @@
             </div>
         </div>
         
-        <!-- Right Sidebar: Clock → Weather → Currency -->
+        <!-- Right Sidebar -->
         <div class="sidebar">
-            <!-- Clock & Date (Compact) -->
             <div class="sidebar-card glass compact-clock">
                 <div class="time" id="digitalClock">00:00</div>
                 <div class="date" id="dateStr">Loading...</div>
             </div>
             
-            <!-- Weather (Compact, fills remaining space) -->
             <div class="sidebar-card glass weather-card custom-scrollbar">
                 <div id="weatherContainer">
                     <div class="text-center py-3"><div class="loading"></div></div>
                 </div>
             </div>
             
-            <!-- Currency (Compact) -->
             <div class="sidebar-card glass">
                 <div class="currency-grid" id="currencyList">
                     <div class="currency-item"><div class="loading"></div></div>
@@ -386,7 +366,7 @@
             </div>
         </div>
         
-        <!-- News Line 1 (Chinese) -->
+        <!-- News Line 1 -->
         <div class="news-row glass">
             <div class="ticker">
                 <span class="ticker-label">中文</span>
@@ -398,7 +378,7 @@
             </div>
         </div>
         
-        <!-- News Line 2 (International) -->
+        <!-- News Line 2 -->
         <div class="news-row glass news-ticker-2">
             <div class="ticker">
                 <span class="ticker-label">INTL</span>
@@ -414,14 +394,25 @@
 
     <script>
         // ============================================
-        // V6 BETA - BIG SCREEN CONFIG
-        // All sensitive data in localStorage only
+        // DEFAULT CONFIG
         // ============================================
+        
+        const DEFAULT_NEWS1 = [
+            { name: '明報', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
+            { name: 'RTHK', url: 'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' }
+        ];
+        
+        const DEFAULT_NEWS2 = [
+            { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+            { name: 'RNZ', url: 'https://www.rnz.co.nz/rss/chinese.xml' }
+        ];
         
         const config = {
             ytPlaylist: '',
             calendarWebAppUrl: '',
             calendarToken: '',
+            news1Feeds: [...DEFAULT_NEWS1],
+            news2Feeds: [...DEFAULT_NEWS2],
             
             weatherLocations: [
                 { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
@@ -431,14 +422,6 @@
             currencies: [
                 { pair: 'NZD-USD', alert: 0.55, below: true },
                 { pair: 'NZD-HKD', alert: 4.5, below: true }
-            ],
-            news1Feeds: [
-                { name: '明報', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
-                { name: 'RTHK', url: 'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' }
-            ],
-            news2Feeds: [
-                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
-                { name: 'RNZ', url: 'https://www.rnz.co.nz/rss/chinese.xml' }
             ]
         };
 
@@ -455,11 +438,29 @@
         function extractPlaylistId(input) {
             if (!input) return null;
             input = input.trim();
-            // Already a playlist ID
             if (/^[A-Za-z0-9_-]+$/.test(input)) return input;
-            // Extract from URL
             const match = input.match(/[?&]list=([A-Za-z0-9_-]+)/);
             return match ? match[1] : null;
+        }
+        
+        // Parse feeds from textarea format: "Name|URL" per line
+        function parseFeedsText(text) {
+            if (!text || !text.trim()) return [];
+            return text.trim().split('\n')
+                .map(line => {
+                    const parts = line.split('|');
+                    if (parts.length >= 2) {
+                        return { name: parts[0].trim(), url: parts[1].trim() };
+                    }
+                    return null;
+                })
+                .filter(f => f && f.name && f.url);
+        }
+        
+        // Convert feeds array to textarea format
+        function feedsToText(feeds) {
+            if (!feeds || !feeds.length) return '';
+            return feeds.map(f => `${f.name}|${f.url}`).join('\n');
         }
 
         // ============================================
@@ -478,14 +479,19 @@
                     config.ytPlaylist = data.ytPlaylist || '';
                     config.calendarWebAppUrl = data.calendarWebAppUrl || '';
                     config.calendarToken = data.calendarToken || '';
+                    config.news1Feeds = data.news1Feeds && data.news1Feeds.length ? data.news1Feeds : [...DEFAULT_NEWS1];
+                    config.news2Feeds = data.news2Feeds && data.news2Feeds.length ? data.news2Feeds : [...DEFAULT_NEWS2];
                 } catch (e) {
                     console.error('Settings error:', e);
                 }
             }
             
+            // Populate UI
             document.getElementById('ytPlaylist').value = config.ytPlaylist;
             document.getElementById('calendarWebAppUrl').value = config.calendarWebAppUrl;
             document.getElementById('calendarToken').value = config.calendarToken;
+            document.getElementById('news1Feeds').value = feedsToText(config.news1Feeds);
+            document.getElementById('news2Feeds').value = feedsToText(config.news2Feeds);
         }
         
         function saveSettings() {
@@ -493,18 +499,36 @@
             config.calendarWebAppUrl = document.getElementById('calendarWebAppUrl').value.trim();
             config.calendarToken = document.getElementById('calendarToken').value.trim();
             
+            const news1Text = document.getElementById('news1Feeds').value;
+            const news2Text = document.getElementById('news2Feeds').value;
+            config.news1Feeds = parseFeedsText(news1Text);
+            config.news2Feeds = parseFeedsText(news2Text);
+            
+            // Use defaults if empty
+            if (!config.news1Feeds.length) config.news1Feeds = [...DEFAULT_NEWS1];
+            if (!config.news2Feeds.length) config.news2Feeds = [...DEFAULT_NEWS2];
+            
             localStorage.setItem('v6BigScreenConfig', JSON.stringify({
                 ytPlaylist: config.ytPlaylist,
                 calendarWebAppUrl: config.calendarWebAppUrl,
-                calendarToken: config.calendarToken
+                calendarToken: config.calendarToken,
+                news1Feeds: config.news1Feeds,
+                news2Feeds: config.news2Feeds
             }));
             
             toggleSettings();
             location.reload();
         }
+        
+        function resetToDefaults() {
+            if (confirm('Reset all settings to defaults?')) {
+                localStorage.removeItem('v6BigScreenConfig');
+                location.reload();
+            }
+        }
 
         // ============================================
-        // CLOCK (Compact HH:MM)
+        // CLOCK
         // ============================================
         
         function updateClock() {
@@ -512,14 +536,13 @@
             const h = String(now.getHours()).padStart(2, '0');
             const m = String(now.getMinutes()).padStart(2, '0');
             document.getElementById('digitalClock').textContent = `${h}:${m}`;
-            
             document.getElementById('dateStr').textContent = now.toLocaleDateString('zh-HK', { 
                 month: 'short', day: 'numeric', weekday: 'short'
             });
         }
 
         // ============================================
-        // WEATHER (Open-Meteo - Free)
+        // WEATHER
         // ============================================
         
         async function fetchWeather() {
@@ -535,7 +558,6 @@
                     const temp = Math.round(data.current.temperature_2m);
                     const desc = weatherCodeToText(data.current.weather_code);
                     
-                    // Current UV
                     const now = new Date();
                     const times = (data.hourly?.time || []).map(t => new Date(t));
                     let uvIdx = 0;
@@ -579,7 +601,7 @@
         }
 
         // ============================================
-        // CURRENCY (ExchangeRate-API - Free)
+        // CURRENCY
         // ============================================
         
         async function fetchCurrencies() {
@@ -612,35 +634,55 @@
         }
 
         // ============================================
-        // NEWS
+        // NEWS - Using RSS2JSON proxy
         // ============================================
         
         async function fetchNews(feeds, containerId) {
             const container = document.getElementById(containerId);
+            
+            if (!feeds || !feeds.length) {
+                container.innerHTML = '<span class="ticker-item">No feeds configured</span>';
+                return;
+            }
+            
             let allNews = [];
             
             for (const feed of feeds) {
                 try {
-                    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=8`);
+                    // Use RSS2JSON as proxy (free, no API key needed for basic use)
+                    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`;
+                    const res = await fetch(proxyUrl);
+                    
+                    if (!res.ok) {
+                        console.error(`Feed ${feed.name} HTTP error:`, res.status);
+                        continue;
+                    }
+                    
                     const data = await res.json();
                     
-                    if (data.status === 'ok' && data.items) {
+                    if (data.status === 'ok' && data.items && data.items.length) {
                         data.items.slice(0, 5).forEach(item => {
-                            allNews.push(`[${feed.name}] ${item.title}`);
+                            if (item.title) {
+                                allNews.push(`[${feed.name}] ${item.title}`);
+                            }
                         });
+                    } else {
+                        console.warn(`Feed ${feed.name} returned no items:`, data);
                     }
                 } catch (e) {
-                    console.error('News error:', feed.name, e);
+                    console.error(`News error (${feed.name}):`, e);
                 }
             }
             
-            container.innerHTML = allNews.length 
-                ? allNews.map(n => `<span class="ticker-item">${escapeHtml(n)}</span>`).join('')
-                : '<span class="ticker-item">News unavailable</span>';
+            if (allNews.length > 0) {
+                container.innerHTML = allNews.map(n => `<span class="ticker-item">${escapeHtml(n)}</span>`).join('');
+            } else {
+                container.innerHTML = '<span class="ticker-item">News temporarily unavailable - check console for details</span>';
+            }
         }
 
         // ============================================
-        // VIDEO PLAYER
+        // VIDEO PLAYER - With SHUFFLE enabled
         // ============================================
         
         function initVideo() {
@@ -648,9 +690,13 @@
             const playlistId = extractPlaylistId(config.ytPlaylist);
             
             if (playlistId) {
+                // shuffle=1 enables shuffle mode by default
+                // Note: YouTube's shuffle in embed is limited, but we add a random start index
+                const randomStart = Math.floor(Math.random() * 50); // Random start position
+                
                 videoArea.innerHTML = `
                     <iframe 
-                        src="https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=1&mute=0&loop=1&rel=0"
+                        src="https://www.youtube.com/embed/videoseries?list=${playlistId}&autoplay=1&mute=0&loop=1&rel=0&index=${randomStart}&shuffle=1"
                         frameborder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                         allowfullscreen>
