@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v6.0 Beta (Big Screen)Final </title>
+    <title>Display Panel - v6.0 Beta (Big Screen)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -80,6 +80,52 @@
         }
         .video-btn.active {
             background: rgba(34, 197, 94, 0.8);
+        }
+        
+        /* Playlist Selector (top-left of video) */
+        .playlist-selector {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 10;
+            display: flex;
+            gap: 0.4rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .video-area:hover .playlist-selector {
+            opacity: 1;
+        }
+        .playlist-dropdown {
+            padding: 0.4rem 0.6rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.4rem;
+            color: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+            min-width: 140px;
+        }
+        .playlist-dropdown option {
+            background: #1e293b;
+            color: white;
+        }
+        .order-btn {
+            padding: 0.4rem 0.6rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.4rem;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .order-btn:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+        .order-btn.active {
+            background: rgba(34, 197, 94, 0.7);
+            border-color: rgba(34, 197, 94, 0.8);
         }
         
         .sidebar {
@@ -224,8 +270,8 @@
         .settings-panel {
             position: fixed;
             top: 0;
-            right: -420px;
-            width: 420px;
+            right: -400px;
+            width: 400px;
             height: 100vh;
             background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(20px);
@@ -257,7 +303,8 @@
             margin-top: 0.5rem;
         }
         .settings-section input[type="text"],
-        .settings-section textarea {
+        .settings-section textarea,
+        .settings-section select {
             width: 100%;
             padding: 0.4rem;
             background: rgba(30, 41, 59, 0.8);
@@ -274,66 +321,6 @@
             font-size: 0.6rem;
             color: #64748b;
             margin-top: 0.2rem;
-        }
-        
-        /* Playlist browser */
-        .playlist-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 0.3rem;
-            margin-top: 0.5rem;
-        }
-        .playlist-item {
-            padding: 0.5rem;
-            cursor: pointer;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-            font-size: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .playlist-item:hover {
-            background: rgba(59, 130, 246, 0.2);
-        }
-        .playlist-item:last-child {
-            border-bottom: none;
-        }
-        .playlist-item img {
-            width: 40px;
-            height: 30px;
-            object-fit: cover;
-            border-radius: 0.2rem;
-        }
-        .playlist-item .title {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .google-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            padding: 0.5rem;
-            background: white;
-            color: #333;
-            border: none;
-            border-radius: 0.3rem;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .google-btn:hover {
-            background: #f0f0f0;
-        }
-        .google-btn.signed-in {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid #22c55e;
         }
         
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
@@ -377,32 +364,22 @@
             <div class="text-xs text-slate-400">Large video + compact sidebar</div>
         </div>
         
-        <!-- YouTube Settings -->
+        <!-- Playlist Settings -->
         <div class="settings-section">
             <h3>📺 YouTube Playlist</h3>
+            <label>Select Playlist</label>
+            <select id="settingsPlaylistSelect" class="mb-2">
+                <option value="">-- Select a playlist --</option>
+            </select>
             
-            <!-- Google Sign In -->
-            <button id="googleSignInBtn" class="google-btn" onclick="handleGoogleAuth()">
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <span id="googleBtnText">Sign in with Google</span>
-            </button>
+            <label>Or Enter Custom Playlist ID/URL</label>
+            <input type="text" id="customPlaylist" placeholder="PLK1NiZBn99vQ...">
             
-            <!-- Playlist Browser (shows when signed in) -->
-            <div id="playlistBrowser" style="display: none;">
-                <label>Your Playlists</label>
-                <div id="playlistList" class="playlist-list custom-scrollbar">
-                    <div class="text-center py-4 text-slate-400 text-xs">Loading playlists...</div>
-                </div>
-            </div>
-            
-            <label>Or Enter Playlist ID/URL manually</label>
-            <input type="text" id="ytPlaylist" placeholder="PLK1NiZBn99vQ79x...">
-            <div class="hint">Shuffle enabled by default</div>
+            <label class="mt-3">Playback Order</label>
+            <select id="settingsPlayOrder">
+                <option value="shuffle">🔀 Shuffle (Random)</option>
+                <option value="newest">📅 Newest First (by date)</option>
+            </select>
         </div>
         
         <!-- News Feed Settings -->
@@ -416,29 +393,6 @@
             <h3>🌍 International News (Line 2)</h3>
             <label>RSS Feeds (Name|URL per line)</label>
             <textarea id="news2Feeds" placeholder="BBC|https://feeds.bbci.co.uk/news/rss.xml"></textarea>
-        </div>
-        
-        <!-- Google API Settings (for playlist browsing) -->
-        <div class="settings-section">
-            <h3>🔑 Google API (for playlist browsing)</h3>
-            <label>API Key (from Google Cloud Console)</label>
-            <input type="text" id="googleApiKey" placeholder="AIzaSy...">
-            <label>Client ID (OAuth 2.0)</label>
-            <input type="text" id="googleClientId" placeholder="xxx.apps.googleusercontent.com">
-            <div class="hint">
-                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-400 hover:underline">
-                    Get credentials from Google Cloud Console →
-                </a>
-            </div>
-        </div>
-        
-        <!-- Calendar (Optional) -->
-        <div class="settings-section">
-            <h3>📅 Calendar (Optional)</h3>
-            <label>Google Apps Script URL</label>
-            <input type="text" id="calendarWebAppUrl" placeholder="https://script.google.com/...">
-            <label>Token</label>
-            <input type="text" id="calendarToken" placeholder="mediapanel">
         </div>
         
         <button onclick="saveSettings()" class="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold text-sm">
@@ -455,16 +409,32 @@
         
         <!-- Large Video Area -->
         <div class="video-area glass" id="videoArea">
+            <!-- Playlist Selector (top-left, shows on hover) -->
+            <div class="playlist-selector">
+                <select class="playlist-dropdown" id="playlistDropdown" onchange="changePlaylist()">
+                    <option value="">Select Playlist...</option>
+                    <option value="PLK1NiZBn99vQ2xsTJ5SIzqK-TfHs9s0He">0Tempwork</option>
+                    <option value="PLK1NiZBn99vRFjnjGvtFkydnVh5vq39V6">AOA</option>
+                    <option value="PLK1NiZBn99vRvPpps7r9wMB0KLUacyRKT">Media Panel</option>
+                    <option value="PLK1NiZBn99vSEy6wYQ3XMYy1RE687kHyH">Big Screen</option>
+                    <option value="PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC">Performance</option>
+                    <option value="PLIpRvnEkgEeU15yy2o_5gKQjr79KP8O2O">HoyTV News</option>
+                </select>
+                <button class="order-btn" id="shuffleToggle" onclick="togglePlayOrder()" title="Toggle Shuffle/Date Order">
+                    🔀 Shuffle
+                </button>
+            </div>
+            
             <div class="no-video" id="noVideoPlaceholder">
                 <i class="fas fa-play-circle"></i>
-                <div class="title">No Playlist Configured</div>
-                <div class="subtitle">Click ⚙️ to add a YouTube playlist</div>
+                <div class="title">Select a Playlist</div>
+                <div class="subtitle">Hover top-left to choose playlist</div>
             </div>
             
             <!-- YouTube Player Container -->
             <div id="ytPlayerContainer" style="width:100%; height:100%; display:none;"></div>
             
-            <!-- Video Controls (hover to show) -->
+            <!-- Video Controls (bottom-right, shows on hover) -->
             <div class="video-controls" id="videoControls" style="display:none;">
                 <button class="video-btn" onclick="ytPrevious()" title="Previous">
                     <i class="fas fa-step-backward"></i>
@@ -475,7 +445,7 @@
                 <button class="video-btn" onclick="ytNext()" title="Next">
                     <i class="fas fa-step-forward"></i>
                 </button>
-                <button class="video-btn" onclick="ytShuffle()" id="shuffleBtn" title="Shuffle">
+                <button class="video-btn" onclick="ytShuffle()" id="shuffleBtnCtrl" title="Shuffle Playlist">
                     <i class="fas fa-random"></i>
                 </button>
             </div>
@@ -533,14 +503,20 @@
 
     <!-- YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <script>
         // ============================================
-        // CONFIG
+        // HARDCODED PLAYLISTS
         // ============================================
+        
+        const PLAYLISTS = [
+            { id: 'PLK1NiZBn99vQ2xsTJ5SIzqK-TfHs9s0He', name: '0Tempwork' },
+            { id: 'PLK1NiZBn99vRFjnjGvtFkydnVh5vq39V6', name: 'AOA' },
+            { id: 'PLK1NiZBn99vRvPpps7r9wMB0KLUacyRKT', name: 'Media Panel' },
+            { id: 'PLK1NiZBn99vSEy6wYQ3XMYy1RE687kHyH', name: 'Big Screen' },
+            { id: 'PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC', name: 'Performance' },
+            { id: 'PLIpRvnEkgEeU15yy2o_5gKQjr79KP8O2O', name: 'HoyTV News' }
+        ];
         
         const DEFAULT_NEWS1 = [
             { name: '明報', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
@@ -552,12 +528,13 @@
             { name: 'RNZ', url: 'https://www.rnz.co.nz/rss/chinese.xml' }
         ];
         
+        // ============================================
+        // CONFIG
+        // ============================================
+        
         const config = {
-            ytPlaylist: '',
-            calendarWebAppUrl: '',
-            calendarToken: '',
-            googleApiKey: 'AIzaSyAOYUwZPQnzlpwwkV1UHpt6OYjr6GvS_H0',
-            googleClientId: '961729102221-0ciqdfqbdifspdkugk7jmp9a33r2efm3.apps.googleusercontent.com',
+            currentPlaylist: '',
+            playOrder: 'shuffle', // 'shuffle' or 'newest'
             news1Feeds: [...DEFAULT_NEWS1],
             news2Feeds: [...DEFAULT_NEWS2],
             
@@ -574,8 +551,7 @@
 
         // YouTube Player
         let ytPlayer = null;
-        let isShuffled = true;
-        let accessToken = null;
+        let ytPlayerReady = false;
 
         // ============================================
         // UTILITIES
@@ -626,11 +602,8 @@
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    config.ytPlaylist = data.ytPlaylist || '';
-                    config.calendarWebAppUrl = data.calendarWebAppUrl || '';
-                    config.calendarToken = data.calendarToken || '';
-                    config.googleApiKey = data.googleApiKey || '';
-                    config.googleClientId = data.googleClientId || '';
+                    config.currentPlaylist = data.currentPlaylist || '';
+                    config.playOrder = data.playOrder || 'shuffle';
                     config.news1Feeds = data.news1Feeds && data.news1Feeds.length ? data.news1Feeds : [...DEFAULT_NEWS1];
                     config.news2Feeds = data.news2Feeds && data.news2Feeds.length ? data.news2Feeds : [...DEFAULT_NEWS2];
                 } catch (e) {
@@ -638,21 +611,32 @@
                 }
             }
             
-            document.getElementById('ytPlaylist').value = config.ytPlaylist;
-            document.getElementById('calendarWebAppUrl').value = config.calendarWebAppUrl;
-            document.getElementById('calendarToken').value = config.calendarToken;
-            document.getElementById('googleApiKey').value = config.googleApiKey;
-            document.getElementById('googleClientId').value = config.googleClientId;
+            // Populate settings UI
+            populatePlaylistDropdowns();
+            document.getElementById('settingsPlayOrder').value = config.playOrder;
             document.getElementById('news1Feeds').value = feedsToText(config.news1Feeds);
             document.getElementById('news2Feeds').value = feedsToText(config.news2Feeds);
+            
+            // Update video dropdown and order button
+            document.getElementById('playlistDropdown').value = config.currentPlaylist;
+            updateOrderButton();
+        }
+        
+        function populatePlaylistDropdowns() {
+            const settingsSelect = document.getElementById('settingsPlaylistSelect');
+            settingsSelect.innerHTML = '<option value="">-- Select a playlist --</option>';
+            PLAYLISTS.forEach(pl => {
+                settingsSelect.innerHTML += `<option value="${pl.id}" ${pl.id === config.currentPlaylist ? 'selected' : ''}>${pl.name}</option>`;
+            });
         }
         
         function saveSettings() {
-            config.ytPlaylist = document.getElementById('ytPlaylist').value.trim();
-            config.calendarWebAppUrl = document.getElementById('calendarWebAppUrl').value.trim();
-            config.calendarToken = document.getElementById('calendarToken').value.trim();
-            config.googleApiKey = document.getElementById('googleApiKey').value.trim();
-            config.googleClientId = document.getElementById('googleClientId').value.trim();
+            // Get playlist from settings (prefer dropdown, fallback to custom)
+            const selectedPlaylist = document.getElementById('settingsPlaylistSelect').value;
+            const customPlaylist = document.getElementById('customPlaylist').value.trim();
+            config.currentPlaylist = selectedPlaylist || extractPlaylistId(customPlaylist) || '';
+            
+            config.playOrder = document.getElementById('settingsPlayOrder').value;
             
             const news1Text = document.getElementById('news1Feeds').value;
             const news2Text = document.getElementById('news2Feeds').value;
@@ -663,11 +647,8 @@
             if (!config.news2Feeds.length) config.news2Feeds = [...DEFAULT_NEWS2];
             
             localStorage.setItem('v6BigScreenConfig', JSON.stringify({
-                ytPlaylist: config.ytPlaylist,
-                calendarWebAppUrl: config.calendarWebAppUrl,
-                calendarToken: config.calendarToken,
-                googleApiKey: config.googleApiKey,
-                googleClientId: config.googleClientId,
+                currentPlaylist: config.currentPlaylist,
+                playOrder: config.playOrder,
                 news1Feeds: config.news1Feeds,
                 news2Feeds: config.news2Feeds
             }));
@@ -684,115 +665,69 @@
         }
 
         // ============================================
-        // GOOGLE AUTH & PLAYLIST BROWSING
+        // PLAYLIST CONTROLS
         // ============================================
         
-        let tokenClient = null;
-        
-        function initGoogleAuth() {
-            if (!config.googleClientId) return;
+        function changePlaylist() {
+            const dropdown = document.getElementById('playlistDropdown');
+            config.currentPlaylist = dropdown.value;
             
-            try {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: config.googleClientId,
-                    scope: 'https://www.googleapis.com/auth/youtube.readonly',
-                    callback: (response) => {
-                        if (response.access_token) {
-                            accessToken = response.access_token;
-                            onSignedIn();
-                        }
-                    },
-                });
-            } catch (e) {
-                console.log('Google auth not available:', e);
+            // Save to localStorage
+            localStorage.setItem('v6BigScreenConfig', JSON.stringify({
+                currentPlaylist: config.currentPlaylist,
+                playOrder: config.playOrder,
+                news1Feeds: config.news1Feeds,
+                news2Feeds: config.news2Feeds
+            }));
+            
+            // Load new playlist
+            if (config.currentPlaylist) {
+                loadPlaylist(config.currentPlaylist);
             }
         }
         
-        function handleGoogleAuth() {
-            if (!config.googleClientId || !config.googleApiKey) {
-                alert('Please enter Google API Key and Client ID in settings first.\n\nYou can get these from Google Cloud Console.');
-                return;
-            }
+        function togglePlayOrder() {
+            config.playOrder = config.playOrder === 'shuffle' ? 'newest' : 'shuffle';
+            updateOrderButton();
             
-            if (accessToken) {
-                // Sign out
-                accessToken = null;
-                google.accounts.oauth2.revoke(accessToken);
-                document.getElementById('googleBtnText').textContent = 'Sign in with Google';
-                document.getElementById('googleSignInBtn').classList.remove('signed-in');
-                document.getElementById('playlistBrowser').style.display = 'none';
+            // Save to localStorage
+            localStorage.setItem('v6BigScreenConfig', JSON.stringify({
+                currentPlaylist: config.currentPlaylist,
+                playOrder: config.playOrder,
+                news1Feeds: config.news1Feeds,
+                news2Feeds: config.news2Feeds
+            }));
+            
+            // Reload playlist with new order
+            if (config.currentPlaylist && ytPlayer) {
+                loadPlaylist(config.currentPlaylist);
+            }
+        }
+        
+        function updateOrderButton() {
+            const btn = document.getElementById('shuffleToggle');
+            if (config.playOrder === 'shuffle') {
+                btn.innerHTML = '🔀 Shuffle';
+                btn.classList.add('active');
             } else {
-                // Sign in
-                if (tokenClient) {
-                    tokenClient.requestAccessToken();
-                } else {
-                    initGoogleAuth();
-                    setTimeout(() => {
-                        if (tokenClient) tokenClient.requestAccessToken();
-                    }, 500);
-                }
+                btn.innerHTML = '📅 Newest';
+                btn.classList.remove('active');
             }
-        }
-        
-        function onSignedIn() {
-            document.getElementById('googleBtnText').textContent = 'Signed in ✓ (click to sign out)';
-            document.getElementById('googleSignInBtn').classList.add('signed-in');
-            document.getElementById('playlistBrowser').style.display = 'block';
-            fetchUserPlaylists();
-        }
-        
-        async function fetchUserPlaylists() {
-            const listEl = document.getElementById('playlistList');
-            listEl.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Loading playlists...</div>';
-            
-            try {
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&mine=true&maxResults=25&key=${config.googleApiKey}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`
-                        }
-                    }
-                );
-                
-                const data = await response.json();
-                
-                if (data.items && data.items.length) {
-                    listEl.innerHTML = data.items.map(pl => `
-                        <div class="playlist-item" onclick="selectPlaylist('${pl.id}', '${escapeHtml(pl.snippet.title)}')">
-                            <img src="${pl.snippet.thumbnails?.default?.url || ''}" alt="">
-                            <span class="title">${escapeHtml(pl.snippet.title)}</span>
-                            <span class="text-slate-500 text-xs">${pl.contentDetails.itemCount} videos</span>
-                        </div>
-                    `).join('');
-                } else {
-                    listEl.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">No playlists found</div>';
-                }
-            } catch (e) {
-                console.error('Failed to fetch playlists:', e);
-                listEl.innerHTML = '<div class="text-center py-4 text-red-400 text-xs">Failed to load playlists</div>';
-            }
-        }
-        
-        function selectPlaylist(playlistId, title) {
-            document.getElementById('ytPlaylist').value = playlistId;
-            alert(`Selected: ${title}\n\nClick "Save & Reload" to apply.`);
         }
 
         // ============================================
-        // YOUTUBE PLAYER (IFrame API)
+        // YOUTUBE PLAYER
         // ============================================
         
         function onYouTubeIframeAPIReady() {
-            // Will be called when API is ready
-            if (config.ytPlaylist) {
+            ytPlayerReady = true;
+            if (config.currentPlaylist) {
                 initYouTubePlayer();
             }
         }
         
         function initYouTubePlayer() {
-            const playlistId = extractPlaylistId(config.ytPlaylist);
-            if (!playlistId) return;
+            if (!config.currentPlaylist) return;
             
             document.getElementById('noVideoPlaceholder').style.display = 'none';
             document.getElementById('ytPlayerContainer').style.display = 'block';
@@ -803,7 +738,7 @@
                 width: '100%',
                 playerVars: {
                     listType: 'playlist',
-                    list: playlistId,
+                    list: config.currentPlaylist,
                     autoplay: 1,
                     controls: 1,
                     rel: 0,
@@ -816,19 +751,50 @@
             });
         }
         
-        function onPlayerReady(event) {
-            // Shuffle the playlist by default
-            if (ytPlayer && ytPlayer.setShuffle) {
-                ytPlayer.setShuffle(true);
-                isShuffled = true;
-                updateShuffleBtn();
+        function loadPlaylist(playlistId) {
+            if (!ytPlayer || !ytPlayer.loadPlaylist) {
+                // Player not ready, init it
+                config.currentPlaylist = playlistId;
+                if (ytPlayerReady) {
+                    initYouTubePlayer();
+                }
+                return;
             }
-            // Play
+            
+            document.getElementById('noVideoPlaceholder').style.display = 'none';
+            document.getElementById('ytPlayerContainer').style.display = 'block';
+            document.getElementById('videoControls').style.display = 'flex';
+            
+            // Load playlist
+            // Note: YouTube API doesn't support "newest first" directly
+            // shuffle=true will shuffle, shuffle=false plays in playlist order
+            ytPlayer.loadPlaylist({
+                list: playlistId,
+                listType: 'playlist',
+                index: 0
+            });
+            
+            // Apply shuffle after a short delay
+            setTimeout(() => {
+                if (config.playOrder === 'shuffle') {
+                    ytPlayer.setShuffle(true);
+                } else {
+                    ytPlayer.setShuffle(false);
+                }
+            }, 1000);
+        }
+        
+        function onPlayerReady(event) {
+            // Apply play order
+            if (config.playOrder === 'shuffle') {
+                ytPlayer.setShuffle(true);
+            } else {
+                ytPlayer.setShuffle(false);
+            }
             event.target.playVideo();
         }
         
         function onPlayerStateChange(event) {
-            // Update play/pause button
             const btn = document.getElementById('playPauseBtn');
             if (event.data === YT.PlayerState.PLAYING) {
                 btn.innerHTML = '<i class="fas fa-pause"></i>';
@@ -861,18 +827,18 @@
         
         function ytShuffle() {
             if (!ytPlayer || !ytPlayer.setShuffle) return;
-            isShuffled = !isShuffled;
-            ytPlayer.setShuffle(isShuffled);
-            updateShuffleBtn();
-        }
-        
-        function updateShuffleBtn() {
-            const btn = document.getElementById('shuffleBtn');
-            if (isShuffled) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+            // Toggle shuffle
+            config.playOrder = config.playOrder === 'shuffle' ? 'newest' : 'shuffle';
+            ytPlayer.setShuffle(config.playOrder === 'shuffle');
+            updateOrderButton();
+            
+            // Save
+            localStorage.setItem('v6BigScreenConfig', JSON.stringify({
+                currentPlaylist: config.currentPlaylist,
+                playOrder: config.playOrder,
+                news1Feeds: config.news1Feeds,
+                news2Feeds: config.news2Feeds
+            }));
         }
 
         // ============================================
@@ -1031,14 +997,9 @@
             loadSettings();
             updateClock();
             
-            // Init YouTube if playlist is set (API will call onYouTubeIframeAPIReady)
-            if (config.ytPlaylist && typeof YT !== 'undefined' && YT.Player) {
+            // Init YouTube if playlist is set and API ready
+            if (config.currentPlaylist && typeof YT !== 'undefined' && YT.Player) {
                 initYouTubePlayer();
-            }
-            
-            // Init Google Auth if credentials are set
-            if (config.googleClientId && typeof google !== 'undefined') {
-                initGoogleAuth();
             }
             
             fetchWeather();
