@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v6.0 Beta (Big Screen) - Playlists</title>
+    <title>Display Panel - v6.0 Beta (Big Screen Auto-Play)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -261,7 +261,7 @@
             font-size: 0.8rem;
         }
         .ticker-item::before {
-            content: '•';
+            content: 'â€¢';
             color: #3b82f6;
             margin-right: 0.4rem;
         }
@@ -355,18 +355,18 @@
     <!-- Settings Panel -->
     <div id="settingsPanel" class="settings-panel custom-scrollbar">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-bold">⚙️ Settings</h2>
+            <h2 class="text-lg font-bold">âš™ï¸ Settings</h2>
             <button onclick="toggleSettings()" class="text-slate-400 hover:text-white text-xl">&times;</button>
         </div>
         
         <div class="p-2 bg-blue-900/30 border border-blue-500/30 rounded-lg mb-4">
-            <div class="font-semibold text-blue-300 text-sm">V6 Beta - Big Screen Mode</div>
-            <div class="text-xs text-slate-400">Large video + compact sidebar</div>
+            <div class="font-semibold text-blue-300 text-sm">V6 Beta - Big Screen Auto-Play</div>
+            <div class="text-xs text-slate-400">Auto-loads "Big Screen" playlist in shuffle mode</div>
         </div>
         
         <!-- Playlist Settings -->
         <div class="settings-section">
-            <h3>📺 YouTube Playlist</h3>
+            <h3>ðŸ“º YouTube Playlist</h3>
             <label>Select Playlist</label>
             <select id="settingsPlaylistSelect" class="mb-2">
                 <option value="">-- Select a playlist --</option>
@@ -377,20 +377,20 @@
             
             <label class="mt-3">Playback Order</label>
             <select id="settingsPlayOrder">
-                <option value="shuffle">🔀 Shuffle (Random)</option>
-                <option value="newest">📅 Newest First (by date)</option>
+                <option value="shuffle">ðŸ”€ Shuffle (Random)</option>
+                <option value="newest">ðŸ“… Newest First (by date)</option>
             </select>
         </div>
         
         <!-- News Feed Settings -->
         <div class="settings-section">
-            <h3>📰 Chinese News (Line 1)</h3>
+            <h3>ðŸ“° Chinese News (Line 1)</h3>
             <label>RSS Feeds (Name|URL per line)</label>
-            <textarea id="news1Feeds" placeholder="明報|https://news.mingpao.com/rss/ins/s00005.xml"></textarea>
+            <textarea id="news1Feeds" placeholder="æ˜Žå ±|https://news.mingpao.com/rss/ins/s00005.xml"></textarea>
         </div>
         
         <div class="settings-section">
-            <h3>🌍 International News (Line 2)</h3>
+            <h3>ðŸŒ International News (Line 2)</h3>
             <label>RSS Feeds (Name|URL per line)</label>
             <textarea id="news2Feeds" placeholder="BBC|https://feeds.bbci.co.uk/news/rss.xml"></textarea>
         </div>
@@ -422,7 +422,7 @@
                     <option value="PL37_7-RvAesjrBipCCGSHM-ZnWxfVA-vZ">No NonSense Gospel</option>
                 </select>
                 <button class="order-btn" id="shuffleToggle" onclick="togglePlayOrder()" title="Toggle Shuffle/Date Order">
-                    🔀 Shuffle
+                    ðŸ”€ Shuffle
                 </button>
             </div>
             
@@ -479,7 +479,7 @@
         <!-- News Line 1 -->
         <div class="news-row glass">
             <div class="ticker">
-                <span class="ticker-label">中文</span>
+                <span class="ticker-label">ä¸­æ–‡</span>
                 <div class="ticker-scroll">
                     <div class="ticker-content" id="news1Content">
                         <span class="ticker-item">Loading news...</span>
@@ -521,7 +521,7 @@
         ];
         
         const DEFAULT_NEWS1 = [
-            { name: '明報', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
+            { name: 'æ˜Žå ±', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
             { name: 'RTHK', url: 'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' }
         ];
         
@@ -535,7 +535,7 @@
         // ============================================
         
         const config = {
-            currentPlaylist: '',
+            currentPlaylist: 'PLK1NiZBn99vSEy6wYQ3XMYy1RE687kHyH', // Auto-load Big Screen playlist
             playOrder: 'shuffle', // 'shuffle' or 'newest'
             news1Feeds: [...DEFAULT_NEWS1],
             news2Feeds: [...DEFAULT_NEWS2],
@@ -543,7 +543,7 @@
             weatherLocations: [
                 { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
                 { label: 'Botany', lat: -36.9167, lon: 174.9110 },
-                { label: '香港', lat: 22.3193, lon: 114.1694 }
+                { label: 'é¦™æ¸¯', lat: 22.3193, lon: 114.1694 }
             ],
             currencies: [
                 { pair: 'NZD-USD', alert: 0.55, below: true },
@@ -709,10 +709,10 @@
         function updateOrderButton() {
             const btn = document.getElementById('shuffleToggle');
             if (config.playOrder === 'shuffle') {
-                btn.innerHTML = '🔀 Shuffle';
+                btn.innerHTML = 'ðŸ”€ Shuffle';
                 btn.classList.add('active');
             } else {
-                btn.innerHTML = '📅 Newest';
+                btn.innerHTML = 'ðŸ“… Newest';
                 btn.classList.remove('active');
             }
         }
@@ -884,14 +884,14 @@
                     const uv = data.hourly?.uv_index?.[uvIdx] || 0;
                     const rainTmr = data.daily?.precipitation_sum?.[1] || 0;
                     
-                    const isHK = loc.label.includes('香港');
-                    const details = isHK ? '' : `<div class="details">UV ${uv.toFixed(1)} · 明雨 ${rainTmr.toFixed(1)}mm</div>`;
+                    const isHK = loc.label.includes('é¦™æ¸¯');
+                    const details = isHK ? '' : `<div class="details">UV ${uv.toFixed(1)} Â· æ˜Žé›¨ ${rainTmr.toFixed(1)}mm</div>`;
                     
                     html += `
                         <div class="weather-item">
                             <div class="flex justify-between items-center">
                                 <span class="location">${loc.label}</span>
-                                <span class="temp">${temp}°</span>
+                                <span class="temp">${temp}Â°</span>
                             </div>
                             <div class="desc">${desc}</div>
                             ${details}
