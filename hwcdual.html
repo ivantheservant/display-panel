@@ -87,12 +87,15 @@
             position: relative;
             border-radius: 0 0 0.75rem 0.75rem;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         /* RIGHT Video - TRUE 16:9 */
         .secondary-video {
             width: 100%;
-            height: 100%;
+            aspect-ratio: 16 / 9;
             background: #000;
             position: relative;
         }
@@ -183,13 +186,13 @@
             flex: 1;
         }
         
-        /* QR Code - Overlays right side of news section (~20% width) */
+        /* QR Code - Overlays right side of news section (~15% width) */
         .qr-overlay {
             position: absolute;
             top: 0;
             right: 0;
             bottom: 0;
-            width: 20%;
+            width: 15%;
             border-radius: 0.6rem;
             padding: 1rem 0.5rem;
             text-align: center;
@@ -200,8 +203,8 @@
             z-index: 5;
         }
         .qr-code {
-            width: 80px;
-            height: 160px;
+            width: 120px;
+            height: 120px;
             margin: 0 auto 0.5rem;
             background: white;
             padding: 0.3rem;
@@ -213,13 +216,13 @@
             display: block;
         }
         .qr-label {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 600;
             color: #cbd5e1;
             margin-top: 0.3rem;
         }
         .qr-channel {
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             color: #94a3b8;
             margin-top: 0.15rem;
         }
@@ -332,10 +335,10 @@
         <!-- News Section (Rows 7-10, Full Width) with QR Overlay -->
         <div class="news-section">
             
-            <!-- QR Code Overlay (Right side, ~20% width) -->
+            <!-- QR Code Overlay (Right side, ~15% width, square) -->
             <div class="qr-overlay glass">
                 <div class="qr-code">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x160&data=https://www.youtube.com/@nononsensegospel" alt="QR">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://www.youtube.com/@nononsensegospel" alt="QR">
                 </div>
                 <div class="qr-label">Scan to Subscribe</div>
                 <div class="qr-channel">No NonSense Gospel</div>
@@ -401,6 +404,10 @@
             left: {
                 playlistId: 'PL37_7-RvAesj5-VrdlB4dkU8HxQZUJdkk',  // HoyTV News
                 autoplay: true
+                // NOTE: YouTube playlists play from first to last by default
+                // If playlist is ordered oldest-to-newest, videos play in that order
+                // If playlist is ordered newest-to-oldest, latest video plays first
+                // Check your YouTube playlist settings: "Date added (newest)" for latest first
             },
             right: {
                 playlists: {
@@ -496,8 +503,20 @@
         function onYouTubeIframeAPIReady() {
             leftPlayer = new YT.Player('leftPlayerContainer', {
                 height: '100%', width: '100%',
-                playerVars: { listType: 'playlist', list: VIDEO_CONFIG.left.playlistId, autoplay: 1, loop: 1, controls: 1, rel: 0, modestbranding: 1 },
-                events: { onReady: (e) => onPlayerReady(e, 'left'), onStateChange: (e) => onPlayerStateChange(e, 'left') }
+                playerVars: { 
+                    listType: 'playlist', 
+                    list: VIDEO_CONFIG.left.playlistId, 
+                    autoplay: 1, 
+                    loop: 1, 
+                    controls: 1, 
+                    rel: 0, 
+                    modestbranding: 1,
+                    playsinline: 1
+                },
+                events: { 
+                    onReady: (e) => onPlayerReady(e, 'left'), 
+                    onStateChange: (e) => onPlayerStateChange(e, 'left') 
+                }
             });
             
             const rightSchedule = getScheduledPlaylist();
@@ -505,15 +524,31 @@
             
             rightPlayer = new YT.Player('rightPlayerContainer', {
                 height: '100%', width: '100%',
-                playerVars: { listType: 'playlist', list: rightSchedule.id, autoplay: 0, loop: 1, controls: 1, rel: 0, modestbranding: 1 },
-                events: { onReady: (e) => onPlayerReady(e, 'right'), onStateChange: (e) => onPlayerStateChange(e, 'right') }
+                playerVars: { 
+                    listType: 'playlist', 
+                    list: rightSchedule.id, 
+                    autoplay: 0, 
+                    loop: 1, 
+                    controls: 1, 
+                    rel: 0, 
+                    modestbranding: 1,
+                    playsinline: 1
+                },
+                events: { 
+                    onReady: (e) => onPlayerReady(e, 'right'), 
+                    onStateChange: (e) => onPlayerStateChange(e, 'right') 
+                }
             });
             
             updateScheduleInfo();
         }
         
         function onPlayerReady(event, playerType) {
-            event.target.setShuffle(true);
+            // Only shuffle RIGHT video (sermon playlists), not LEFT (news)
+            if (playerType === 'right') {
+                event.target.setShuffle(true);
+            }
+            
             if ((playerType === 'left' && VIDEO_CONFIG.left.autoplay) || (playerType === 'right' && VIDEO_CONFIG.right.autoplay)) {
                 setTimeout(() => event.target.playVideo(), 1500);
             }
