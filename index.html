@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v6.0 Beta (Big Screen Auto-Play)</title>
+    <title>Display Panel - v6.0 Beta (Big Screen Auto-Shuffle)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -360,8 +360,8 @@
         </div>
         
         <div class="p-2 bg-blue-900/30 border border-blue-500/30 rounded-lg mb-4">
-            <div class="font-semibold text-blue-300 text-sm">V6 Beta - Big Screen Auto-Play</div>
-            <div class="text-xs text-slate-400">Auto-loads "Big Screen" playlist in shuffle mode</div>
+            <div class="font-semibold text-blue-300 text-sm">V6 Beta - Big Screen Auto-Shuffle</div>
+            <div class="text-xs text-slate-400">Auto-loads "Big Screen" in TRUE shuffle mode (1.5s delay)</div>
         </div>
         
         <!-- Playlist Settings -->
@@ -790,10 +790,14 @@
             // Apply play order
             if (config.playOrder === 'shuffle') {
                 ytPlayer.setShuffle(true);
+                // Wait for shuffle to take effect before playing
+                setTimeout(() => {
+                    event.target.playVideo();
+                }, 1500);
             } else {
                 ytPlayer.setShuffle(false);
+                event.target.playVideo();
             }
-            event.target.playVideo();
         }
         
         function onPlayerStateChange(event) {
