@@ -893,13 +893,13 @@
                     const rainTmr = data.daily?.precipitation_sum?.[1] || 0;
                     
                     const isHK = loc.label.includes('é¦™æ¸¯');
-                    const details = isHK ? '' : `<div class="details">UV ${uv.toFixed(1)} Â· æ˜Žé›¨ ${rainTmr.toFixed(1)}mm</div>`;
+                    const details = isHK ? '' : `<div class="details">UV ${uv.toFixed(1)} &middot; æ˜Žé›¨ ${rainTmr.toFixed(1)}mm</div>`;
                     
                     html += `
                         <div class="weather-item">
                             <div class="flex justify-between items-center">
                                 <span class="location">${loc.label}</span>
-                                <span class="temp">${temp}Â°</span>
+                                <span class="temp">${temp}&deg;</span>
                             </div>
                             <div class="desc">${desc}</div>
                             ${details}
