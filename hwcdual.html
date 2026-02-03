@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holy Word Channel - Dual Display</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            color: #f8fafc; 
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; 
+            overflow: hidden;
+            margin: 0; 
+            padding: 0;
+            height: 100vh;
+        }
+        
+        .glass { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            height: 100vh;
+            padding: 0.5rem;
+            gap: 0.5rem;
+            grid-template-columns: 1fr 420px;
+            grid-template-rows: auto auto auto auto auto auto auto auto auto auto;
+        }
+        
+        /* LEFT Video - TRUE 16:9 (HoyTV News) */
+        .main-video {
+            grid-column: 1;
+            grid-row: 1 / 7;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+            aspect-ratio: 16 / 9;
+            align-self: center;
+        }
+        
+        .main-video iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Clock + Right Video Container (no gap) */
+        .right-column-container {
+            grid-column: 2;
+            grid-row: 1 / 7;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        /* Clock (Top - no bottom margin) */
+        .clock-panel {
+            border-radius: 0.6rem 0.6rem 0 0;
+            padding: 0.6rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .clock-panel .time {
+            font-size: 3rem;
+            font-weight: bold;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+        .clock-panel .date {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 0.3rem;
+        }
+        
+        /* RIGHT Video Container - Sticks to clock */
+        .secondary-video-wrapper {
+            flex: 1;
+            position: relative;
+            border-radius: 0 0 0.75rem 0.75rem;
+            overflow: hidden;
+        }
+        
+        /* RIGHT Video - TRUE 16:9 */
+        .secondary-video {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            position: relative;
+        }
+        
+        .secondary-video iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .secondary-video iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Video Controls */
+        .video-controls {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.3rem;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .main-video:hover .video-controls,
+        .secondary-video:hover .video-controls {
+            opacity: 1;
+        }
+        .video-btn {
+            padding: 0.4rem 0.6rem;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.3rem;
+            color: white;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        .video-btn:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+        
+        /* Schedule Info (RIGHT video only) */
+        .schedule-info {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            z-index: 10;
+            padding: 0.4rem 0.6rem;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.3rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .secondary-video:hover .schedule-info {
+            opacity: 1;
+        }
+        .schedule-info .current-mode {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+        .schedule-info .next-change {
+            font-size: 0.55rem;
+            color: #94a3b8;
+            margin-top: 0.1rem;
+        }
+        
+        /* News Section Container (rows 7-10, full width) */
+        .news-section {
+            grid-column: 1 / -1;
+            grid-row: 7 / 11;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        /* Individual News Rows */
+        .news-row {
+            border-radius: 0.4rem;
+            overflow: hidden;
+            height: 2.8rem;
+            flex: 1;
+        }
+        
+        /* QR Code - Overlays right side of news section (~20% width) */
+        .qr-overlay {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 20%;
+            border-radius: 0.6rem;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+        .qr-code {
+            width: 80px;
+            height: 160px;
+            margin: 0 auto 0.5rem;
+            background: white;
+            padding: 0.3rem;
+            border-radius: 0.5rem;
+        }
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .qr-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-top: 0.3rem;
+        }
+        .qr-channel {
+            font-size: 0.55rem;
+            color: #94a3b8;
+            margin-top: 0.15rem;
+        }
+        
+        /* Ticker Styles */
+        .ticker {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.6);
+            display: flex;
+            align-items: center;
+        }
+        .ticker-label {
+            flex-shrink: 0;
+            padding: 0.3rem 0.7rem;
+            margin-left: 0.5rem;
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 0.3rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #93c5fd;
+        }
+        .ticker-label.church { background: rgba(139, 92, 246, 0.3); color: #c4b5fd; }
+        .ticker-label.weather { background: rgba(34, 197, 94, 0.3); color: #86efac; }
+        
+        .ticker-scroll {
+            flex: 1;
+            overflow: hidden;
+            margin-left: 0.7rem;
+        }
+        .ticker-content {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            animation: scroll-left 120s linear infinite;
+        }
+        .news-row:nth-child(1) .ticker-content { animation-duration: 120s; }
+        .news-row:nth-child(2) .ticker-content { animation-duration: 100s; }
+        .news-row:nth-child(3) .ticker-content { animation-duration: 110s; }
+        .news-row:nth-child(4) .ticker-content { animation-duration: 90s; }
+        
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        .ticker-item {
+            display: inline-block;
+            margin-right: 3rem;
+            font-size: 1.3rem;
+        }
+        .ticker-item::before {
+            content: '•';
+            color: #3b82f6;
+            margin-right: 0.5rem;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 12px; height: 12px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <!-- LEFT Video - HoyTV News (Large, 16:9, Rows 1-6) -->
+        <div class="main-video glass">
+            <div id="leftPlayerContainer" style="width:100%; height:100%;"></div>
+            <div class="video-controls">
+                <button class="video-btn" onclick="leftPrevious()"><i class="fas fa-step-backward"></i></button>
+                <button class="video-btn" onclick="leftPlayPause()" id="leftPlayPauseBtn"><i class="fas fa-pause"></i></button>
+                <button class="video-btn" onclick="leftNext()"><i class="fas fa-step-forward"></i></button>
+            </div>
+        </div>
+        
+        <!-- Clock + Right Video (Stick Together, No Gap) -->
+        <div class="right-column-container">
+            
+            <!-- Clock (Top) -->
+            <div class="clock-panel glass">
+                <div class="time" id="digitalClock">00:00</div>
+                <div class="date" id="dateStr">Loading...</div>
+            </div>
+            
+            <!-- RIGHT Video - Sticks to Clock Bottom -->
+            <div class="secondary-video-wrapper glass">
+                <div class="secondary-video">
+                    <div id="rightPlayerContainer" style="width:100%; height:100%;"></div>
+                    <div class="schedule-info">
+                        <div class="current-mode" id="currentMode">Loading...</div>
+                        <div class="next-change" id="nextChange"></div>
+                    </div>
+                    <div class="video-controls">
+                        <button class="video-btn" onclick="rightPrevious()"><i class="fas fa-step-backward"></i></button>
+                        <button class="video-btn" onclick="rightPlayPause()" id="rightPlayPauseBtn"><i class="fas fa-pause"></i></button>
+                        <button class="video-btn" onclick="rightNext()"><i class="fas fa-step-forward"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- News Section (Rows 7-10, Full Width) with QR Overlay -->
+        <div class="news-section">
+            
+            <!-- QR Code Overlay (Right side, ~20% width) -->
+            <div class="qr-overlay glass">
+                <div class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x160&data=https://www.youtube.com/@nononsensegospel" alt="QR">
+                </div>
+                <div class="qr-label">Scan to Subscribe</div>
+                <div class="qr-channel">No NonSense Gospel</div>
+            </div>
+            
+            <!-- Church News -->
+            <div class="news-row glass">
+                <div class="ticker">
+                    <span class="ticker-label church">CHURCH</span>
+                    <div class="ticker-scroll">
+                        <div class="ticker-content" id="churchNewsContent">
+                            <span class="ticker-item">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weather News -->
+            <div class="news-row glass">
+                <div class="ticker">
+                    <span class="ticker-label weather">WEATHER</span>
+                    <div class="ticker-scroll">
+                        <div class="ticker-content" id="weatherContent">
+                            <span class="ticker-item">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chinese News -->
+            <div class="news-row glass">
+                <div class="ticker">
+                    <span class="ticker-label">中文</span>
+                    <div class="ticker-scroll">
+                        <div class="ticker-content" id="chineseNewsContent">
+                            <span class="ticker-item">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- International News -->
+            <div class="news-row glass">
+                <div class="ticker">
+                    <span class="ticker-label">INTL</span>
+                    <div class="ticker-scroll">
+                        <div class="ticker-content" id="intlNewsContent">
+                            <span class="ticker-item">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        // ============ CONFIG - EASY SWAP ============
+        
+        const VIDEO_CONFIG = {
+            left: {
+                playlistId: 'PL37_7-RvAesj5-VrdlB4dkU8HxQZUJdkk',  // HoyTV News
+                autoplay: true
+            },
+            right: {
+                playlists: {
+                    master: 'PL37_7-RvAesgsTr4HjLGXg44UBEWpx7gc',
+                    english: 'PL37_7-RvAesgJ0E_Wv9rq5LYInMpNQu0_',
+                    mandarin: 'PL37_7-RvAeshmEFAfH1T8jA-Lp3kGzfJx',
+                    cantonese: 'PL37_7-RvAesjrBipCCGSHM-ZnWxfVA-vZ'
+                },
+                useScheduling: true,
+                autoplay: false
+            }
+        };
+        
+        const NEWS_FEEDS = {
+            church: [{ name: 'Church', url: 'https://feeds.feedburner.com/christianpost/news' }],
+            chinese: [
+                { name: '明報', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
+                { name: 'RTHK', url: 'https://rthk9.rthk.hk/rthk/news/rss/c_expressnews_clocal.xml' }
+            ],
+            intl: [
+                { name: 'BBC', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+                { name: 'RNZ', url: 'https://www.rnz.co.nz/rss/chinese.xml' }
+            ]
+        };
+        
+        const WEATHER_LOCATIONS = [
+            { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
+            { label: 'Botany', lat: -36.9167, lon: 174.9110 },
+            { label: 'Hong Kong', lat: 22.3193, lon: 114.1694 }
+        ];
+
+        let leftPlayer = null;
+        let rightPlayer = null;
+        let lastRightPlaylistId = null;
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============ SCHEDULING (RIGHT video) ============
+        
+        function getScheduledPlaylist() {
+            if (!VIDEO_CONFIG.right.useScheduling) {
+                return { id: VIDEO_CONFIG.right.playlists.master, language: 'All', next: 'No Schedule' };
+            }
+            
+            const now = new Date();
+            const day = now.getDay();
+            const minutes = now.getHours() * 60 + now.getMinutes();
+            
+            if (day >= 1 && day <= 5) {
+                return { id: VIDEO_CONFIG.right.playlists.master, language: 'All Languages', next: 'Sat 12AM' };
+            }
+            
+            if (day === 6) {
+                if (minutes < 720) return { id: VIDEO_CONFIG.right.playlists.mandarin, language: 'Mandarin 華語', next: '12PM→Cantonese' };
+                if (minutes < 1080) return { id: VIDEO_CONFIG.right.playlists.cantonese, language: 'Cantonese 廣東話', next: '6PM→English' };
+                return { id: VIDEO_CONFIG.right.playlists.english, language: 'English', next: 'Sun 9AM' };
+            }
+            
+            if (day === 0) {
+                if (minutes < 540) return { id: VIDEO_CONFIG.right.playlists.english, language: 'English', next: '9AM→Cantonese' };
+                if (minutes < 810) return { id: VIDEO_CONFIG.right.playlists.cantonese, language: 'Cantonese 廣東話', next: '1:30PM→Mandarin' };
+                if (minutes < 1080) return { id: VIDEO_CONFIG.right.playlists.mandarin, language: 'Mandarin 華語', next: '6PM→Random' };
+                return { id: VIDEO_CONFIG.right.playlists.master, language: 'All Languages', next: 'Mon' };
+            }
+        }
+        
+        function updateScheduleInfo() {
+            const schedule = getScheduledPlaylist();
+            document.getElementById('currentMode').textContent = schedule.language;
+            document.getElementById('nextChange').textContent = `Next: ${schedule.next}`;
+        }
+        
+        function checkScheduleChange() {
+            if (!VIDEO_CONFIG.right.useScheduling) return;
+            const schedule = getScheduledPlaylist();
+            if (schedule.id !== lastRightPlaylistId) {
+                if (rightPlayer && rightPlayer.loadPlaylist) {
+                    rightPlayer.loadPlaylist({ listType: 'playlist', list: schedule.id, index: 0 });
+                    rightPlayer.setShuffle(true);
+                    rightPlayer.playVideo();
+                }
+                lastRightPlaylistId = schedule.id;
+            }
+            updateScheduleInfo();
+        }
+
+        // ============ YOUTUBE PLAYERS ============
+        
+        function onYouTubeIframeAPIReady() {
+            leftPlayer = new YT.Player('leftPlayerContainer', {
+                height: '100%', width: '100%',
+                playerVars: { listType: 'playlist', list: VIDEO_CONFIG.left.playlistId, autoplay: 1, loop: 1, controls: 1, rel: 0, modestbranding: 1 },
+                events: { onReady: (e) => onPlayerReady(e, 'left'), onStateChange: (e) => onPlayerStateChange(e, 'left') }
+            });
+            
+            const rightSchedule = getScheduledPlaylist();
+            lastRightPlaylistId = rightSchedule.id;
+            
+            rightPlayer = new YT.Player('rightPlayerContainer', {
+                height: '100%', width: '100%',
+                playerVars: { listType: 'playlist', list: rightSchedule.id, autoplay: 0, loop: 1, controls: 1, rel: 0, modestbranding: 1 },
+                events: { onReady: (e) => onPlayerReady(e, 'right'), onStateChange: (e) => onPlayerStateChange(e, 'right') }
+            });
+            
+            updateScheduleInfo();
+        }
+        
+        function onPlayerReady(event, playerType) {
+            event.target.setShuffle(true);
+            if ((playerType === 'left' && VIDEO_CONFIG.left.autoplay) || (playerType === 'right' && VIDEO_CONFIG.right.autoplay)) {
+                setTimeout(() => event.target.playVideo(), 1500);
+            }
+        }
+        
+        function onPlayerStateChange(event, playerType) {
+            const btnId = playerType === 'left' ? 'leftPlayPauseBtn' : 'rightPlayPauseBtn';
+            const btn = document.getElementById(btnId);
+            btn.innerHTML = event.data === YT.PlayerState.PLAYING ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        }
+        
+        function leftPlayPause() { if (!leftPlayer) return; leftPlayer.getPlayerState() === YT.PlayerState.PLAYING ? leftPlayer.pauseVideo() : leftPlayer.playVideo(); }
+        function leftNext() { if (leftPlayer && leftPlayer.nextVideo) leftPlayer.nextVideo(); }
+        function leftPrevious() { if (leftPlayer && leftPlayer.previousVideo) leftPlayer.previousVideo(); }
+        function rightPlayPause() { if (!rightPlayer) return; rightPlayer.getPlayerState() === YT.PlayerState.PLAYING ? rightPlayer.pauseVideo() : rightPlayer.playVideo(); }
+        function rightNext() { if (rightPlayer && rightPlayer.nextVideo) rightPlayer.nextVideo(); }
+        function rightPrevious() { if (rightPlayer && rightPlayer.previousVideo) rightPlayer.previousVideo(); }
+
+        // ============ CLOCK ============
+        
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digitalClock').textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('dateStr').textContent = now.toLocaleDateString('zh-HK', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' });
+        }
+
+        // ============ WEATHER (For weather news ticker) ============
+        
+        async function fetchWeather() {
+            const container = document.getElementById('weatherContent');
+            let items = [];
+            for (const loc of WEATHER_LOCATIONS) {
+                try {
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,weather_code&hourly=uv_index&daily=precipitation_sum&forecast_days=2&timezone=auto`;
+                    const resp = await fetch(url);
+                    const data = await resp.json();
+                    const temp = Math.round(data.current.temperature_2m);
+                    const desc = weatherCodeToText(data.current.weather_code);
+                    const now = new Date();
+                    const times = (data.hourly?.time || []).map(t => new Date(t));
+                    let uvIdx = 0;
+                    for (let i = 0; i < times.length; i++) { if (times[i] <= now) uvIdx = i; else break; }
+                    const uv = data.hourly?.uv_index?.[uvIdx] || 0;
+                    const rainTmr = data.daily?.precipitation_sum?.[1] || 0;
+                    items.push(`${loc.label}: ${temp}° ${desc} · UV ${uv.toFixed(1)} · Tmr ${rainTmr.toFixed(1)}mm`);
+                } catch (e) {}
+            }
+            container.innerHTML = items.length ? items.map(w => `<span class="ticker-item">${escapeHtml(w)}</span>`).join('') : '<span class="ticker-item">Weather unavailable</span>';
+        }
+        
+        function weatherCodeToText(code) {
+            const codes = { 0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Foggy',48:'Foggy',51:'Light Drizzle',53:'Drizzle',55:'Drizzle',61:'Light Rain',63:'Rain',65:'Heavy Rain',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',96:'T-Storm' };
+            return codes[code] || 'Unknown';
+        }
+
+        // ============ NEWS ============
+        
+        async function fetchNews(feeds, containerId) {
+            const container = document.getElementById(containerId);
+            if (!feeds || !feeds.length) { container.innerHTML = '<span class="ticker-item">No feeds</span>'; return; }
+            let allNews = [];
+            for (const feed of feeds) {
+                try {
+                    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`;
+                    const res = await fetch(proxyUrl);
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (data.status === 'ok' && data.items && data.items.length) {
+                        data.items.slice(0, 5).forEach(item => { if (item.title) allNews.push(`[${feed.name}] ${item.title}`); });
+                    }
+                } catch (e) {}
+            }
+            container.innerHTML = allNews.length ? allNews.map(n => `<span class="ticker-item">${escapeHtml(n)}</span>`).join('') : '<span class="ticker-item">News unavailable</span>';
+        }
+
+        // ============ INIT ============
+        
+        function init() {
+            updateClock();
+            fetchWeather();
+            fetchNews(NEWS_FEEDS.church, 'churchNewsContent');
+            fetchNews(NEWS_FEEDS.chinese, 'chineseNewsContent');
+            fetchNews(NEWS_FEEDS.intl, 'intlNewsContent');
+            setInterval(updateClock, 1000);
+            setInterval(checkScheduleChange, 60000);
+            setInterval(fetchWeather, 1800000);
+            setInterval(() => fetchNews(NEWS_FEEDS.church, 'churchNewsContent'), 1800000);
+            setInterval(() => fetchNews(NEWS_FEEDS.chinese, 'chineseNewsContent'), 1800000);
+            setInterval(() => fetchNews(NEWS_FEEDS.intl, 'intlNewsContent'), 1800000);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(e => console.log('Wake Lock:', e));
+        }
+    </script>
+</body>
+</html>
