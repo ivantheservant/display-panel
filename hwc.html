@@ -79,6 +79,33 @@
             background: rgba(59, 130, 246, 0.8);
         }
         
+        /* Schedule Info Overlay */
+        .schedule-info {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 10;
+            padding: 0.5rem 0.75rem;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.4rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .video-area:hover .schedule-info {
+            opacity: 1;
+        }
+        .schedule-info .current-mode {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+        .schedule-info .next-change {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.2rem;
+        }
+        
         .sidebar {
             grid-column: 2;
             grid-row: 1;
@@ -254,6 +281,12 @@
             <!-- YouTube Player Container -->
             <div id="ytPlayerContainer" style="width:100%; height:100%;"></div>
             
+            <!-- Schedule Info (top-left, shows on hover) -->
+            <div class="schedule-info" id="scheduleInfo">
+                <div class="current-mode" id="currentMode">Loading...</div>
+                <div class="next-change" id="nextChange"></div>
+            </div>
+            
             <!-- Video Controls (bottom-right, shows on hover) -->
             <div class="video-controls" id="videoControls">
                 <button class="video-btn" onclick="ytPrevious()" title="Previous">
@@ -331,10 +364,15 @@
 
     <script>
         // ============================================
-        // CONFIG - Master Playlist (All Sermons)
+        // HYBRID CONFIG - Random Weekdays, Scheduled Weekends
         // ============================================
         
-        const MASTER_PLAYLIST = 'PL37_7-RvAesgsTr4HjLGXg44UBEWpx7gc';
+        const PLAYLISTS = {
+            master: 'PL37_7-RvAesgsTr4HjLGXg44UBEWpx7gc',    // All sermons
+            english: 'PL37_7-RvAesgJ0E_Wv9rq5LYInMpNQu0_',   // English only
+            mandarin: 'PL37_7-RvAeshmEFAfH1T8jA-Lp3kGzfJx',  // Mandarin only
+            cantonese: 'PL37_7-RvAesjrBipCCGSHM-ZnWxfVA-vZ'  // Cantonese only
+        };
         
         const DEFAULT_NEWS1 = [
             { name: '明報', url: 'https://news.mingpao.com/rss/ins/s00005.xml' },
@@ -347,7 +385,8 @@
         ];
         
         const config = {
-            currentPlaylist: MASTER_PLAYLIST,
+            currentPlaylist: null,
+            scheduledPlaylist: null,
             news1Feeds: [...DEFAULT_NEWS1],
             news2Feeds: [...DEFAULT_NEWS2],
             
@@ -362,8 +401,98 @@
             ]
         };
 
+        // ============================================
+        // HYBRID SCHEDULING LOGIC
+        // ============================================
+        
+        function getScheduledPlaylist() {
+            const now = new Date();
+            const day = now.getDay(); // 0=Sunday, 6=Saturday
+            const hours = now.getHours();
+            const minutes = hours * 60 + now.getMinutes();
+            
+            // WEEKDAYS (Monday-Friday): Master playlist (random all sermons)
+            if (day >= 1 && day <= 5) {
+                return {
+                    id: PLAYLISTS.master,
+                    mode: 'Random All Sermons',
+                    language: 'All Languages',
+                    next: 'Saturday 12:00 AM'
+                };
+            }
+            
+            // SATURDAY SCHEDULE
+            if (day === 6) {
+                if (minutes < 720) { // Before 12:00 PM
+                    return {
+                        id: PLAYLISTS.mandarin,
+                        mode: 'Weekend Schedule',
+                        language: 'Mandarin (華語)',
+                        next: '12:00 PM → Cantonese'
+                    };
+                }
+                if (minutes < 1080) { // 12:00 PM - 6:00 PM
+                    return {
+                        id: PLAYLISTS.cantonese,
+                        mode: 'Weekend Schedule',
+                        language: 'Cantonese (廣東話)',
+                        next: '6:00 PM → English'
+                    };
+                }
+                // After 6:00 PM
+                return {
+                    id: PLAYLISTS.english,
+                    mode: 'Weekend Schedule',
+                    language: 'English',
+                    next: 'Tomorrow 9:00 AM'
+                };
+            }
+            
+            // SUNDAY SCHEDULE
+            if (day === 0) {
+                if (minutes < 540) { // Before 9:00 AM
+                    return {
+                        id: PLAYLISTS.english,
+                        mode: 'Weekend Schedule',
+                        language: 'English',
+                        next: '9:00 AM → Cantonese'
+                    };
+                }
+                if (minutes < 810) { // 9:00 AM - 1:30 PM
+                    return {
+                        id: PLAYLISTS.cantonese,
+                        mode: 'Weekend Schedule',
+                        language: 'Cantonese (廣東話)',
+                        next: '1:30 PM → Mandarin'
+                    };
+                }
+                if (minutes < 1080) { // 1:30 PM - 6:00 PM
+                    return {
+                        id: PLAYLISTS.mandarin,
+                        mode: 'Weekend Schedule',
+                        language: 'Mandarin (華語)',
+                        next: '6:00 PM → Random'
+                    };
+                }
+                // After 6:00 PM: Back to master playlist
+                return {
+                    id: PLAYLISTS.master,
+                    mode: 'Random All Sermons',
+                    language: 'All Languages',
+                    next: 'Monday'
+                };
+            }
+        }
+        
+        function updateScheduleInfo() {
+            const schedule = getScheduledPlaylist();
+            document.getElementById('currentMode').textContent = schedule.language;
+            document.getElementById('nextChange').textContent = `Next: ${schedule.next}`;
+        }
+
         // YouTube Player
         let ytPlayer = null;
+        let lastPlaylistId = null;
 
         // ============================================
         // UTILITIES
@@ -380,12 +509,17 @@
         // ============================================
         
         function onYouTubeIframeAPIReady() {
+            const schedule = getScheduledPlaylist();
+            config.currentPlaylist = schedule.id;
+            config.scheduledPlaylist = schedule;
+            lastPlaylistId = schedule.id;
+            
             ytPlayer = new YT.Player('ytPlayerContainer', {
                 height: '100%',
                 width: '100%',
                 playerVars: {
                     listType: 'playlist',
-                    list: MASTER_PLAYLIST,
+                    list: schedule.id,
                     autoplay: 1,
                     controls: 1,
                     rel: 0,
@@ -396,6 +530,8 @@
                     onStateChange: onPlayerStateChange
                 }
             });
+            
+            updateScheduleInfo();
         }
         
         function onPlayerReady(event) {
@@ -414,6 +550,33 @@
             } else {
                 btn.innerHTML = '<i class="fas fa-play"></i>';
             }
+        }
+        
+        // Check schedule every minute and switch playlists if needed
+        function checkScheduleChange() {
+            const schedule = getScheduledPlaylist();
+            
+            if (schedule.id !== lastPlaylistId) {
+                console.log(`Schedule change detected: ${lastPlaylistId} → ${schedule.id}`);
+                console.log(`New language: ${schedule.language}`);
+                
+                // Load new playlist
+                if (ytPlayer && ytPlayer.loadPlaylist) {
+                    ytPlayer.loadPlaylist({
+                        listType: 'playlist',
+                        list: schedule.id,
+                        index: 0
+                    });
+                    ytPlayer.setShuffle(true);
+                    ytPlayer.playVideo();
+                }
+                
+                lastPlaylistId = schedule.id;
+                config.currentPlaylist = schedule.id;
+                config.scheduledPlaylist = schedule;
+            }
+            
+            updateScheduleInfo();
         }
         
         function ytPlayPause() {
@@ -598,6 +761,7 @@
             fetchNews(config.news2Feeds, 'news2Content');
             
             setInterval(updateClock, 1000);
+            setInterval(checkScheduleChange, 60 * 1000); // Check schedule every minute
             setInterval(fetchWeather, 30 * 60 * 1000);
             setInterval(fetchCurrencies, 30 * 60 * 1000);
             setInterval(() => fetchNews(config.news1Feeds, 'news1Content'), 30 * 60 * 1000);
