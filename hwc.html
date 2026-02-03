@@ -137,18 +137,18 @@
         /* Clock */
         .compact-clock {
             text-align: center;
-            padding: 0.5rem;
+            padding: 0.75rem;
         }
         .compact-clock .time {
-            font-size: 2.2rem;
+            font-size: 3rem;
             font-weight: bold;
             line-height: 1;
             letter-spacing: -1px;
         }
         .compact-clock .date {
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             color: #94a3b8;
-            margin-top: 0.2rem;
+            margin-top: 0.3rem;
         }
         
         /* QR Code */
@@ -181,33 +181,14 @@
         
         /* Weather */
         .weather-item {
-            padding: 0.4rem 0;
+            padding: 0.6rem 0;
             border-bottom: 1px solid rgba(148, 163, 184, 0.12);
         }
         .weather-item:last-child { border-bottom: none; }
-        .weather-item .location { font-size: 0.75rem; font-weight: 600; color: #cbd5e1; }
-        .weather-item .temp { font-size: 1.4rem; font-weight: bold; }
-        .weather-item .desc { font-size: 0.65rem; color: #94a3b8; }
-        .weather-item .details { font-size: 0.6rem; color: #64748b; margin-top: 0.15rem; }
-        
-        /* Currency */
-        .currency-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.4rem;
-        }
-        .currency-item {
-            text-align: center;
-            padding: 0.4rem;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 0.4rem;
-        }
-        .currency-item.alert {
-            background: rgba(234, 179, 8, 0.2);
-            border: 1px solid rgba(234, 179, 8, 0.5);
-        }
-        .currency-item .pair { font-size: 0.6rem; color: #94a3b8; }
-        .currency-item .rate { font-size: 1rem; font-weight: bold; font-family: 'Courier New', monospace; }
+        .weather-item .location { font-size: 0.95rem; font-weight: 600; color: #cbd5e1; }
+        .weather-item .temp { font-size: 1.8rem; font-weight: bold; }
+        .weather-item .desc { font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem; }
+        .weather-item .details { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
         
         /* News Tickers */
         .ticker {
@@ -220,11 +201,11 @@
         }
         .ticker-label {
             flex-shrink: 0;
-            padding: 0.15rem 0.5rem;
+            padding: 0.25rem 0.65rem;
             margin-left: 0.4rem;
             background: rgba(59, 130, 246, 0.3);
             border-radius: 0.2rem;
-            font-size: 0.6rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: #93c5fd;
         }
@@ -247,7 +228,7 @@
         .ticker-item {
             display: inline-block;
             margin-right: 2.5rem;
-            font-size: 0.8rem;
+            font-size: 1.2rem;
         }
         .ticker-item::before {
             content: '•';
@@ -324,13 +305,6 @@
                     <div class="text-center py-3"><div class="loading"></div></div>
                 </div>
             </div>
-            
-            <!-- Currency -->
-            <div class="sidebar-card glass">
-                <div class="currency-grid" id="currencyList">
-                    <div class="currency-item"><div class="loading"></div></div>
-                </div>
-            </div>
         </div>
         
         <!-- News Line 1 - Chinese -->
@@ -394,10 +368,6 @@
                 { label: 'Auckland', lat: -36.8485, lon: 174.7633 },
                 { label: 'Botany', lat: -36.9167, lon: 174.9110 },
                 { label: 'Hong Kong', lat: 22.3193, lon: 114.1694 }
-            ],
-            currencies: [
-                { pair: 'NZD-USD', alert: 0.55, below: true },
-                { pair: 'NZD-HKD', alert: 4.5, below: true }
             ]
         };
 
@@ -675,39 +645,6 @@
         }
 
         // ============================================
-        // CURRENCY
-        // ============================================
-        
-        async function fetchCurrencies() {
-            const container = document.getElementById('currencyList');
-            let html = '';
-            
-            for (const c of config.currencies) {
-                try {
-                    const [base, quote] = c.pair.split('-');
-                    const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
-                    const data = await res.json();
-                    
-                    if (data.rates?.[quote]) {
-                        const rate = data.rates[quote];
-                        const isAlert = c.below ? rate < c.alert : rate > c.alert;
-                        
-                        html += `
-                            <div class="currency-item ${isAlert ? 'alert' : ''}">
-                                <div class="pair">${base}/${quote}</div>
-                                <div class="rate">${rate.toFixed(4)}</div>
-                            </div>
-                        `;
-                    }
-                } catch (e) {
-                    console.error('Currency error:', c.pair, e);
-                }
-            }
-            
-            container.innerHTML = html || '<div class="text-red-400 text-xs">Error</div>';
-        }
-
-        // ============================================
         // NEWS
         // ============================================
         
@@ -756,14 +693,12 @@
         function init() {
             updateClock();
             fetchWeather();
-            fetchCurrencies();
             fetchNews(config.news1Feeds, 'news1Content');
             fetchNews(config.news2Feeds, 'news2Content');
             
             setInterval(updateClock, 1000);
             setInterval(checkScheduleChange, 60 * 1000); // Check schedule every minute
             setInterval(fetchWeather, 30 * 60 * 1000);
-            setInterval(fetchCurrencies, 30 * 60 * 1000);
             setInterval(() => fetchNews(config.news1Feeds, 'news1Content'), 30 * 60 * 1000);
             setInterval(() => fetchNews(config.news2Feeds, 'news2Content'), 30 * 60 * 1000);
         }
