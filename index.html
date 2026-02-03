@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Display Panel - v6.0 Beta (Big Screen Auto-Shuffle)</title>
+    <title>Display Panel - v6.0 Beta (Big Screen Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -416,7 +416,7 @@
                     <option value="PLK1NiZBn99vQ2xsTJ5SIzqK-TfHs9s0He">0Tempwork</option>
                     <option value="PLK1NiZBn99vRFjnjGvtFkydnVh5vq39V6">AOA</option>
                     <option value="PLK1NiZBn99vRvPpps7r9wMB0KLUacyRKT">Media Panel</option>
-                    <option value="PLK1NiZBn99vSEy6wYQ3XMYy1RE687kHyH">Big Screen</option>
+                    <option value="PLK1NiZBn99vSEy6wYQ3XMYy1RE687kHyH" selected>Big Screen</option>
                     <option value="PLK1NiZBn99vQ79xMYiOyZwdH6-u1WqqxC">Performance</option>
                     <option value="PLIpRvnEkgEeU15yy2o_5gKQjr79KP8O2O">HoyTV News</option>
                     <option value="PL37_7-RvAesjrBipCCGSHM-ZnWxfVA-vZ">No NonSense Gospel</option>
@@ -604,7 +604,11 @@
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    config.currentPlaylist = data.currentPlaylist || '';
+                    // Only override default if localStorage has a valid playlist
+                    if (data.currentPlaylist) {
+                        config.currentPlaylist = data.currentPlaylist;
+                    }
+                    // Keep hardcoded default if localStorage is empty
                     config.playOrder = data.playOrder || 'shuffle';
                     config.news1Feeds = data.news1Feeds && data.news1Feeds.length ? data.news1Feeds : [...DEFAULT_NEWS1];
                     config.news2Feeds = data.news2Feeds && data.news2Feeds.length ? data.news2Feeds : [...DEFAULT_NEWS2];
