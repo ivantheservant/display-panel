@@ -141,6 +141,40 @@
             background: rgba(59, 130, 246, 0.8);
         }
         
+        /* Play Button Overlay (for blocked autoplay) */
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 15;
+            cursor: pointer;
+        }
+        .play-overlay.show {
+            display: flex;
+        }
+        .play-overlay-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(59, 130, 246, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            transition: all 0.3s;
+        }
+        .play-overlay-btn:hover {
+            background: rgba(59, 130, 246, 1);
+            transform: scale(1.1);
+        }
+        
         /* Schedule Info (RIGHT video only) */
         .schedule-info {
             position: absolute;
@@ -298,6 +332,14 @@
         <!-- LEFT Video - HoyTV News (Large, 16:9, Rows 1-6) -->
         <div class="main-video glass">
             <div id="leftPlayerContainer" style="width:100%; height:100%;"></div>
+            
+            <!-- Play Button Overlay (shown if autoplay blocked) -->
+            <div class="play-overlay" id="leftPlayOverlay" onclick="playLeftVideo()">
+                <div class="play-overlay-btn">
+                    <i class="fas fa-play"></i>
+                </div>
+            </div>
+            
             <div class="video-controls">
                 <button class="video-btn" onclick="leftPrevious()"><i class="fas fa-step-backward"></i></button>
                 <button class="video-btn" onclick="leftPlayPause()" id="leftPlayPauseBtn"><i class="fas fa-pause"></i></button>
@@ -402,12 +444,9 @@
         
         const VIDEO_CONFIG = {
             left: {
-                playlistId: 'PL37_7-RvAesj5-VrdlB4dkU8HxQZUJdkk',  // HoyTV News
-                autoplay: true
-                // NOTE: YouTube playlists play from first to last by default
-                // If playlist is ordered oldest-to-newest, videos play in that order
-                // If playlist is ordered newest-to-oldest, latest video plays first
-                // Check your YouTube playlist settings: "Date added (newest)" for latest first
+                playlistId: 'PL9eACSpOeYt-VXmUQqKQyeClL4Wm_jp32',  // New Playlist
+                autoplay: true,
+                shuffle: true  // Enable shuffle
             },
             right: {
                 playlists: {
@@ -511,7 +550,8 @@
                     controls: 1, 
                     rel: 0, 
                     modestbranding: 1,
-                    playsinline: 1
+                    playsinline: 1,
+                    mute: 0
                 },
                 events: { 
                     onReady: (e) => onPlayerReady(e, 'left'), 
@@ -544,20 +584,56 @@
         }
         
         function onPlayerReady(event, playerType) {
-            // Only shuffle RIGHT video (sermon playlists), not LEFT (news)
-            if (playerType === 'right') {
+            console.log(`${playerType} player ready`);
+            
+            // Enable shuffle based on config
+            if (playerType === 'left' && VIDEO_CONFIG.left.shuffle) {
+                event.target.setShuffle(true);
+            } else if (playerType === 'right') {
                 event.target.setShuffle(true);
             }
             
-            if ((playerType === 'left' && VIDEO_CONFIG.left.autoplay) || (playerType === 'right' && VIDEO_CONFIG.right.autoplay)) {
-                setTimeout(() => event.target.playVideo(), 1500);
+            // Immediate autoplay for left video
+            if (playerType === 'left' && VIDEO_CONFIG.left.autoplay) {
+                event.target.playVideo();
+                
+                // Check if autoplay worked after 3 seconds
+                setTimeout(() => {
+                    if (event.target.getPlayerState() !== YT.PlayerState.PLAYING) {
+                        console.log('Autoplay blocked - showing play button');
+                        const overlay = document.getElementById('leftPlayOverlay');
+                        if (overlay) overlay.classList.add('show');
+                    }
+                }, 3000);
+            } else if (playerType === 'right' && VIDEO_CONFIG.right.autoplay) {
+                setTimeout(() => event.target.playVideo(), 1000);
+            }
+        }
+        
+        // Manual play function for overlay button
+        function playLeftVideo() {
+            if (leftPlayer) {
+                leftPlayer.playVideo();
+                const overlay = document.getElementById('leftPlayOverlay');
+                if (overlay) overlay.classList.remove('show');
             }
         }
         
         function onPlayerStateChange(event, playerType) {
             const btnId = playerType === 'left' ? 'leftPlayPauseBtn' : 'rightPlayPauseBtn';
             const btn = document.getElementById(btnId);
-            btn.innerHTML = event.data === YT.PlayerState.PLAYING ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+            
+            if (event.data === YT.PlayerState.PLAYING) {
+                btn.innerHTML = '<i class="fas fa-pause"></i>';
+                
+                // Hide play overlay if video starts playing
+                if (playerType === 'left') {
+                    const overlay = document.getElementById('leftPlayOverlay');
+                    if (overlay) overlay.classList.remove('show');
+                }
+            } else {
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+            }
         }
         
         function leftPlayPause() { if (!leftPlayer) return; leftPlayer.getPlayerState() === YT.PlayerState.PLAYING ? leftPlayer.pauseVideo() : leftPlayer.playVideo(); }
