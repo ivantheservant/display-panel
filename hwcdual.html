@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Holy Word Channel - Dual Display V2 - HWC + ivan</title>
+    <title>Holy Word Channel - Dual Display HWC + Ivan(mute+cc)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -446,7 +446,9 @@
             left: {
                 playlistId: 'PL9eACSpOeYt-VXmUQqKQyeClL4Wm_jp32',  // New Playlist
                 autoplay: true,
-                shuffle: true  // Enable shuffle
+                shuffle: true,  // Enable shuffle
+                mute: false,    // Audio ON (unmuted)
+                cc: true        // Closed Captions ON
             },
             right: {
                 playlists: {
@@ -456,7 +458,8 @@
                     cantonese: 'PL37_7-RvAesjrBipCCGSHM-ZnWxfVA-vZ'
                 },
                 useScheduling: true,
-                autoplay: false
+                autoplay: true,   // ✅ CHANGED TO TRUE
+                mute: true        // Audio MUTED
             }
         };
         
@@ -551,7 +554,8 @@
                     rel: 0, 
                     modestbranding: 1,
                     playsinline: 1,
-                    mute: 0
+                    mute: 0,              // Audio ON (unmuted)
+                    cc_load_policy: 1     // Closed Captions ON (if available on video)
                 },
                 events: { 
                     onReady: (e) => onPlayerReady(e, 'left'), 
@@ -567,12 +571,13 @@
                 playerVars: { 
                     listType: 'playlist', 
                     list: rightSchedule.id, 
-                    autoplay: 0, 
+                    autoplay: 1,          // ✅ CHANGED TO 1 (auto-play)
                     loop: 1, 
                     controls: 1, 
                     rel: 0, 
                     modestbranding: 1,
-                    playsinline: 1
+                    playsinline: 1,
+                    mute: 1               // Audio MUTED
                 },
                 events: { 
                     onReady: (e) => onPlayerReady(e, 'right'), 
@@ -593,20 +598,36 @@
                 event.target.setShuffle(true);
             }
             
-            // Immediate autoplay for left video
+            // Set audio levels
+            if (playerType === 'left' && !VIDEO_CONFIG.left.mute) {
+                event.target.unMute();  // Ensure left is unmuted
+            } else if (playerType === 'right' && VIDEO_CONFIG.right.mute) {
+                event.target.mute();    // Ensure right is muted
+            }
+            
+            // Immediate autoplay for BOTH videos
             if (playerType === 'left' && VIDEO_CONFIG.left.autoplay) {
                 event.target.playVideo();
                 
                 // Check if autoplay worked after 3 seconds
                 setTimeout(() => {
                     if (event.target.getPlayerState() !== YT.PlayerState.PLAYING) {
-                        console.log('Autoplay blocked - showing play button');
+                        console.log('Left autoplay blocked - showing play button');
                         const overlay = document.getElementById('leftPlayOverlay');
                         if (overlay) overlay.classList.add('show');
                     }
                 }, 3000);
             } else if (playerType === 'right' && VIDEO_CONFIG.right.autoplay) {
-                setTimeout(() => event.target.playVideo(), 1000);
+                // Immediate autoplay for right video too
+                event.target.playVideo();
+                
+                // Check if autoplay worked after 3 seconds
+                setTimeout(() => {
+                    if (event.target.getPlayerState() !== YT.PlayerState.PLAYING) {
+                        console.log('Right autoplay blocked - retrying...');
+                        event.target.playVideo();
+                    }
+                }, 3000);
             }
         }
         
