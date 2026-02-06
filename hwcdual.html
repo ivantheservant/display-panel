@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Holy Word Channel - Dual Display HWC + Ivan(mute+cc)</title>
+    <title>Holy Word Channel - Dual Display</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -360,6 +360,14 @@
             <div class="secondary-video-wrapper glass">
                 <div class="secondary-video">
                     <div id="rightPlayerContainer" style="width:100%; height:100%;"></div>
+                    
+                    <!-- Play Button Overlay (shown if autoplay blocked) -->
+                    <div class="play-overlay" id="rightPlayOverlay" onclick="playRightVideo()">
+                        <div class="play-overlay-btn">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                    
                     <div class="schedule-info">
                         <div class="current-mode" id="currentMode">Loading...</div>
                         <div class="next-change" id="nextChange"></div>
@@ -446,9 +454,9 @@
             left: {
                 playlistId: 'PL9eACSpOeYt-VXmUQqKQyeClL4Wm_jp32',  // New Playlist
                 autoplay: true,
-                shuffle: true,  // Enable shuffle
-                mute: false,    // Audio ON (unmuted)
-                cc: true        // Closed Captions ON
+                shuffle: true,    // Shuffle enabled
+                mute: false,      // Audio ON
+                cc: false         // NO captions
             },
             right: {
                 playlists: {
@@ -458,8 +466,10 @@
                     cantonese: 'PL37_7-RvAesjrBipCCGSHM-ZnWxfVA-vZ'
                 },
                 useScheduling: true,
-                autoplay: true,   // ✅ CHANGED TO TRUE
-                mute: true        // Audio MUTED
+                autoplay: true,   // Auto-play enabled
+                shuffle: true,    // Shuffle enabled
+                mute: true,       // Audio MUTED
+                cc: true          // Captions ON
             }
         };
         
@@ -543,6 +553,7 @@
         // ============ YOUTUBE PLAYERS ============
         
         function onYouTubeIframeAPIReady() {
+            // LEFT Player - Start MUTED to bypass autoplay restrictions, then unmute
             leftPlayer = new YT.Player('leftPlayerContainer', {
                 height: '100%', width: '100%',
                 playerVars: { 
@@ -554,8 +565,7 @@
                     rel: 0, 
                     modestbranding: 1,
                     playsinline: 1,
-                    mute: 0,              // Audio ON (unmuted)
-                    cc_load_policy: 1     // Closed Captions ON (if available on video)
+                    mute: 1               // Start MUTED for autoplay
                 },
                 events: { 
                     onReady: (e) => onPlayerReady(e, 'left'), 
@@ -566,18 +576,20 @@
             const rightSchedule = getScheduledPlaylist();
             lastRightPlaylistId = rightSchedule.id;
             
+            // RIGHT Player - Muted with Closed Captions
             rightPlayer = new YT.Player('rightPlayerContainer', {
                 height: '100%', width: '100%',
                 playerVars: { 
                     listType: 'playlist', 
                     list: rightSchedule.id, 
-                    autoplay: 1,          // ✅ CHANGED TO 1 (auto-play)
+                    autoplay: 1,          // Auto-play enabled
                     loop: 1, 
                     controls: 1, 
                     rel: 0, 
                     modestbranding: 1,
                     playsinline: 1,
-                    mute: 1               // Audio MUTED
+                    mute: 1,              // Audio MUTED
+                    cc_load_policy: 1     // Closed Captions ON
                 },
                 events: { 
                     onReady: (e) => onPlayerReady(e, 'right'), 
@@ -591,51 +603,69 @@
         function onPlayerReady(event, playerType) {
             console.log(`${playerType} player ready`);
             
-            // Enable shuffle based on config
-            if (playerType === 'left' && VIDEO_CONFIG.left.shuffle) {
-                event.target.setShuffle(true);
-            } else if (playerType === 'right') {
-                event.target.setShuffle(true);
-            }
+            // Enable shuffle for BOTH videos
+            event.target.setShuffle(true);
             
-            // Set audio levels
-            if (playerType === 'left' && !VIDEO_CONFIG.left.mute) {
-                event.target.unMute();  // Ensure left is unmuted
-            } else if (playerType === 'right' && VIDEO_CONFIG.right.mute) {
-                event.target.mute();    // Ensure right is muted
-            }
-            
-            // Immediate autoplay for BOTH videos
+            // Auto-play BOTH videos immediately
             if (playerType === 'left' && VIDEO_CONFIG.left.autoplay) {
+                // Start playing (muted by default for autoplay)
                 event.target.playVideo();
                 
-                // Check if autoplay worked after 3 seconds
+                // Unmute after video starts playing (500ms delay)
+                setTimeout(() => {
+                    if (event.target.getPlayerState() === YT.PlayerState.PLAYING) {
+                        event.target.unMute();
+                        console.log('Left video unmuted');
+                    }
+                }, 500);
+                
+                // Fallback check - show play button if still not playing after 3 seconds
                 setTimeout(() => {
                     if (event.target.getPlayerState() !== YT.PlayerState.PLAYING) {
-                        console.log('Left autoplay blocked - showing play button');
+                        console.log('Left autoplay failed - showing play button');
                         const overlay = document.getElementById('leftPlayOverlay');
                         if (overlay) overlay.classList.add('show');
                     }
                 }, 3000);
+                
             } else if (playerType === 'right' && VIDEO_CONFIG.right.autoplay) {
-                // Immediate autoplay for right video too
+                // Right video auto-plays muted
                 event.target.playVideo();
                 
-                // Check if autoplay worked after 3 seconds
+                // Ensure it stays muted
+                setTimeout(() => {
+                    event.target.mute();
+                }, 500);
+                
+                // Fallback check - show play button if still not playing after 3 seconds
                 setTimeout(() => {
                     if (event.target.getPlayerState() !== YT.PlayerState.PLAYING) {
-                        console.log('Right autoplay blocked - retrying...');
-                        event.target.playVideo();
+                        console.log('Right autoplay failed - showing play button');
+                        const overlay = document.getElementById('rightPlayOverlay');
+                        if (overlay) overlay.classList.add('show');
                     }
                 }, 3000);
             }
         }
         
-        // Manual play function for overlay button
+        // Manual play function for left overlay button
         function playLeftVideo() {
             if (leftPlayer) {
                 leftPlayer.playVideo();
+                // Unmute when manually played
+                setTimeout(() => {
+                    leftPlayer.unMute();
+                }, 500);
                 const overlay = document.getElementById('leftPlayOverlay');
+                if (overlay) overlay.classList.remove('show');
+            }
+        }
+        
+        // Manual play function for right overlay button
+        function playRightVideo() {
+            if (rightPlayer) {
+                rightPlayer.playVideo();
+                const overlay = document.getElementById('rightPlayOverlay');
                 if (overlay) overlay.classList.remove('show');
             }
         }
@@ -647,10 +677,27 @@
             if (event.data === YT.PlayerState.PLAYING) {
                 btn.innerHTML = '<i class="fas fa-pause"></i>';
                 
-                // Hide play overlay if video starts playing
+                // Hide play overlays when videos start playing
                 if (playerType === 'left') {
                     const overlay = document.getElementById('leftPlayOverlay');
                     if (overlay) overlay.classList.remove('show');
+                    
+                    // Ensure left video is unmuted when playing
+                    setTimeout(() => {
+                        if (!VIDEO_CONFIG.left.mute) {
+                            event.target.unMute();
+                        }
+                    }, 100);
+                }
+                
+                if (playerType === 'right') {
+                    const overlay = document.getElementById('rightPlayOverlay');
+                    if (overlay) overlay.classList.remove('show');
+                    
+                    // Ensure right video stays muted when playing
+                    if (VIDEO_CONFIG.right.mute) {
+                        event.target.mute();
+                    }
                 }
             } else {
                 btn.innerHTML = '<i class="fas fa-play"></i>';
